@@ -1,0 +1,10 @@
+{
+  "description": "Easily upload and manage multiple images in one place, streamlining organization and sharing for photographers, designers, and content creators.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
