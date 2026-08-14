@@ -5,11 +5,12 @@ import path from 'node:path'
 
 import siteConfiguration from './.figma/make/site.json'
 
+// Vite config
 export default defineConfig(({ mode }) => {
   const emitSourcemaps = mode === 'development'
 
   return {
-    base: '/', // FIXED
+    base: '/',
 
     build: {
       sourcemap: emitSourcemaps ? 'inline' : false,
@@ -37,7 +38,15 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       port: parseInt(process.env.PORT || '8443'),
       strictPort: true,
-      watch: {
+      watch: { ignored: ['**/.figma/**'] },
+    },
+
+    preview: {
+      host: '0.0.0.0',
+      port: parseInt(process.env.PORT || '8443'),
+    },
+  }
+})
         ignored: ['**/.figma/**'],
       },
     },
