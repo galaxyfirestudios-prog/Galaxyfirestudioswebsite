@@ -1,7 +1,8 @@
 {
-  "description": "Easily upload and manage multiple images in one place, streamlining organization and sharing for photographers, designers, and content creators.",
+  "title": "Galaxy Fire Studios",
+  "description": "Galaxy Fire Studios — professional recording, music production, vocal production, mixing and mastering.",
   "robots": {
-    "index": false
+    "index": true
   },
   "accessibility": {
     "addBypassLinks": false,
