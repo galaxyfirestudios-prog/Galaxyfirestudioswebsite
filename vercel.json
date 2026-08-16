@@ -2,6 +2,9 @@
   "functions": {
     "api/verify-payment.js": {
       "maxDuration": 10
+    },
+    "api/check-availability.js": {
+      "maxDuration": 10
     }
   },
   "rewrites": [

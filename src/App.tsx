@@ -72,9 +72,63 @@ export default function App() {
     document.body.appendChild(script);
   }, []);
 
-  const submitBooking = (event: React.FormEvent<HTMLFormElement>) => {
+  const submitBooking = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setPaymentError("");
+
+    // Check studio availability before opening Paystack.
+    if (
+      booking.service === "The Fire Session" ||
+      booking.service === "Studio Hour" ||
+      booking.service === "Production Session"
+    ) {
+      const durationHours = booking.service === "The Fire Session" ? 6 : 1;
+      const startAt = new Date(`${booking.date}T${booking.time}`);
+      const endAt = new Date(startAt.getTime() + durationHours * 60 * 60 * 1000);
+
+      const formatTimestamp = (date: Date) => {
+        const pad = (value: number) => String(value).padStart(2, "0");
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:00`;
+      };
+
+      try {
+        const availabilityResponse = await fetch(
+          "/api/check-availability",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              startAt: formatTimestamp(startAt),
+              endAt: formatTimestamp(endAt),
+            }),
+          }
+        );
+
+        if (!availabilityResponse.ok) {
+          const errorText = await availabilityResponse.text();
+          console.error("Availability API error:", errorText);
+          throw new Error("Could not check studio availability.");
+        }
+
+        const available = await availabilityResponse.json();
+
+        if (available !== true) {
+          setPaymentError(
+            "Sorry, that time is already booked. Please choose another date or time."
+          );
+          return;
+        }
+      } catch (error) {
+        console.error("Availability check failed:", error);
+        setPaymentError(
+          "We could not check availability right now. Please try again."
+        );
+        return;
+      }
+    }
+
     setPaymentProcessing(true);
 
     const reference = `GFS-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
