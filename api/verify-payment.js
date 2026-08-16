@@ -7,6 +7,7 @@ const supabase = createClient(
 
 function generateReference() {
   const d = new Date()
+
   const date =
     String(d.getFullYear()).slice(-2) +
     String(d.getMonth() + 1).padStart(2, '0') +
@@ -24,7 +25,9 @@ function generateReference() {
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
+    return res.status(405).json({
+      error: 'Method not allowed'
+    })
   }
 
   const { reference, booking } = req.body
