@@ -234,11 +234,17 @@ export default function App() {
         </div>
 
         <nav className={menuOpen ? "nav-links open" : "nav-links"}>
-          <a href="#studio">STUDIO</a>
-          <a href="#services">SERVICES</a>
-          <a href="#pricing">PRICING</a>
-          <a href="#gallery">GALLERY</a>
-          <a href="#contact">CONTACT</a>
+          <a href="#home" onClick={() => setMenuOpen(false)}>HOME</a>
+          <a href="#studio" onClick={() => setMenuOpen(false)}>STUDIO</a>
+          <a href="#services" onClick={() => setMenuOpen(false)}>SERVICES</a>
+          <a href="#booking" onClick={() => setMenuOpen(false)}>BOOK</a>
+          <a href="#culture" onClick={() => setMenuOpen(false)}>FOR THE CULTURE</a>
+          <a href="#radio" onClick={() => setMenuOpen(false)}>RADIO</a>
+          <a href="#blog" onClick={() => setMenuOpen(false)}>BLOG</a>
+          <a href="#beats" onClick={() => setMenuOpen(false)}>BEATS</a>
+          <a href="#shop" onClick={() => setMenuOpen(false)}>SHOP</a>
+          <a href="#about" onClick={() => setMenuOpen(false)}>ABOUT</a>
+          <a href="#contact" onClick={() => setMenuOpen(false)}>CONTACT</a>
         </nav>
 
         <a className="nav-button" href="#booking">BOOK A SESSION</a>
@@ -250,7 +256,7 @@ export default function App() {
 
 
       {/* HERO */}
-      <section className="hero">
+      <section className="hero" id="home">
         <img src={heroImg} alt="Galaxy Studios control room" className="hero-photo" />
         <div className="hero-overlay" />
         <div className="hero-content">
@@ -487,10 +493,149 @@ export default function App() {
       </section>
 
 
+      {/* FOR THE CULTURE */}
+      <section className="culture" id="culture">
+        <div className="section-heading">
+          <div className="section-number">07 / FOR THE CULTURE</div>
+          <h2>THE SOUND.<br /><span>THE PEOPLE. THE CULTURE.</span></h2>
+          <p>
+            Galaxy Fire Studios is more than a room to record in. FOR THE CULTURE is our
+            growing home for Abuja music, artists, stories, beats, radio and the creative
+            community around us.
+          </p>
+        </div>
+
+        <div className="culture-grid">
+          <a href="#radio" className="culture-card culture-card-featured">
+            <div className="culture-card-number">01</div>
+            <div className="culture-card-content">
+              <span>LIVE MUSIC DESTINATION</span>
+              <h3>FOR THE CULTURE<br />RADIO</h3>
+              <p>Hear Abuja talent, guest mixes, premieres and future Galaxy Fire programming.</p>
+              <strong>EXPLORE RADIO →</strong>
+            </div>
+          </a>
+
+          <a href="#blog" className="culture-card">
+            <div className="culture-card-number">02</div>
+            <div className="culture-card-content">
+              <span>STORIES &amp; PEOPLE</span>
+              <h3>THE<br />BLOG</h3>
+              <p>Artist profiles, interviews, releases, events, studio stories and creative culture.</p>
+              <strong>READ THE BLOG →</strong>
+            </div>
+          </a>
+
+          <a href="#beats" className="culture-card">
+            <div className="culture-card-number">03</div>
+            <div className="culture-card-content">
+              <span>PRODUCERS &amp; ARTISTS</span>
+              <h3>BEATS<br />MARKETPLACE</h3>
+              <p>Discover beats by genre, mood, BPM and producer, then take the record to Galaxy Fire.</p>
+              <strong>EXPLORE BEATS →</strong>
+            </div>
+          </a>
+
+          <a href="#shop" className="culture-card">
+            <div className="culture-card-number">04</div>
+            <div className="culture-card-content">
+              <span>WEAR THE BRAND</span>
+              <h3>GALAXY FIRE<br />SHOP</h3>
+              <p>Studio merchandise, FOR THE CULTURE pieces, accessories and branded essentials.</p>
+              <strong>VISIT THE SHOP →</strong>
+            </div>
+          </a>
+        </div>
+
+        <div className="culture-statement">
+          <div>
+            <span className="eyebrow">THE GALAXY FIRE ECOSYSTEM</span>
+            <h3>DISCOVER. CREATE. CONNECT.</h3>
+          </div>
+          <p>
+            Discover music and stories. Find a beat. Hear the culture. Then bring your next
+            record back to Galaxy Fire Studios to record, produce, mix, master and release it.
+          </p>
+        </div>
+      </section>
+
+      {/* ECOSYSTEM COMING SOON */}
+      <section className="ecosystem-preview" id="radio">
+        <div className="ecosystem-preview-inner">
+          <div>
+            <div className="section-number">08 / RADIO</div>
+            <h2>FOR THE<br /><span>CULTURE RADIO.</span></h2>
+            <p>
+              The live station is coming. This space will become the home for the FOR THE CULTURE
+              stream, now-playing information, guest mixes, artist spotlights and original shows.
+            </p>
+          </div>
+          <div className="ecosystem-status">
+            <span>STATUS</span>
+            <strong>COMING SOON</strong>
+            <small>LIVE INTERNET RADIO WILL BE CONNECTED HERE.</small>
+          </div>
+        </div>
+      </section>
+
+      <section className="ecosystem-preview dark" id="blog">
+        <div className="ecosystem-preview-inner">
+          <div>
+            <div className="section-number">09 / BLOG</div>
+            <h2>THE<br /><span>STORIES.</span></h2>
+            <p>
+              Artist interviews, producer spotlights, new releases, Abuja creative culture,
+              events, tutorials and behind-the-scenes stories will live here.
+            </p>
+          </div>
+          <a href="#contact" className="button outline">GET FEATURED →</a>
+        </div>
+      </section>
+
+      <section className="ecosystem-preview" id="beats">
+        <div className="ecosystem-preview-inner">
+          <div>
+            <div className="section-number">10 / BEATS</div>
+            <h2>FIND YOUR<br /><span>SOUND.</span></h2>
+            <p>
+              The Beats Marketplace will let artists preview beats, explore producers and
+              purchase the right license for their next record.
+            </p>
+          </div>
+          <a href="#booking" className="button red">WORK WITH A PRODUCER →</a>
+        </div>
+      </section>
+
+      <section className="ecosystem-preview dark" id="shop">
+        <div className="ecosystem-preview-inner">
+          <div>
+            <div className="section-number">11 / SHOP</div>
+            <h2>WEAR<br /><span>THE FIRE.</span></h2>
+            <p>
+              Galaxy Fire and FOR THE CULTURE merchandise will be available here as the studio
+              ecosystem grows.
+            </p>
+          </div>
+          <a href="#contact" className="button outline">SHOP COMING SOON →</a>
+        </div>
+      </section>
+
+      <section className="about-preview" id="about">
+        <div className="about-preview-inner">
+          <div className="section-number">12 / ABOUT GALAXY FIRE</div>
+          <h2>BUILT FOR<br /><span>CREATORS.</span></h2>
+          <p>
+            Galaxy Fire Studios is a professional recording and production environment for
+            artists, producers and creators who want to take their music seriously.
+          </p>
+          <a href="#booking" className="button red">WORK WITH US →</a>
+        </div>
+      </section>
+
       {/* PROMO / SOCIAL */}
       <section className="promo-section">
         <div className="section-heading">
-          <div className="section-number">07 / THE WORD</div>
+          <div className="section-number">13 / THE WORD</div>
           <h2>SPREAD<br /><span>THE FIRE.</span></h2>
           <p>Galaxy Fire Studios — where beats get built, voices get captured, and music gets finished.</p>
         </div>
@@ -514,7 +659,7 @@ export default function App() {
       {/* WHY GALAXY FIRE */}
       <section className="why">
         <div className="why-content">
-          <div className="section-number">06 / THE STANDARD</div>
+          <div className="section-number">14 / THE STANDARD</div>
           <h2>YOUR MUSIC.<br /><span>OUR CRAFT.</span></h2>
           <div className="why-grid">
             <div><strong>01</strong><h3>PROFESSIONAL</h3><p>A serious environment for serious music.</p></div>
@@ -619,10 +764,13 @@ export default function App() {
           <div className="footer-links">
             <div>
               <span>EXPLORE</span>
+              <a href="#home">Home</a>
               <a href="#studio">Studio</a>
               <a href="#services">Services</a>
-              <a href="#pricing">Pricing</a>
-              <a href="#gallery">Gallery</a>
+              <a href="#booking">Book a Session</a>
+              <a href="#culture">For the Culture</a>
+              <a href="#beats">Beats</a>
+              <a href="#shop">Shop</a>
             </div>
             <div>
               <span>CONTACT</span>
@@ -912,6 +1060,184 @@ export default function App() {
         .footer-links a:hover { color: white; }
         .footer-bottom { border-top: 1px solid #1a1a1a; padding-top: 25px; display: flex; justify-content: space-between; color: #444; font-family: 'Barlow Condensed', sans-serif; font-size: 9px; letter-spacing: 1px; }
 
+        /* FOR THE CULTURE */
+        .culture { background: #0a0a0a; }
+        .culture-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 12px;
+          margin-top: 55px;
+        }
+        .culture-card {
+          min-height: 420px;
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 32px;
+          background: #111;
+          border: 1px solid #252525;
+          overflow: hidden;
+          transition: transform .3s ease, border-color .3s ease, background .3s ease;
+        }
+        .culture-card::after {
+          content: "";
+          position: absolute;
+          width: 180px;
+          height: 180px;
+          right: -70px;
+          bottom: -70px;
+          border-radius: 50%;
+          background: rgba(229,9,20,.08);
+          transition: transform .4s ease;
+        }
+        .culture-card:hover {
+          transform: translateY(-5px);
+          border-color: #e50914;
+          background: #151515;
+        }
+        .culture-card:hover::after { transform: scale(1.5); }
+        .culture-card-featured {
+          background: linear-gradient(145deg, #171717, #0d0d0d);
+          border-color: #e50914;
+        }
+        .culture-card-number {
+          position: relative;
+          z-index: 1;
+          color: #e50914;
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 12px;
+          font-weight: 900;
+          letter-spacing: 1px;
+        }
+        .culture-card-content {
+          position: relative;
+          z-index: 1;
+        }
+        .culture-card-content > span {
+          color: #777;
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 9px;
+          font-weight: 900;
+          letter-spacing: 2px;
+        }
+        .culture-card h3 {
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 31px;
+          line-height: .95;
+          letter-spacing: -0.5px;
+          margin: 15px 0 18px;
+        }
+        .culture-card p {
+          color: #777;
+          font-size: 13px;
+          line-height: 1.7;
+          margin: 0 0 25px;
+        }
+        .culture-card strong {
+          color: #e50914;
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: 1.2px;
+        }
+        .culture-statement {
+          margin-top: 12px;
+          padding: 35px;
+          border: 1px solid #242424;
+          background: #111;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 50px;
+          align-items: center;
+        }
+        .culture-statement h3 {
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 32px;
+          margin: 12px 0 0;
+          letter-spacing: 1px;
+        }
+        .culture-statement p {
+          color: #777;
+          line-height: 1.8;
+          font-size: 14px;
+          margin: 0;
+        }
+
+        /* ECOSYSTEM PREVIEWS */
+        .ecosystem-preview {
+          padding: 120px 7%;
+          background: #0b0b0b;
+          border-top: 1px solid #181818;
+        }
+        .ecosystem-preview.dark { background: #080808; }
+        .ecosystem-preview-inner {
+          max-width: 1200px;
+          margin: auto;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 70px;
+        }
+        .ecosystem-preview-inner > div:first-child { max-width: 700px; }
+        .ecosystem-preview h2 {
+          font-size: clamp(50px, 7vw, 95px);
+          margin-bottom: 25px;
+        }
+        .ecosystem-preview p {
+          max-width: 600px;
+          color: #777;
+          line-height: 1.8;
+          font-size: 15px;
+          margin: 0;
+        }
+        .ecosystem-status {
+          min-width: 260px;
+          padding: 30px;
+          border: 1px solid #2b2b2b;
+          background: #101010;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .ecosystem-status span {
+          color: #e50914;
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 9px;
+          font-weight: 900;
+          letter-spacing: 2px;
+        }
+        .ecosystem-status strong {
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 26px;
+          letter-spacing: 1px;
+        }
+        .ecosystem-status small {
+          color: #555;
+          font-size: 9px;
+          line-height: 1.6;
+          letter-spacing: 1px;
+        }
+
+        /* ABOUT PREVIEW */
+        .about-preview {
+          padding: 120px 7%;
+          background: #111;
+          border-top: 1px solid #1c1c1c;
+        }
+        .about-preview-inner {
+          max-width: 1000px;
+          margin: auto;
+        }
+        .about-preview h2 { font-size: clamp(55px, 8vw, 110px); }
+        .about-preview p {
+          max-width: 620px;
+          color: #888;
+          line-height: 1.8;
+          font-size: 16px;
+          margin-bottom: 35px;
+        }
+
         /* PROMO */
         .promo-section { background: #0a0a0a; }
 
@@ -947,7 +1273,7 @@ export default function App() {
         @media (max-width: 900px) {
           .nav-links {
             display: none; position: absolute; top: 82px; left: 0; right: 0;
-            background: #0a0a0a; padding: 30px; flex-direction: column; border-bottom: 1px solid #222;
+            background: #0a0a0a; padding: 30px; flex-direction: column; border-bottom: 1px solid #222; max-height: calc(100vh - 82px); overflow-y: auto;
           }
           .nav-links.open { display: flex; }
           .nav-button { display: none; }
@@ -959,6 +1285,9 @@ export default function App() {
           .gallery-grid { grid-template-columns: 1fr; }
           .gallery-row2 { grid-template-columns: 1fr 1fr; }
           .promo-grid { grid-template-columns: 1fr 1fr; }
+          .culture-grid { grid-template-columns: 1fr 1fr; }
+          .culture-statement { grid-template-columns: 1fr; gap: 25px; }
+          .ecosystem-preview-inner { flex-direction: column; align-items: flex-start; gap: 40px; }
           .footer-top { flex-direction: column; gap: 50px; }
           .footer-links { gap: 50px; }
         }
@@ -973,6 +1302,11 @@ export default function App() {
           .service-grid, .pricing-grid, .why-grid { grid-template-columns: 1fr; }
           .gallery-row2 { grid-template-columns: 1fr; }
           .promo-grid { grid-template-columns: 1fr 1fr; }
+          .culture-grid { grid-template-columns: 1fr; }
+          .culture-card { min-height: 360px; }
+          .culture-statement { padding: 25px; }
+          .ecosystem-preview, .about-preview { padding: 90px 6%; }
+          .ecosystem-status { width: 100%; min-width: 0; }
           .stats { gap: 25px; }
           .contact-details { flex-direction: column; gap: 25px; align-items: center; }
           .booking-modal { padding: 10px; }
