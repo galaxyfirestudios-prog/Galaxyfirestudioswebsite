@@ -1,0 +1,8 @@
+Galaxy Fire Studios image recovery
+
+This package contains the real binary versions of the original studio images and 27 verified visual-production images.
+
+The supplied "New website images.zip" contained 27 filenames, but 10 of those entries were Git LFS conflict-pointer files rather than photographs:
+image_16.jpg, image_18.jpg, image_19.jpg, image_20.jpg, image_21.jpg, image_22.jpg, image_23.jpg, image_25.jpg, image_26.jpg, image_27.jpg.
+
+The package therefore uses the 17 unique valid photographs from that ZIP and 10 real photography images previously uploaded in the same project conversation to keep the visual gallery at 27 valid images. No Git LFS image pointers are included in the final website assets.
