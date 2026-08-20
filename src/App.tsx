@@ -1,55 +1,75 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
-import logoImg from "@/imports/galaxy_studio_logo_for_video_without_background.png";
-import heroImg from "@/imports/bcff0804-5388-404a-8e04-15f201fad894.JPG";
-import deskImg from "@/imports/3fdd97c2-2891-4094-9214-196df630473f.JPG";
-import micCloseImg from "@/imports/9b6f958a-50ea-406b-b280-731a77251cd2.JPG";
-import micWideImg from "@/imports/2dad0e2f-97cd-4bc5-8a40-6d2ca428cee7.JPG";
-import monitorsImg from "@/imports/c896af71-ea06-4d96-9f86-afc747ae9b1f.JPG";
-import mpcLitImg from "@/imports/5f761b8a-db00-4f37-be3f-8a9cf9ced4ba.JPG";
-import mpcDemoImg from "@/imports/e2706307-4e0c-4c81-8ad8-c2b703520b7a.JPG";
-import interfaceImg from "@/imports/e508b057-4fc6-4354-b78c-ed237765bde3.JPG";
-import keyboardImg from "@/imports/b58464ee-8826-4dcf-82c2-e782d895a5eb.JPG";
-import speakerImg from "@/imports/7aa7a4d2-c05f-4d17-ace1-204719c82c51.JPG";
+// IMPORTANT: these are the OLD studio images that are actually present in src/imports.
+// The previous App.tsx referenced several deleted UUID files, which caused Vite to fail.
+import studioDesk from "@/imports/3fdd97c2-2891-4094-9214-196df630473f.JPG";
+import studioMicClose from "@/imports/9b6f958a-50ea-406b-b280-731a77251cd2.JPG";
+import studioMic from "@/imports/2dad0e2f-97cd-4bc5-8a40-6d2ca428cee7.JPG";
+import studioMpc from "@/imports/5f761b8a-db00-4f37-be3f-8a9cf9ced4ba.JPG";
+import studioSpeaker from "@/imports/7aa7a4d2-c05f-4d17-ace1-204719c82c51.JPG";
 import promoStudioTimeImg from "@/imports/IMG_3312.PNG";
 import promoBeatsImg from "@/imports/IMG_3365.PNG";
 import promoSuperstarsImg from "@/imports/IMG_3360.PNG";
 import promoMixMasterImg from "@/imports/IMG_3359.PNG";
-import image1 from "@/imports/Image 1.jpg";
-import image2 from "@/imports/Image 2.jpg";
-import image3 from "@/imports/Image 3.jpg";
-import image4 from "@/imports/Image 4.jpg";
-import image5 from "@/imports/Image 5.jpg";
-import image6 from "@/imports/Image 6.jpg";
-import image7 from "@/imports/Image 7.jpg";
-import image8 from "@/imports/Image 8.jpg";
-import image9 from "@/imports/Image 9.jpg";
-import image10 from "@/imports/Image 10.jpg";
-import image11 from "@/imports/Image 11.jpg";
-import image12 from "@/imports/Image 12.jpg";
-import image13 from "@/imports/Image 13.jpg";
-import image14 from "@/imports/Image 14.jpg";
-import image15 from "@/imports/Image 15.jpg";
-import image16 from "@/imports/Image 16.jpg";
-import image17 from "@/imports/Image 17.jpg";
-import image18 from "@/imports/Image 18.jpg";
-import image19 from "@/imports/Image 19.jpg";
-import image20 from "@/imports/Image 20.jpg";
-import image21 from "@/imports/Image 21.jpg";
-import image22 from "@/imports/Image 22.jpg";
-import image23 from "@/imports/Image 23.jpg";
-import image24 from "@/imports/Image 24.jpg";
-import image25 from "@/imports/Image 25.jpg";
-import image26 from "@/imports/Image 26.jpg";
-import image27 from "@/imports/Image 27.jpg";
+
+// Vite imports all 27 new visual images automatically.
+const visualFiles = import.meta.glob("./imports/Image *.jpg", {
+  eager: true,
+  query: "?url",
+  import: "default",
+}) as Record<string, string>;
+
+const visualImage = (number: number) => visualFiles[`./imports/Image ${number}.jpg`];
+
+const bookingServices = [
+  { title: "The Fire Session", price: 130000, unit: "6 hours" },
+  { title: "Studio Hour", price: 25000, unit: "per hour" },
+  { title: "Professional Mix", price: 75000, unit: "per song" },
+  { title: "Mastering", price: 35000, unit: "per song" },
+  { title: "Mix + Master", price: 100000, unit: "per song" },
+  { title: "Production Session", price: 30000, unit: "per hour" },
+  { title: "Artist Photoshoot", price: 75000, unit: "starting price" },
+  { title: "Cover Art Shoot", price: 50000, unit: "starting price" },
+  { title: "Event Photography", price: 100000, unit: "starting price" },
+  { title: "Music Video", price: 250000, unit: "starting price" },
+  { title: "Performance Video", price: 150000, unit: "starting price" },
+  { title: "Visualizer", price: 100000, unit: "starting price" },
+  { title: "Lyric Video", price: 75000, unit: "starting price" },
+  { title: "Social Content Package", price: 100000, unit: "starting price" },
+];
+
+const studioServices = [
+  ["01", "RECORDING", "Professional recording sessions engineered to capture your performance with clarity, character and impact."],
+  ["02", "MUSIC PRODUCTION", "Build your record from the first idea with beat production, arrangement, sound selection and creative development."],
+  ["03", "VOCAL PRODUCTION", "Performance direction, harmonies, ad-libs, vocal arrangement and detailed vocal preparation."],
+  ["04", "MIXING", "Turn your recordings into a finished record with balance, depth, punch and clarity."],
+  ["05", "MASTERING", "Give your finished music the final polish it needs before it reaches the world."],
+  ["06", "RELEASE SUPPORT", "Help preparing music for release, including metadata, distribution guidance and release planning."],
+];
+
+const visualServices = [
+  { n: "01", title: "PHOTOGRAPHY", image: 1, price: "₦75,000+", text: "Artist portraits, cover-art photography, press photos, birthdays, events and editorial shoots.", booking: "Artist Photoshoot" },
+  { n: "02", title: "VIDEOGRAPHY", image: 2, price: "₦250,000+", text: "Music videos, performance films, lyric videos, visualizers, social content and event coverage.", booking: "Music Video" },
+  { n: "03", title: "CREATIVE DIRECTION", image: 3, price: "CUSTOM QUOTE", text: "Music-video concepts, cover-art concepts, artist branding, visual storytelling and content planning." },
+];
+
+const portfolioTitles = [
+  "ARTIST PORTRAITS", "COVER ART", "EVENTS", "BEHIND THE SCENES", "CAMPAIGNS",
+  "MUSIC VIDEOS", "PERFORMANCE FILMS", "VISUALIZERS", "LYRIC VIDEOS", "SOCIAL CONTENT",
+  "EDITORIAL", "ARTIST BRANDING", "STUDIO SESSIONS", "LIVE EVENTS", "PRESS PHOTOS",
+  "CREATIVE CAMPAIGNS", "COVER CONCEPTS", "MUSIC VIDEO BTS", "CONTENT CREATION", "PORTRAIT SERIES",
+  "PERFORMANCE", "VISUAL STORYTELLING", "CAMERA WORK", "GALAXY FIRE VISUALS",
+];
+
+const naira = (value: number) => `₦${value.toLocaleString("en-NG")}`;
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
-  const [bookingSubmitted, setBookingSubmitted] = useState(false);
-  const [paymentProcessing, setPaymentProcessing] = useState(false);
-  const [paymentError, setPaymentError] = useState("");
-  const [paymentReference, setPaymentReference] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState("");
+  const [reference, setReference] = useState("");
   const [booking, setBooking] = useState({
     service: "The Fire Session",
     date: "",
@@ -61,30 +81,13 @@ export default function App() {
     payment: "deposit",
   });
 
-  const bookingServices = [
-    { title: "The Fire Session", price: 130000, unit: "6 hours" },
-    { title: "Studio Hour", price: 25000, unit: "per hour" },
-    { title: "Professional Mix", price: 75000, unit: "per song" },
-    { title: "Mastering", price: 35000, unit: "per song" },
-    { title: "Mix + Master", price: 100000, unit: "per song" },
-    { title: "Production Session", price: 30000, unit: "per hour" },
-    { title: "Artist Photoshoot", price: 75000, unit: "starting price" },
-    { title: "Cover Art Shoot", price: 50000, unit: "starting price" },
-    { title: "Event Photography", price: 100000, unit: "starting price" },
-    { title: "Music Video", price: 250000, unit: "starting price" },
-    { title: "Performance Video", price: 150000, unit: "starting price" },
-    { title: "Visualizer", price: 100000, unit: "starting price" },
-    { title: "Lyric Video", price: 75000, unit: "starting price" },
-    { title: "Social Content Package", price: 100000, unit: "starting price" },
-  ];
-
-  const selectedService = bookingServices.find((service) => service.title === booking.service) || bookingServices[0];
-  const amountDue = booking.payment === "deposit" ? Math.round(selectedService.price * 0.5) : selectedService.price;
-  const formatNaira = (amount: number) => `₦${amount.toLocaleString("en-NG")}`;
+  const selected = bookingServices.find((s) => s.title === booking.service) ?? bookingServices[0];
+  const amount = booking.payment === "deposit" ? Math.round(selected.price / 2) : selected.price;
 
   const openBooking = (service?: string) => {
-    setBookingSubmitted(false);
-    if (service) setBooking((current) => ({ ...current, service }));
+    setSubmitted(false);
+    setError("");
+    if (service) setBooking((b) => ({ ...b, service }));
     setBookingOpen(true);
     document.body.style.overflow = "hidden";
   };
@@ -94,86 +97,32 @@ export default function App() {
     document.body.style.overflow = "";
   };
 
-  const updateBooking = (field: string, value: string) => {
-    setBooking((current) => ({ ...current, [field]: value }));
+  const update = (field: string, value: string) => {
+    setBooking((b) => ({ ...b, [field]: value }));
   };
 
   useEffect(() => {
-    const existing = document.querySelector('script[src="https://js.paystack.co/v2/inline.js"]');
-    if (existing) return;
+    const src = "https://js.paystack.co/v2/inline.js";
+    if (document.querySelector(`script[src="${src}"]`)) return;
     const script = document.createElement("script");
-    script.src = "https://js.paystack.co/v2/inline.js";
+    script.src = src;
     script.async = true;
     document.body.appendChild(script);
   }, []);
 
-  const submitBooking = async (event: React.FormEvent<HTMLFormElement>) => {
+  const submitBooking = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setPaymentError("");
+    setError("");
+    setProcessing(true);
 
-    // Check studio availability before opening Paystack.
-    if (
-      booking.service === "The Fire Session" ||
-      booking.service === "Studio Hour" ||
-      booking.service === "Production Session"
-    ) {
-      const durationHours = booking.service === "The Fire Session" ? 6 : 1;
-      const startAt = new Date(`${booking.date}T${booking.time}`);
-      const endAt = new Date(startAt.getTime() + durationHours * 60 * 60 * 1000);
-
-      const formatTimestamp = (date: Date) => {
-        const pad = (value: number) => String(value).padStart(2, "0");
-        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:00`;
-      };
-
-      try {
-        const availabilityResponse = await fetch(
-          "/api/check-availability",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              startAt: formatTimestamp(startAt),
-              endAt: formatTimestamp(endAt),
-            }),
-          }
-        );
-
-        if (!availabilityResponse.ok) {
-          const errorText = await availabilityResponse.text();
-          console.error("Availability API error:", errorText);
-          throw new Error("Could not check studio availability.");
-        }
-
-        const available = await availabilityResponse.json();
-
-        if (available !== true) {
-          setPaymentError(
-            "Sorry, that time is already booked. Please choose another date or time."
-          );
-          return;
-        }
-      } catch (error) {
-        console.error("Availability check failed:", error);
-        setPaymentError(
-          "We could not check availability right now. Please try again."
-        );
-        return;
-      }
-    }
-
-    setPaymentProcessing(true);
-
-    const reference = `GFS-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    const referenceId = `GFS-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
     const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_f350611c4c768b941d8725e73b122d3d37c9e5d7";
 
-    const openPaystack = () => {
+    const startPaystack = () => {
       const PaystackPop = (window as any).PaystackPop;
       if (!PaystackPop) {
-        setPaymentProcessing(false);
-        setPaymentError("Paystack could not load. Please check your internet connection and try again.");
+        setProcessing(false);
+        setError("Paystack could not load. Please refresh the page and try again.");
         return;
       }
 
@@ -181,9 +130,9 @@ export default function App() {
       paystack.newTransaction({
         key: publicKey,
         email: booking.email,
-        amount: amountDue * 100,
+        amount: amount * 100,
         currency: "NGN",
-        reference,
+        reference: referenceId,
         firstName: booking.name.trim().split(/\s+/)[0],
         phone: booking.phone,
         metadata: {
@@ -202,1305 +151,138 @@ export default function App() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 reference: transaction.reference,
-                expectedAmount: amountDue * 100,
+                expectedAmount: amount * 100,
                 booking,
               }),
             });
-
             const result = await response.json();
-            if (!response.ok || !result.verified) {
-              throw new Error(result.message || "We could not verify the payment.");
-            }
-
-            setPaymentReference(transaction.reference);
-            setPaymentProcessing(false);
-            setBookingSubmitted(true);
-          } catch (error) {
-            console.error(error);
-            setPaymentProcessing(false);
-            setPaymentError("Payment was completed, but we could not verify it yet. Please contact us on WhatsApp with your payment reference: " + transaction.reference);
+            if (!response.ok || !result.verified) throw new Error(result.message || "Payment verification failed.");
+            setReference(transaction.reference);
+            setSubmitted(true);
+          } catch (err) {
+            console.error(err);
+            setError(`Payment was completed, but verification failed. Please contact us with reference ${transaction.reference}.`);
+          } finally {
+            setProcessing(false);
           }
         },
-        onCancel: () => {
-          setPaymentProcessing(false);
-        },
+        onCancel: () => setProcessing(false),
       });
     };
 
     if ((window as any).PaystackPop) {
-      openPaystack();
-    } else {
-      const waitForPaystack = window.setInterval(() => {
-        if ((window as any).PaystackPop) {
-          window.clearInterval(waitForPaystack);
-          openPaystack();
-        }
-      }, 150);
-      window.setTimeout(() => {
-        window.clearInterval(waitForPaystack);
-        if (!(window as any).PaystackPop) {
-          setPaymentProcessing(false);
-          setPaymentError("Paystack could not load. Please refresh the page and try again.");
-        }
-      }, 8000);
+      startPaystack();
+      return;
     }
+
+    const timer = window.setInterval(() => {
+      if ((window as any).PaystackPop) {
+        window.clearInterval(timer);
+        startPaystack();
+      }
+    }, 150);
+
+    window.setTimeout(() => {
+      window.clearInterval(timer);
+      if (!(window as any).PaystackPop) {
+        setProcessing(false);
+        setError("Paystack could not load. Please refresh the page and try again.");
+      }
+    }, 8000);
   };
-
-  const services = [
-    { number: "01", title: "RECORDING", text: "Professional recording sessions engineered to capture your performance with clarity, character and impact." },
-    { number: "02", title: "MUSIC PRODUCTION", text: "Build your record from the first idea. Beat production, arrangement, sound selection and creative development." },
-    { number: "03", title: "VOCAL PRODUCTION", text: "Performance direction, harmonies, ad-libs, vocal arrangement and detailed vocal preparation." },
-    { number: "04", title: "MIXING", text: "Turn your recordings into a finished record with balance, depth, punch and clarity." },
-    { number: "05", title: "MASTERING", text: "Give your finished music the final polish it needs before it reaches the world." },
-    { number: "06", title: "RELEASE SUPPORT", text: "Get help preparing your music for release, including metadata, distribution guidance and release planning." },
-  ];
-
-  const visualServices = [
-    {
-      number: "01",
-      title: "PHOTOGRAPHY",
-      text: "Artist portraits, cover-art photography, press photos, birthdays, events and editorial shoots.",
-      image: image1,
-      price: "₦75,000+",
-      bookingService: "Artist Photoshoot",
-    },
-    {
-      number: "02",
-      title: "VIDEOGRAPHY",
-      text: "Music videos, performance films, lyric videos, visualizers, social content and event coverage.",
-      image: image2,
-      price: "₦250,000+",
-      bookingService: "Music Video",
-    },
-    {
-      number: "03",
-      title: "CREATIVE DIRECTION",
-      text: "Music-video concepts, cover-art concepts, artist branding, visual storytelling and content planning.",
-      image: image3,
-      price: "CUSTOM QUOTE",
-    },
-  ];
-
-  const visualPortfolio = [
-    { title: "ARTIST PORTRAITS", image: image4 },
-    { title: "COVER ART", image: image5 },
-    { title: "EVENTS", image: image6 },
-    { title: "BEHIND THE SCENES", image: image7 },
-    { title: "CAMPAIGNS", image: image8 },
-    { title: "MUSIC VIDEOS", image: image9 },
-    { title: "PERFORMANCE FILMS", image: image10 },
-    { title: "VISUALIZERS", image: image11 },
-    { title: "LYRIC VIDEOS", image: image12 },
-    { title: "SOCIAL CONTENT", image: image13 },
-    { title: "EDITORIAL", image: image14 },
-    { title: "ARTIST BRANDING", image: image15 },
-    { title: "STUDIO SESSIONS", image: image16 },
-    { title: "LIVE EVENTS", image: image17 },
-    { title: "PRESS PHOTOS", image: image18 },
-    { title: "CREATIVE CAMPAIGNS", image: image19 },
-    { title: "COVER CONCEPTS", image: image20 },
-    { title: "MUSIC VIDEO BTS", image: image21 },
-    { title: "CONTENT CREATION", image: image22 },
-    { title: "PORTRAIT SERIES", image: image23 },
-    { title: "PERFORMANCE", image: image24 },
-    { title: "VISUAL STORYTELLING", image: image25 },
-    { title: "CAMERA WORK", image: image26 },
-    { title: "GALAXY FIRE VISUALS", image: image27 },
-  ];
 
   return (
     <div className="site">
-
-      {/* NAVIGATION */}
       <header className="nav">
-        <div className="logo">
-          <img src={logoImg} alt="Galaxy Studios logo" className="logo-img" />
-          <div>
-            <div className="logo-title">GALAXY FIRE</div>
-            <div className="logo-sub">STUDIOS · EST. 2020</div>
-          </div>
-        </div>
+        <a className="brand" href="#home">
+          <span className="brand-mark">GF</span>
+          <span><strong>GALAXY FIRE</strong><small>STUDIOS · EST. 2020</small></span>
+        </a>
 
         <nav className={menuOpen ? "nav-links open" : "nav-links"}>
-          <a href="#home" onClick={() => setMenuOpen(false)}>HOME</a>
-          <a href="#studio" onClick={() => setMenuOpen(false)}>STUDIO</a>
-          <a href="#services" onClick={() => setMenuOpen(false)}>SERVICES</a>
-          <a href="#visuals" onClick={() => setMenuOpen(false)}>VISUALS</a>
-          <a href="#booking" onClick={() => setMenuOpen(false)}>BOOK</a>
-          <a href="#culture" onClick={() => setMenuOpen(false)}>FOR THE CULTURE</a>
-          <a href="#radio" onClick={() => setMenuOpen(false)}>RADIO</a>
-          <a href="#blog" onClick={() => setMenuOpen(false)}>BLOG</a>
-          <a href="#beats" onClick={() => setMenuOpen(false)}>BEATS</a>
-          <a href="#shop" onClick={() => setMenuOpen(false)}>SHOP</a>
-          <a href="#about" onClick={() => setMenuOpen(false)}>ABOUT</a>
-          <a href="#contact" onClick={() => setMenuOpen(false)}>CONTACT</a>
+          {[["HOME", "home"], ["STUDIO", "studio"], ["SERVICES", "services"], ["VISUALS", "visuals"], ["PRICING", "pricing"], ["BOOK", "booking"], ["FOR THE CULTURE", "culture"], ["RADIO", "radio"], ["BLOG", "blog"], ["BEATS", "beats"], ["SHOP", "shop"], ["ABOUT", "about"], ["CONTACT", "contact"]].map(([label, id]) => (
+            <a key={id} href={`#${id}`} onClick={() => setMenuOpen(false)}>{label}</a>
+          ))}
         </nav>
 
-        <a className="nav-button" href="#booking">BOOK A SESSION</a>
-
-        <button className="menu-button" onClick={() => setMenuOpen(!menuOpen)}>
-          {menuOpen ? "✕" : "☰"}
-        </button>
+        <a className="nav-cta" href="#booking">BOOK A SESSION</a>
+        <button className="menu" onClick={() => setMenuOpen((v) => !v)} aria-label="Open menu">{menuOpen ? "×" : "☰"}</button>
       </header>
 
-
-      {/* HERO */}
-      <section className="hero" id="home">
-        <img src={heroImg} alt="Galaxy Studios control room" className="hero-photo" />
-        <div className="hero-overlay" />
-        <div className="hero-content">
-          <div className="eyebrow">PROFESSIONAL RECORDING STUDIO · NIGERIA</div>
-          <h1>YOUR SOUND.<br /><span>YOUR FIRE.</span></h1>
-          <p>A professional recording and production studio built for artists who take their music seriously.</p>
-          <div className="hero-buttons">
-            <a href="#booking" className="button red">BOOK A SESSION</a>
-            <a href="#studio" className="button outline">EXPLORE THE STUDIO</a>
+      <main>
+        <section className="hero" id="home">
+          <img src={studioDesk} alt="Galaxy Fire Studios" />
+          <div className="shade" />
+          <div className="hero-copy">
+            <span className="eyebrow">PROFESSIONAL RECORDING STUDIO · NIGERIA</span>
+            <h1>YOUR SOUND.<br /><span>YOUR FIRE.</span></h1>
+            <p>A professional recording and production studio built for artists who take their music seriously.</p>
+            <div className="actions"><a className="btn red" href="#booking">BOOK A SESSION</a><a className="btn ghost" href="#studio">EXPLORE THE STUDIO</a></div>
+            <small className="est">EST. 2020</small>
           </div>
-          <div className="hero-est">EST. 2020</div>
-        </div>
-        <div className="scroll">SCROLL TO EXPLORE <span>↓</span></div>
-      </section>
+        </section>
 
+        <section className="split" id="studio">
+          <div><span className="section-no">01 / THE STUDIO</span><h2>ONE ROOM.<br /><span>BUILT FOR CREATION.</span></h2><p>Galaxy Fire Studios is a professional recording and production environment created for artists, producers and creators who want more from their music.</p><p>From the first vocal take to the final master, we give you the space, tools and expertise to bring your vision to life.</p><div className="stats"><b>2020<small>ESTABLISHED</small></b><b>01<small>STUDIO ROOM</small></b><b>∞<small>POSSIBILITIES</small></b></div></div>
+          <img src={studioDesk} alt="Studio desk and monitors" />
+        </section>
 
-      {/* INTRO */}
-      <section className="intro" id="studio">
-        <div className="intro-text">
-          <div className="section-number">01 / THE STUDIO</div>
-          <h2>ONE ROOM.<br /><span>BUILT FOR CREATION.</span></h2>
-          <p>Galaxy Fire Studios is a professional recording and production environment created for artists, producers and creators who want more from their music.</p>
-          <p>From the first vocal take to the final master, we give you the space, tools and expertise to bring your vision to life.</p>
-          <div className="stats">
-            <div><strong>2020</strong><span>ESTABLISHED</span></div>
-            <div><strong>01</strong><span>STUDIO ROOM</span></div>
-            <div><strong>∞</strong><span>POSSIBILITIES</span></div>
-          </div>
-        </div>
-        <div className="intro-image">
-          <img src={deskImg} alt="Galaxy Studios full desk setup with dual monitors and MPC" className="section-photo" />
-        </div>
-      </section>
+        <section className="split dark-split">
+          <img src={studioMic} alt="Recording microphone" />
+          <div><span className="section-no">02 / THE EXPERIENCE</span><h2>WALK IN WITH<br /><span>AN IDEA.</span></h2><h3>WALK OUT WITH A RECORD.</h3><p>Galaxy Fire is designed to keep you focused on what matters — making great music.</p><div className="steps">{[["01", "BOOK", "Choose your service and session."], ["02", "CREATE", "Come into the studio and make the record."], ["03", "REFINE", "Record, produce, mix and shape the sound."], ["04", "RELEASE", "Leave with music ready for the world."]].map(([n, t, p]) => <div className="step" key={n}><b>{n}</b><div><strong>{t}</strong><p>{p}</p></div></div>)}</div></div>
+        </section>
 
+        <section id="services">
+          <div className="heading"><span className="section-no">03 / SERVICES</span><h2>WHAT<br /><span>WE DO.</span></h2><p>Everything you need to take an idea from the first recording to a finished release.</p></div>
+          <div className="cards">{studioServices.map(([n, t, p]) => <article className="card" key={n}><span>{n}</span><h3>{t}</h3><p>{p}</p><a href="#booking">GET STARTED →</a></article>)}</div>
+        </section>
 
-      {/* STUDIO EXPERIENCE */}
-      <section className="experience">
-        <div className="experience-image">
-          <img src={micWideImg} alt="Condenser microphone with acoustic shield in the recording room" className="section-photo" />
-        </div>
-        <div className="experience-content">
-          <div className="section-number">02 / THE EXPERIENCE</div>
-          <h2>WALK IN WITH<br /><span>AN IDEA.</span></h2>
-          <h3>WALK OUT WITH A RECORD.</h3>
-          <p>Galaxy Fire is designed to keep you focused on what matters — making great music.</p>
-          <div className="steps">
-            <div className="step"><span>01</span><div><strong>BOOK</strong><p>Choose your service and session.</p></div></div>
-            <div className="step"><span>02</span><div><strong>CREATE</strong><p>Come into the studio and make the record.</p></div></div>
-            <div className="step"><span>03</span><div><strong>REFINE</strong><p>Record, produce, mix and shape the sound.</p></div></div>
-            <div className="step"><span>04</span><div><strong>RELEASE</strong><p>Leave with music ready for the world.</p></div></div>
-          </div>
-        </div>
-      </section>
+        <section className="feature"><img src={studioSpeaker} alt="Studio monitors" /><div className="shade" /><div><span className="eyebrow">THE GALAXY FIRE STANDARD</span><h2>GREAT MUSIC<br /><span>STARTS HERE.</span></h2><a className="btn red" href="#booking">BOOK YOUR SESSION</a></div></section>
 
+        <section id="visuals">
+          <div className="heading"><span className="section-no">04 / VISUAL PRODUCTION</span><h2>MAKE IT<br /><span>VISIBLE.</span></h2><p>Photography, videography and creative direction built around the artist, the record and the story behind it.</p></div>
+          <div className="visual-services">{visualServices.map((s) => <article className="visual-card" key={s.n}><div className="visual-image"><img src={visualImage(s.image)} alt={s.title} /><b>{s.n}</b></div><div className="visual-body"><h3>{s.title}</h3><strong className="visual-price">{s.price}</strong><p>{s.text}</p>{s.booking ? <button className="text-button" onClick={() => openBooking(s.booking)}>BOOK A VISUAL SESSION →</button> : <a className="text-button" href="https://wa.me/2348035345977?text=Hi%20Galaxy%20Fire%20Studios%2C%20I%27d%20like%20a%20creative%20direction%20quote." target="_blank" rel="noreferrer">GET A CREATIVE QUOTE →</a>}</div></article>)}</div>
 
-      {/* SERVICES */}
-      <section className="services" id="services">
-        <div className="section-heading">
-          <div className="section-number">03 / SERVICES</div>
-          <h2>WHAT<br /><span>WE DO.</span></h2>
-          <p>Everything you need to take an idea from the first recording to a finished release.</p>
-        </div>
-        <div className="service-grid">
-          {services.map((s) => (
-            <div className="service-card" key={s.number}>
-              <div className="service-number">{s.number}</div>
-              <h3>{s.title}</h3>
-              <p>{s.text}</p>
-              <a href="#booking">GET STARTED →</a>
-            </div>
-          ))}
-        </div>
-      </section>
+          <div className="portfolio-title"><div><span className="section-no">PORTFOLIO</span><h3>SELECTED<br /><span>VISUAL WORK.</span></h3></div><p>Photography and videography work from Galaxy Fire Studios. All 27 new images are kept inside the Visual Production section.</p></div>
+          <div className="portfolio">{portfolioTitles.map((title, i) => <article key={title}><img src={visualImage(i + 4)} alt={title} /><span>{title}</span></article>)}</div>
+        </section>
 
+        <section id="pricing">
+          <div className="heading center"><span className="section-no">05 / PRICING</span><h2>STUDIO<br /><span>RATES.</span></h2><p>Professional services. Straightforward pricing.</p></div>
+          <div className="pricing">{bookingServices.slice(0, 6).map((s, i) => <article className={i === 0 ? "price-card featured" : "price-card"} key={s.title}>{i === 0 && <em>MOST POPULAR</em>}<span>{s.unit.toUpperCase()}</span><h3>{s.title}</h3><strong>{naira(s.price)}</strong><p>{s.unit} · professional service</p><button onClick={() => openBooking(s.title)}>BOOK →</button></article>)}</div>
+          <div className="visual-pricing"><h3>VISUAL PRODUCTION PRICING</h3><div><span>Artist Photoshoot <b>₦75,000+</b></span><span>Cover Art Shoot <b>₦50,000+</b></span><span>Event Photography <b>₦100,000+</b></span><span>Music Video <b>₦250,000+</b></span><span>Performance Video <b>₦150,000+</b></span><span>Visualizer <b>₦100,000+</b></span><span>Lyric Video <b>₦75,000+</b></span><span>Social Content Package <b>₦100,000+</b></span></div></div>
+        </section>
 
-      {/* FEATURE BANNER */}
-      <section className="feature">
-        <div className="feature-image">
-          <img src={monitorsImg} alt="Studio monitor speakers and audio interface on the mixing desk" className="feature-photo" />
-          <div className="feature-overlay" />
-          <div className="feature-content">
-            <div className="eyebrow">THE GALAXY FIRE STANDARD</div>
-            <h2>GREAT MUSIC<br /><span>STARTS HERE.</span></h2>
-            <a href="#booking" className="button red">BOOK YOUR SESSION</a>
-          </div>
-        </div>
-      </section>
+        <section id="gallery">
+          <div className="heading"><span className="section-no">06 / GALLERY</span><h2>INSIDE<br /><span>THE FIRE.</span></h2></div>
+          <div className="gallery"><img src={studioDesk} alt="Control room" /><img src={studioMicClose} alt="Vocal booth" /><img src={studioMpc} alt="MPC production setup" /><img src={studioSpeaker} alt="Studio monitor" /><img src={studioMic} alt="Microphone setup" /><img src={studioDesk} alt="Studio desk" /></div>
+        </section>
 
+        <section className="culture" id="culture">
+          <div className="heading"><span className="section-no">08 / FOR THE CULTURE</span><h2>THE SOUND.<br /><span>THE PEOPLE. THE CULTURE.</span></h2><p>Galaxy Fire Studios is more than a room to record in. FOR THE CULTURE is our growing home for Abuja music, artists, stories, beats, radio and the creative community around us.</p></div>
+          <div className="cards culture-cards">{[["01", "FOR THE CULTURE RADIO", "Hear Abuja talent, guest mixes, premieres and future Galaxy Fire programming."], ["02", "THE BLOG", "Artist profiles, interviews, releases, events, studio stories and creative culture."], ["03", "BEATS MARKETPLACE", "Discover beats by genre, mood, BPM and producer."], ["04", "GALAXY FIRE SHOP", "Studio merchandise, FOR THE CULTURE pieces and branded essentials."]].map(([n, t, p]) => <a className="card" href={`#${n === "01" ? "radio" : n === "02" ? "blog" : n === "03" ? "beats" : "shop"}`} key={n}><span>{n}</span><h3>{t}</h3><p>{p}</p><strong>EXPLORE →</strong></a>)}</div>
+        </section>
 
-      {/* VISUAL PRODUCTION — PHASE 2 */}
-      <section className="visual-production" id="visuals">
-        <div className="section-heading">
-          <div className="section-number">04 / VISUAL PRODUCTION</div>
-          <h2>MAKE IT<br /><span>VISIBLE.</span></h2>
-          <p>Photography, videography and creative direction built around the artist, the record and the story behind it.</p>
-        </div>
+        {["radio", "blog", "beats", "shop"].map((id, i) => <section className="coming" id={id} key={id}><span className="section-no">{String(9 + i).padStart(2, "0")} / {id.toUpperCase()}</span><h2>{id === "radio" ? "FOR THE CULTURE RADIO." : id === "blog" ? "THE STORIES." : id === "beats" ? "FIND YOUR SOUND." : "WEAR THE FIRE."}</h2><p>{id === "radio" ? "The live station is coming. This space will become the home for the FOR THE CULTURE stream, guest mixes and original shows." : id === "blog" ? "Artist interviews, producer spotlights, releases, Abuja creative culture, events and behind-the-scenes stories will live here." : id === "beats" ? "The Beats Marketplace will let artists preview beats, explore producers and purchase the right license." : "Galaxy Fire and FOR THE CULTURE merchandise will be available here as the studio ecosystem grows."}</p><span className="status">COMING SOON</span></section>)}
 
-        <div className="visual-service-grid">
-          {visualServices.map((service) => (
-            <article className="visual-service-card" key={service.number}>
-              <div className="visual-service-image">
-                <img src={service.image} alt={service.title} />
-                <span>{service.number}</span>
-              </div>
-              <div className="visual-service-body">
-                <h3>{service.title}</h3>
-                <div className="visual-service-price">{service.price}</div>
-                <p>{service.text}</p>
-                {service.bookingService ? (
-                  <button type="button" className="visual-link" onClick={() => openBooking(service.bookingService)}>BOOK A VISUAL SESSION →</button>
-                ) : (
-                  <a className="visual-link" href="https://wa.me/2348035345977?text=Hi%20Galaxy%20Fire%20Studios%2C%20I%27d%20like%20a%20creative%20direction%20quote." target="_blank" rel="noreferrer">GET A CREATIVE QUOTE →</a>
-                )}
-              </div>
-            </article>
-          ))}
-        </div>
+        <section id="about" className="about"><span className="section-no">13 / ABOUT GALAXY FIRE</span><h2>BUILT FOR<br /><span>CREATORS.</span></h2><p>Galaxy Fire Studios is a professional recording and production environment for artists, producers and creators who want to take their music seriously.</p><a className="btn red" href="#booking">WORK WITH US →</a></section>
 
-        <div className="visual-portfolio-heading">
-          <div>
-            <div className="section-number">PORTFOLIO</div>
-            <h3>SELECTED<br /><span>VISUAL WORK.</span></h3>
-          </div>
-          <p>More work can be added here as the visual archive grows. The gallery is intentionally flexible so new images can be dropped into <strong>public/images</strong> without rebuilding the whole site.</p>
-        </div>
+        <section className="promo"><div className="heading"><span className="section-no">14 / THE WORD</span><h2>SPREAD<br /><span>THE FIRE.</span></h2></div><div className="promo-grid">{[[promoStudioTimeImg, "Studio time"], [promoBeatsImg, "Beats and engineering"], [promoSuperstarsImg, "Bring out the superstar"], [promoMixMasterImg, "Mix and master"]].map(([img, alt]) => <img key={alt} src={img} alt={alt} />)}</div></section>
 
-        <div className="visual-portfolio-grid">
-          {visualPortfolio.map((item) => (
-            <div className="visual-portfolio-item" key={item.title}>
-              <img src={item.image} alt={item.title} />
-              <div>{item.title}</div>
-            </div>
-          ))}
-        </div>
+        <section className="why"><span className="section-no">15 / THE STANDARD</span><h2>YOUR MUSIC.<br /><span>OUR CRAFT.</span></h2><div className="why-grid">{[["01", "PROFESSIONAL", "A serious environment for serious music."], ["02", "CREATIVE", "A space designed to keep artists focused."], ["03", "PERSONAL", "Your record is not treated like just another session."], ["04", "QUALITY", "Every detail matters from recording to final master."]].map(([n, t, p]) => <div key={n}><b>{n}</b><h3>{t}</h3><p>{p}</p></div>)}</div></section>
 
-        <div className="visual-cta">
-          <div>
-            <span className="eyebrow">YOUR IDEA. OUR VISUAL TEAM.</span>
-            <h3>READY TO<br /><span>SHOOT?</span></h3>
-          </div>
-          <div className="visual-cta-buttons">
-            <button type="button" className="button red" onClick={() => openBooking("Artist Photoshoot")}>BOOK A VISUAL SESSION</button>
-            <a href="#visuals" className="button outline">VIEW PORTFOLIO</a>
-            <a href="https://wa.me/2348035345977?text=Hi%20Galaxy%20Fire%20Studios%2C%20I%27d%20like%20a%20quote%20for%20a%20visual%20production%20project." className="button outline" target="_blank" rel="noreferrer">GET A QUOTE</a>
-          </div>
-        </div>
-      </section>
+        <section className="booking" id="booking"><img src={studioDesk} alt="Galaxy Fire studio" /><div className="shade" /><div><span className="eyebrow">GALAXY FIRE STUDIOS · EST. 2020</span><h2>READY TO<br /><span>MAKE SOME FIRE?</span></h2><p>Choose your service, preferred session time and payment option.</p><div className="actions"><button className="btn red" onClick={() => openBooking()}>BOOK & PAY ONLINE</button><a className="btn ghost" href="https://wa.me/2348035345977" target="_blank" rel="noreferrer">BOOK VIA WHATSAPP</a></div><p className="contact">galaxyfirestudios@gmail.com · +234 803 534 5977</p></div></section>
+      </main>
 
+      {bookingOpen && <div className="modal" role="dialog" aria-modal="true"><div className="modal-bg" onClick={closeBooking} /><div className="modal-card"><button className="close" onClick={closeBooking}>×</button>{!submitted ? <><span className="section-no">BOOKING / 01</span><h2>BOOK YOUR<br /><span>SESSION.</span></h2><form onSubmit={submitBooking}><label>SERVICE<select value={booking.service} onChange={(e) => update("service", e.target.value)}>{bookingServices.map((s) => <option key={s.title}>{s.title} — {naira(s.price)}</option>)}</select></label><div className="form-grid"><label>DATE<input required type="date" min={new Date().toISOString().split("T")[0]} value={booking.date} onChange={(e) => update("date", e.target.value)} /></label><label>TIME<input required type="time" value={booking.time} onChange={(e) => update("time", e.target.value)} /></label></div><div className="form-grid"><label>FULL NAME<input required value={booking.name} onChange={(e) => update("name", e.target.value)} /></label><label>PHONE<input required value={booking.phone} onChange={(e) => update("phone", e.target.value)} /></label></div><label>EMAIL<input required type="email" value={booking.email} onChange={(e) => update("email", e.target.value)} /></label><label>NOTES<textarea rows={3} value={booking.notes} onChange={(e) => update("notes", e.target.value)} /></label><div className="pay-options"><button type="button" className={booking.payment === "deposit" ? "active" : ""} onClick={() => update("payment", "deposit")}>50% DEPOSIT<br /><b>{naira(selected.price / 2)}</b></button><button type="button" className={booking.payment === "full" ? "active" : ""} onClick={() => update("payment", "full")}>FULL PAYMENT<br /><b>{naira(selected.price)}</b></button></div><div className="due">AMOUNT DUE <strong>{naira(amount)}</strong></div><button className="btn red submit" disabled={processing}>{processing ? "OPENING PAYSTACK..." : `PAY ${naira(amount)} WITH PAYSTACK →`}</button>{error && <p className="error">{error}</p>}</form></> : <div className="success"><div className="success-mark">✓</div><span className="section-no">PAYMENT VERIFIED</span><h2>YOU'RE ON<br /><span>THE LIST.</span></h2><p>Your payment has been received and verified. We will contact you to confirm your session.</p><p><strong>REFERENCE: {reference}</strong></p><a className="btn red" href={`https://wa.me/2348035345977?text=${encodeURIComponent(`Hi Galaxy Fire Studios, I just paid for ${booking.service}. Reference: ${reference}.`)}`} target="_blank" rel="noreferrer">MESSAGE US ON WHATSAPP</a></div>}</div></div>}
 
-      {/* PRICING */}
-      <section className="pricing" id="pricing">
-        <div className="section-heading center">
-          <div className="section-number">05 / PRICING</div>
-          <h2>STUDIO<br /><span>RATES.</span></h2>
-          <p>Professional services. Straightforward pricing. No unnecessary complications.</p>
-        </div>
-        <div className="pricing-grid">
-
-          <div className="price-card featured">
-            <div className="popular">MOST POPULAR</div>
-            <div className="price-category">RECORDING</div>
-            <h3>THE FIRE SESSION</h3>
-            <div className="price">₦130,000</div>
-            <div className="price-detail">6 HOURS · ENGINEER INCLUDED</div>
-            <ul>
-              <li>Studio access</li><li>Recording engineer</li><li>Vocal recording</li>
-              <li>Basic vocal editing</li><li>Professional monitoring</li><li>Session files</li>
-            </ul>
-            <button type="button" className="price-button" onClick={() => openBooking("The Fire Session")}>BOOK THE FIRE SESSION →</button>
-          </div>
-
-          <div className="price-card">
-            <div className="price-category">RECORDING</div>
-            <h3>STUDIO HOUR</h3>
-            <div className="price">₦25,000</div>
-            <div className="price-detail">PER HOUR · ENGINEER INCLUDED</div>
-            <ul>
-              <li>Studio access</li><li>Recording engineer</li>
-              <li>Professional recording setup</li><li>Session files</li>
-            </ul>
-            <button type="button" className="price-button" onClick={() => openBooking("Studio Hour")}>BOOK →</button>
-          </div>
-
-          <div className="price-card">
-            <div className="price-category">MIXING</div>
-            <h3>PROFESSIONAL MIX</h3>
-            <div className="price">₦75,000</div>
-            <div className="price-detail">PER SONG</div>
-            <ul>
-              <li>Full song mix</li><li>Vocal processing</li>
-              <li>EQ &amp; compression</li><li>Effects</li><li>2 revisions</li>
-            </ul>
-            <button type="button" className="price-button" onClick={() => openBooking("Professional Mix")}>START A MIX →</button>
-          </div>
-
-          <div className="price-card">
-            <div className="price-category">MASTERING</div>
-            <h3>MASTERING</h3>
-            <div className="price">₦35,000</div>
-            <div className="price-detail">PER SONG</div>
-            <ul>
-              <li>Professional mastering</li><li>Streaming-ready master</li>
-              <li>WAV delivery</li><li>MP3 reference</li>
-            </ul>
-            <button type="button" className="price-button" onClick={() => openBooking("Mastering")}>MASTER MY SONG →</button>
-          </div>
-
-          <div className="price-card">
-            <div className="price-category">COMPLETE</div>
-            <h3>MIX + MASTER</h3>
-            <div className="price">₦100,000</div>
-            <div className="price-detail">PER SONG</div>
-            <ul>
-              <li>Professional mix</li><li>Vocal processing</li>
-              <li>2 mix revisions</li><li>Final master</li><li>WAV + MP3</li>
-            </ul>
-            <button type="button" className="price-button" onClick={() => openBooking("Mix + Master")}>COMPLETE MY SONG →</button>
-          </div>
-
-          <div className="price-card">
-            <div className="price-category">PRODUCTION</div>
-            <h3>PRODUCTION SESSION</h3>
-            <div className="price">₦30,000</div>
-            <div className="price-detail">PER HOUR</div>
-            <ul>
-              <li>Beat production</li><li>Arrangement</li>
-              <li>Sound selection</li><li>MIDI production</li><li>Creative direction</li>
-            </ul>
-            <button type="button" className="price-button" onClick={() => openBooking("Production Session")}>START CREATING →</button>
-          </div>
-
-        </div>
-      </section>
-
-
-      {/* GALLERY */}
-      <section className="gallery" id="gallery">
-        <div className="section-heading">
-          <div className="section-number">06 / GALLERY</div>
-          <h2>INSIDE<br /><span>THE FIRE.</span></h2>
-        </div>
-        <div className="gallery-grid">
-          <div className="gallery-large">
-            <img src={heroImg} alt="Galaxy Studios control room with mixing desk and booth window" className="gallery-photo" />
-            <div className="gallery-caption">THE CONTROL ROOM</div>
-          </div>
-          <div className="gallery-col">
-            <div className="gallery-small">
-              <img src={micCloseImg} alt="Condenser microphone in the red acoustic vocal booth" className="gallery-photo" />
-              <div className="gallery-caption">THE VOCAL BOOTH</div>
-            </div>
-            <div className="gallery-small">
-              <img src={mpcLitImg} alt="AKAI MPC X with lit cyan performance pads" className="gallery-photo" />
-              <div className="gallery-caption">PRODUCTION</div>
-            </div>
-            <div className="gallery-small">
-              <img src={speakerImg} alt="Studio monitor speaker cone close-up against red velvet wall" className="gallery-photo" />
-              <div className="gallery-caption">THE MONITORS</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Second row */}
-        <div className="gallery-row2">
-          <div className="gallery-med">
-            <img src={deskImg} alt="Full studio desk with dual monitors, MPC and studio monitors" className="gallery-photo" />
-            <div className="gallery-caption">THE DESK</div>
-          </div>
-          <div className="gallery-med">
-            <img src={keyboardImg} alt="Studio keyboard with blue LED lighting" className="gallery-photo" />
-            <div className="gallery-caption">THE KEYS</div>
-          </div>
-          <div className="gallery-med">
-            <img src={monitorsImg} alt="AKG headphones and studio monitor on mixing desk" className="gallery-photo" />
-            <div className="gallery-caption">MONITORING</div>
-          </div>
-        </div>
-
-        {/* Third row */}
-        <div className="gallery-row2" style={{marginTop: '12px'}}>
-          <div className="gallery-med">
-            <img src={micWideImg} alt="Microphone with acoustic shield in the recording room" className="gallery-photo" />
-            <div className="gallery-caption">THE MIC SETUP</div>
-          </div>
-          <div className="gallery-med">
-            <img src={mpcDemoImg} alt="AKAI MPC X showing genre demo selection screen" className="gallery-photo" />
-            <div className="gallery-caption">THE MPC</div>
-          </div>
-          <div className="gallery-med">
-            <img src={interfaceImg} alt="Universal Audio interface close-up on the studio desk" className="gallery-photo" />
-            <div className="gallery-caption">AUDIO INTERFACE</div>
-          </div>
-        </div>
-      </section>
-
-
-      {/* FOR THE CULTURE */}
-      <section className="culture" id="culture">
-        <div className="section-heading">
-          <div className="section-number">08 / FOR THE CULTURE</div>
-          <h2>THE SOUND.<br /><span>THE PEOPLE. THE CULTURE.</span></h2>
-          <p>
-            Galaxy Fire Studios is more than a room to record in. FOR THE CULTURE is our
-            growing home for Abuja music, artists, stories, beats, radio and the creative
-            community around us.
-          </p>
-        </div>
-
-        <div className="culture-grid">
-          <a href="#radio" className="culture-card culture-card-featured">
-            <div className="culture-card-number">01</div>
-            <div className="culture-card-content">
-              <span>LIVE MUSIC DESTINATION</span>
-              <h3>FOR THE CULTURE<br />RADIO</h3>
-              <p>Hear Abuja talent, guest mixes, premieres and future Galaxy Fire programming.</p>
-              <strong>EXPLORE RADIO →</strong>
-            </div>
-          </a>
-
-          <a href="#blog" className="culture-card">
-            <div className="culture-card-number">02</div>
-            <div className="culture-card-content">
-              <span>STORIES &amp; PEOPLE</span>
-              <h3>THE<br />BLOG</h3>
-              <p>Artist profiles, interviews, releases, events, studio stories and creative culture.</p>
-              <strong>READ THE BLOG →</strong>
-            </div>
-          </a>
-
-          <a href="#beats" className="culture-card">
-            <div className="culture-card-number">03</div>
-            <div className="culture-card-content">
-              <span>PRODUCERS &amp; ARTISTS</span>
-              <h3>BEATS<br />MARKETPLACE</h3>
-              <p>Discover beats by genre, mood, BPM and producer, then take the record to Galaxy Fire.</p>
-              <strong>EXPLORE BEATS →</strong>
-            </div>
-          </a>
-
-          <a href="#shop" className="culture-card">
-            <div className="culture-card-number">04</div>
-            <div className="culture-card-content">
-              <span>WEAR THE BRAND</span>
-              <h3>GALAXY FIRE<br />SHOP</h3>
-              <p>Studio merchandise, FOR THE CULTURE pieces, accessories and branded essentials.</p>
-              <strong>VISIT THE SHOP →</strong>
-            </div>
-          </a>
-        </div>
-
-        <div className="culture-statement">
-          <div>
-            <span className="eyebrow">THE GALAXY FIRE ECOSYSTEM</span>
-            <h3>DISCOVER. CREATE. CONNECT.</h3>
-          </div>
-          <p>
-            Discover music and stories. Find a beat. Hear the culture. Then bring your next
-            record back to Galaxy Fire Studios to record, produce, mix, master and release it.
-          </p>
-        </div>
-      </section>
-
-      {/* ECOSYSTEM COMING SOON */}
-      <section className="ecosystem-preview" id="radio">
-        <div className="ecosystem-preview-inner">
-          <div>
-            <div className="section-number">09 / RADIO</div>
-            <h2>FOR THE<br /><span>CULTURE RADIO.</span></h2>
-            <p>
-              The live station is coming. This space will become the home for the FOR THE CULTURE
-              stream, now-playing information, guest mixes, artist spotlights and original shows.
-            </p>
-          </div>
-          <div className="ecosystem-status">
-            <span>STATUS</span>
-            <strong>COMING SOON</strong>
-            <small>LIVE INTERNET RADIO WILL BE CONNECTED HERE.</small>
-          </div>
-        </div>
-      </section>
-
-      <section className="ecosystem-preview dark" id="blog">
-        <div className="ecosystem-preview-inner">
-          <div>
-            <div className="section-number">10 / BLOG</div>
-            <h2>THE<br /><span>STORIES.</span></h2>
-            <p>
-              Artist interviews, producer spotlights, new releases, Abuja creative culture,
-              events, tutorials and behind-the-scenes stories will live here.
-            </p>
-          </div>
-          <a href="#contact" className="button outline">GET FEATURED →</a>
-        </div>
-      </section>
-
-      <section className="ecosystem-preview" id="beats">
-        <div className="ecosystem-preview-inner">
-          <div>
-            <div className="section-number">11 / BEATS</div>
-            <h2>FIND YOUR<br /><span>SOUND.</span></h2>
-            <p>
-              The Beats Marketplace will let artists preview beats, explore producers and
-              purchase the right license for their next record.
-            </p>
-          </div>
-          <a href="#booking" className="button red">WORK WITH A PRODUCER →</a>
-        </div>
-      </section>
-
-      <section className="ecosystem-preview dark" id="shop">
-        <div className="ecosystem-preview-inner">
-          <div>
-            <div className="section-number">12 / SHOP</div>
-            <h2>WEAR<br /><span>THE FIRE.</span></h2>
-            <p>
-              Galaxy Fire and FOR THE CULTURE merchandise will be available here as the studio
-              ecosystem grows.
-            </p>
-          </div>
-          <a href="#contact" className="button outline">SHOP COMING SOON →</a>
-        </div>
-      </section>
-
-      <section className="about-preview" id="about">
-        <div className="about-preview-inner">
-          <div className="section-number">13 / ABOUT GALAXY FIRE</div>
-          <h2>BUILT FOR<br /><span>CREATORS.</span></h2>
-          <p>
-            Galaxy Fire Studios is a professional recording and production environment for
-            artists, producers and creators who want to take their music seriously.
-          </p>
-          <a href="#booking" className="button red">WORK WITH US →</a>
-        </div>
-      </section>
-
-      {/* PROMO / SOCIAL */}
-      <section className="promo-section">
-        <div className="section-heading">
-          <div className="section-number">14 / THE WORD</div>
-          <h2>SPREAD<br /><span>THE FIRE.</span></h2>
-          <p>Galaxy Fire Studios — where beats get built, voices get captured, and music gets finished.</p>
-        </div>
-        <div className="promo-grid">
-          <div className="promo-card">
-            <img src={promoStudioTimeImg} alt="Need some studio time? Reach out today" className="promo-img" />
-          </div>
-          <div className="promo-card">
-            <img src={promoBeatsImg} alt="Do you need beats or engineering? Contact us today" className="promo-img" />
-          </div>
-          <div className="promo-card">
-            <img src={promoSuperstarsImg} alt="Bring out the superstar in you — contact us now" className="promo-img" />
-          </div>
-          <div className="promo-card">
-            <img src={promoMixMasterImg} alt="Need to mix and master your music? Reach out to us today" className="promo-img" />
-          </div>
-        </div>
-      </section>
-
-
-      {/* WHY GALAXY FIRE */}
-      <section className="why">
-        <div className="why-content">
-          <div className="section-number">15 / THE STANDARD</div>
-          <h2>YOUR MUSIC.<br /><span>OUR CRAFT.</span></h2>
-          <div className="why-grid">
-            <div><strong>01</strong><h3>PROFESSIONAL</h3><p>A serious environment for serious music.</p></div>
-            <div><strong>02</strong><h3>CREATIVE</h3><p>A space designed to keep artists focused on creating.</p></div>
-            <div><strong>03</strong><h3>PERSONAL</h3><p>Your record isn&#39;t treated like just another session.</p></div>
-            <div><strong>04</strong><h3>QUALITY</h3><p>Every detail matters from recording to final master.</p></div>
-          </div>
-        </div>
-      </section>
-
-
-      {/* BOOKING */}
-      <section className="booking" id="booking">
-        <img src={interfaceImg} alt="Studio audio interface" className="booking-photo" />
-        <div className="booking-overlay" />
-        <div className="booking-content">
-          <div className="eyebrow">GALAXY FIRE STUDIOS · EST. 2020</div>
-          <h2>READY TO<br /><span>MAKE SOME FIRE?</span></h2>
-          <p>Choose your service, preferred session time and payment option. We will confirm your slot with you.</p>
-          <div className="booking-buttons">
-            <button type="button" className="button red" onClick={() => openBooking()}>BOOK & PAY ONLINE</button>
-            <a href="https://wa.me/2348035345977" className="button outline">BOOK VIA WHATSAPP</a>
-          </div>
-          <div className="contact-details">
-            <div><span>EMAIL</span>galaxyfirestudios@gmail.com</div>
-            <div><span>PHONE / WHATSAPP</span>+234 803 534 5977</div>
-          </div>
-        </div>
-      </section>
-
-      {bookingOpen && (
-        <div className="booking-modal" role="dialog" aria-modal="true" aria-labelledby="booking-title">
-          <div className="booking-modal-backdrop" onClick={closeBooking} />
-          <div className="booking-modal-card">
-            <button type="button" className="booking-close" onClick={closeBooking} aria-label="Close booking form">×</button>
-            {!bookingSubmitted ? (
-              <>
-                <div className="section-number">BOOKING / 01</div>
-                <h2 id="booking-title">BOOK YOUR<br /><span>SESSION.</span></h2>
-                <p className="booking-modal-intro">Reserve your preferred slot and choose whether you want to pay a 50% deposit or the full amount.</p>
-                <form onSubmit={submitBooking} className="booking-form">
-                  <label>
-                    SERVICE
-                    <select value={booking.service} onChange={(e) => updateBooking("service", e.target.value)}>
-                      {bookingServices.map((service) => (
-                        <option key={service.title} value={service.title}>{service.title} — {formatNaira(service.price)}</option>
-                      ))}
-                    </select>
-                  </label>
-                  <div className="booking-form-grid">
-                    <label>DATE<input required type="date" min={new Date().toISOString().split("T")[0]} value={booking.date} onChange={(e) => updateBooking("date", e.target.value)} /></label>
-                    <label>PREFERRED TIME<input required type="time" value={booking.time} onChange={(e) => updateBooking("time", e.target.value)} /></label>
-                  </div>
-                  <div className="booking-form-grid">
-                    <label>FULL NAME<input required type="text" placeholder="Your name" value={booking.name} onChange={(e) => updateBooking("name", e.target.value)} /></label>
-                    <label>PHONE / WHATSAPP<input required type="tel" placeholder="080..." value={booking.phone} onChange={(e) => updateBooking("phone", e.target.value)} /></label>
-                  </div>
-                  <label>EMAIL<input required type="email" placeholder="you@example.com" value={booking.email} onChange={(e) => updateBooking("email", e.target.value)} /></label>
-                  <label>NOTES / SONG DETAILS<textarea rows={3} placeholder="Tell us anything we should know before the session..." value={booking.notes} onChange={(e) => updateBooking("notes", e.target.value)} /></label>
-                  <div className="payment-options">
-                    <button type="button" className={booking.payment === "deposit" ? "payment-option active" : "payment-option"} onClick={() => updateBooking("payment", "deposit")}><span>50% DEPOSIT</span><strong>{formatNaira(selectedService.price * 0.5)}</strong><small>Secure your booking</small></button>
-                    <button type="button" className={booking.payment === "full" ? "payment-option active" : "payment-option"} onClick={() => updateBooking("payment", "full")}><span>FULL PAYMENT</span><strong>{formatNaira(selectedService.price)}</strong><small>Pay in full</small></button>
-                  </div>
-                  <div className="booking-total"><span>AMOUNT DUE</span><strong>{formatNaira(amountDue)}</strong></div>
-                  <button className="button red booking-submit" type="submit" disabled={paymentProcessing}>
-                    {paymentProcessing ? "OPENING PAYSTACK..." : `PAY ${formatNaira(amountDue)} WITH PAYSTACK →`}
-                  </button>
-                  {paymentError && <p className="booking-payment-error" role="alert">{paymentError}</p>}
-                  <p className="booking-payment-note">Secure payment is processed by Paystack. Your booking is confirmed only after the payment is verified.</p>
-                </form>
-              </>
-            ) : (
-              <div className="booking-success">
-                <div className="success-mark">✓</div>
-                <div className="section-number">BOOKING REQUEST SENT</div>
-                <h2>YOU'RE ON<br /><span>THE LIST.</span></h2>
-                <p>Your payment has been received and verified. Galaxy Fire Studios will contact you to confirm your session slot.</p>
-                {paymentReference && <p className="booking-reference">PAYMENT REFERENCE: <strong>{paymentReference}</strong></p>}
-                <div className="booking-success-actions">
-                  <a className="button outline" href={`https://wa.me/2348035345977?text=${encodeURIComponent(`Hi Galaxy Fire Studios, I just paid for ${booking.service}. Payment reference: ${paymentReference}. My preferred date/time is ${booking.date} at ${booking.time}.`)}`} target="_blank" rel="noreferrer">MESSAGE US ON WHATSAPP</a>
-                  <button type="button" className="button red" onClick={closeBooking}>DONE</button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* FOOTER */}
-      <footer id="contact">
-        <div className="footer-top">
-          <div className="footer-brand">
-            <div className="logo">
-              <img src={logoImg} alt="Galaxy Studios logo" className="logo-img" />
-              <div>
-                <div className="logo-title">GALAXY FIRE</div>
-                <div className="logo-sub">STUDIOS · EST. 2020</div>
-              </div>
-            </div>
-            <p>Record. Create. Ignite.</p>
-          </div>
-          <div className="footer-links">
-            <div>
-              <span>EXPLORE</span>
-              <a href="#home">Home</a>
-              <a href="#studio">Studio</a>
-              <a href="#services">Services</a>
-              <a href="#booking">Book a Session</a>
-              <a href="#culture">For the Culture</a>
-              <a href="#beats">Beats</a>
-              <a href="#shop">Shop</a>
-            </div>
-            <div>
-              <span>CONTACT</span>
-              <a href="#booking">Book a Session</a>
-              <a href="mailto:galaxyfirestudios@gmail.com">Email Us</a>
-              <a href="https://wa.me/2348035345977">WhatsApp</a>
-            </div>
-          </div>
-        </div>
-        <div className="footer-bottom">
-          <span>© 2026 GALAXY FIRE STUDIOS</span>
-          <span>EST. 2020 · NIGERIA</span>
-        </div>
-      </footer>
-
+      <footer id="contact"><div><strong>GALAXY FIRE STUDIOS</strong><p>Record. Create. Ignite.</p></div><div><a href="#home">Home</a><a href="#services">Services</a><a href="#visuals">Visuals</a><a href="#pricing">Pricing</a><a href="#booking">Book</a><a href="mailto:galaxyfirestudios@gmail.com">Email</a></div><small>© 2026 GALAXY FIRE STUDIOS · EST. 2020 · NIGERIA</small></footer>
 
       <style>{`
-        * { box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
-
-        body {
-          margin: 0;
-          font-family: 'Barlow', Arial, sans-serif;
-          background: #080808;
-          color: white;
-        }
-
-        .site { background: #080808; overflow: hidden; }
-        a { color: inherit; text-decoration: none; }
-
-        /* NAV */
-        .nav {
-          position: fixed; top: 0; left: 0; right: 0; height: 82px; z-index: 100;
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 0 5%;
-          background: rgba(5,5,5,.92);
-          backdrop-filter: blur(14px);
-          border-bottom: 1px solid rgba(255,255,255,.07);
-        }
-
-        .logo { display: flex; align-items: center; gap: 12px; }
-
-        .logo-img {
-          width: 46px; height: 46px;
-          object-fit: contain;
-          border-radius: 50%;
-        }
-
-        .logo-title { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 900; letter-spacing: 2px; }
-        .logo-sub { margin-top: 3px; font-size: 8px; letter-spacing: 2px; color: #888; font-family: 'Barlow Condensed', sans-serif; }
-
-        .nav-links { display: flex; gap: 34px; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 800; letter-spacing: 1.5px; }
-        .nav-links a { transition: color .2s; }
-        .nav-links a:hover { color: #e50914; }
-
-        .nav-button {
-          padding: 13px 22px;
-          background: #e50914;
-          font-family: 'Barlow Condensed', sans-serif;
-          font-size: 11px; font-weight: 900; letter-spacing: 1px;
-        }
-
-        .menu-button { display: none; background: none; color: white; border: none; font-size: 22px; cursor: pointer; }
-
-        /* HERO */
-        .hero { min-height: 100vh; position: relative; display: flex; align-items: center; }
-
-        .hero-photo {
-          position: absolute; inset: 0; width: 100%; height: 100%;
-          object-fit: cover; object-position: center;
-        }
-
-        .hero-overlay {
-          position: absolute; inset: 0;
-          background: linear-gradient(90deg, rgba(0,0,0,.88) 0%, rgba(0,0,0,.5) 60%, rgba(0,0,0,.2) 100%);
-        }
-
-        .hero-content {
-          position: relative; z-index: 2;
-          max-width: 1100px; padding: 150px 8% 100px;
-        }
-
-        .eyebrow, .section-number {
-          color: #e50914; font-family: 'Barlow Condensed', sans-serif;
-          font-size: 11px; font-weight: 900; letter-spacing: 3px;
-        }
-
-        h1 {
-          font-family: 'Barlow Condensed', sans-serif;
-          font-size: clamp(60px, 9vw, 130px);
-          line-height: .88; margin: 25px 0; font-weight: 900; letter-spacing: -2px;
-        }
-
-        h1 span, h2 span { color: #e50914; }
-
-        .hero-content p { max-width: 500px; color: #ccc; font-size: 17px; line-height: 1.7; }
-
-        .hero-buttons, .booking-buttons { display: flex; gap: 14px; margin-top: 35px; flex-wrap: wrap; }
-
-        .button { padding: 16px 24px; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 900; letter-spacing: 1.5px; }
-        .button.red { background: #e50914; }
-        .button.outline { border: 1px solid rgba(255,255,255,.45); }
-        .button:hover { opacity: .88; }
-
-        .hero-est { margin-top: 80px; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 4px; color: #888; }
-
-        .scroll {
-          position: absolute; bottom: 30px; right: 6%;
-          display: flex; align-items: center; gap: 12px;
-          font-family: 'Barlow Condensed', sans-serif; font-size: 9px; letter-spacing: 2px; color: #aaa;
-        }
-        .scroll span { color: #e50914; font-size: 20px; }
-
-        /* SECTIONS */
-        section { padding: 130px 7%; }
-
-        h2 {
-          font-family: 'Barlow Condensed', sans-serif;
-          font-size: clamp(50px, 7vw, 100px);
-          line-height: .9; letter-spacing: -2px; margin: 25px 0; font-weight: 900;
-        }
-
-        /* SECTION PHOTOS */
-        .section-photo { width: 100%; height: 100%; min-height: 580px; object-fit: cover; display: block; }
-
-        /* INTRO */
-        .intro {
-          display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
-          background: #0b0b0b;
-        }
-
-        .intro-text p { max-width: 540px; color: #aaa; line-height: 1.8; font-size: 16px; }
-        .intro-image { min-height: 580px; overflow: hidden; }
-
-        .stats { display: flex; gap: 50px; margin-top: 50px; }
-        .stats div { display: flex; flex-direction: column; gap: 6px; }
-        .stats strong { font-family: 'Barlow Condensed', sans-serif; color: #e50914; font-size: 34px; font-weight: 900; }
-        .stats span { font-family: 'Barlow Condensed', sans-serif; font-size: 9px; color: #666; letter-spacing: 2px; }
-
-        /* EXPERIENCE */
-        .experience {
-          display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
-          background: #0e0e0e;
-        }
-        .experience-image { min-height: 580px; overflow: hidden; }
-        .experience-content > p { max-width: 520px; color: #aaa; line-height: 1.8; font-size: 16px; }
-        .experience-content h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; letter-spacing: 1px; margin-top: -5px; font-weight: 700; }
-
-        .steps { margin-top: 45px; }
-        .step { display: flex; gap: 25px; padding: 22px 0; border-top: 1px solid #222; }
-        .step > span { color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 15px; }
-        .step strong { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: 2px; }
-        .step p { margin: 7px 0 0; color: #666; font-size: 13px; }
-
-        /* SERVICES */
-        .services { background: #080808; }
-
-        .section-heading { max-width: 650px; margin-bottom: 70px; }
-        .section-heading.center { margin-left: auto; margin-right: auto; text-align: center; }
-        .section-heading p { color: #777; line-height: 1.7; font-size: 15px; }
-
-        .service-grid {
-          display: grid; grid-template-columns: repeat(3, 1fr);
-          border-top: 1px solid #242424; border-left: 1px solid #242424;
-        }
-
-        .service-card {
-          min-height: 340px; padding: 40px;
-          border-right: 1px solid #242424; border-bottom: 1px solid #242424;
-          transition: background .25s;
-        }
-        .service-card:hover { background: #141414; }
-        .service-number { color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 900; letter-spacing: 1px; }
-        .service-card h3 { font-family: 'Barlow Condensed', sans-serif; margin-top: 70px; font-size: 20px; letter-spacing: 1px; }
-        .service-card p { color: #777; line-height: 1.7; font-size: 13px; }
-        .service-card a { display: inline-block; margin-top: 20px; color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 900; letter-spacing: 1px; }
-
-        /* FEATURE */
-        .feature { padding: 0; }
-        .feature-image { min-height: 680px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .feature-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; }
-        .feature-overlay { position: absolute; inset: 0; background: linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.88)); }
-        .feature-content { position: relative; text-align: center; z-index: 1; }
-        .feature-content h2 { font-size: clamp(55px, 8vw, 115px); }
-
-        /* VISUAL PRODUCTION */
-        .visual-production { background: #0b0b0b; border-top: 1px solid #181818; }
-        .visual-service-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-        .visual-service-card { background: #111; border: 1px solid #252525; overflow: hidden; transition: transform .3s ease, border-color .3s ease; }
-        .visual-service-card:hover { transform: translateY(-5px); border-color: #e50914; }
-        .visual-service-image { position: relative; height: 300px; overflow: hidden; background: #080808; }
-        .visual-service-image img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s ease; }
-        .visual-service-card:hover .visual-service-image img { transform: scale(1.04); }
-        .visual-service-image span { position: absolute; top: 18px; left: 18px; color: white; background: #e50914; padding: 7px 10px; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 900; }
-        .visual-service-body { padding: 30px; }
-        .visual-service-body h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 25px; letter-spacing: 1px; margin: 0 0 14px; }
-        .visual-service-body p { color: #777; font-size: 13px; line-height: 1.7; min-height: 88px; margin: 0; }
-        .visual-link { margin-top: 24px; padding: 0; border: 0; background: transparent; color: #e50914; cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 900; letter-spacing: 1.2px; }
-        .visual-portfolio-heading { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: end; margin: 110px 0 35px; }
-        .visual-portfolio-heading h3 { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(38px, 5vw, 65px); line-height: .9; margin: 18px 0 0; }
-        .visual-portfolio-heading h3 span { color: #e50914; }
-        .visual-portfolio-heading p { color: #777; font-size: 14px; line-height: 1.8; margin: 0; }
-        .visual-portfolio-heading strong { color: #aaa; }
-        .visual-portfolio-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-        .visual-portfolio-item { position: relative; min-height: 300px; overflow: hidden; background: #111; }
-        .visual-portfolio-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s ease; }
-        .visual-portfolio-item:hover img { transform: scale(1.04); }
-        .visual-portfolio-item div { position: absolute; inset: auto 0 0; padding: 30px 18px 18px; background: linear-gradient(transparent, rgba(0,0,0,.8)); font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 900; letter-spacing: 2px; }
-        .visual-cta { margin-top: 55px; padding: 45px; border: 1px solid #292929; background: linear-gradient(135deg, #151515, #0c0c0c); display: flex; align-items: center; justify-content: space-between; gap: 40px; }
-        .visual-cta h3 { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(42px, 6vw, 70px); line-height: .88; margin: 15px 0 0; }
-        .visual-cta h3 span { color: #e50914; }
-        .visual-cta-buttons { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
-
-        /* PRICING */
-        .pricing { background: #0b0b0b; }
-        .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; max-width: 1250px; margin: auto; }
-
-        .price-card { position: relative; background: #111; border: 1px solid #252525; padding: 40px; }
-        .price-card.featured { border-color: #e50914; }
-
-        .popular { position: absolute; top: 0; right: 0; padding: 8px 12px; background: #e50914; font-family: 'Barlow Condensed', sans-serif; font-size: 9px; font-weight: 900; letter-spacing: 1px; }
-        .price-category { color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 900; letter-spacing: 2px; }
-        .price-card h3 { font-family: 'Barlow Condensed', sans-serif; margin-top: 28px; font-size: 20px; letter-spacing: .5px; }
-        .price { font-family: 'Barlow Condensed', sans-serif; font-size: 42px; font-weight: 900; margin: 22px 0 8px; }
-        .price-detail { color: #555; font-family: 'Barlow Condensed', sans-serif; font-size: 9px; letter-spacing: 2px; }
-        .price-card ul { padding: 22px 0; margin: 0; list-style: none; border-top: 1px solid #252525; border-bottom: 1px solid #252525; margin-top: 28px; }
-        .price-card li { padding: 7px 0; color: #999; font-size: 12px; }
-        .price-card li::before { content: "✓"; color: #e50914; margin-right: 10px; }
-        .price-button { display: block; margin-top: 22px; padding: 14px; text-align: center; border: 1px solid #383838; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 900; letter-spacing: 1px; transition: border-color .2s, color .2s; }
-        .price-button:hover { border-color: #e50914; color: #e50914; }
-
-        /* GALLERY */
-        .gallery { background: #080808; }
-
-        .gallery-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
-
-        .gallery-large { position: relative; overflow: hidden; min-height: 640px; }
-        .gallery-col { display: flex; flex-direction: column; gap: 12px; }
-        .gallery-small { position: relative; overflow: hidden; flex: 1; min-height: 200px; }
-
-        .gallery-photo { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s ease; }
-        .gallery-large:hover .gallery-photo,
-        .gallery-small:hover .gallery-photo,
-        .gallery-med:hover .gallery-photo { transform: scale(1.04); }
-
-        .gallery-caption {
-          position: absolute; bottom: 0; left: 0; right: 0;
-          padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,.75));
-          font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 900; letter-spacing: 2px; color: rgba(255,255,255,.75);
-        }
-
-        .gallery-row2 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; }
-        .gallery-med { position: relative; overflow: hidden; min-height: 280px; }
-
-        /* WHY */
-        .why { background: #111; }
-        .why-content { max-width: 1200px; margin: auto; }
-        .why-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 35px; margin-top: 80px; }
-        .why-grid strong { color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 900; }
-        .why-grid h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; letter-spacing: 1px; margin-top: 30px; }
-        .why-grid p { color: #666; font-size: 13px; line-height: 1.6; }
-
-        /* BOOKING */
-        .booking { min-height: 750px; position: relative; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
-        .booking-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
-        .booking-overlay { position: absolute; inset: 0; background: linear-gradient(rgba(0,0,0,.72), rgba(0,0,0,.92)); }
-        .booking-content { position: relative; z-index: 1; max-width: 900px; padding: 0 5%; }
-        .booking-content h2 { font-size: clamp(55px, 8vw, 110px); }
-        .booking-content p { max-width: 520px; margin: auto; color: #999; line-height: 1.7; }
-        .booking-buttons { justify-content: center; }
-
-        .contact-details { display: flex; justify-content: center; gap: 70px; margin-top: 80px; }
-        .contact-details div { display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
-        .contact-details span { color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-size: 8px; font-weight: 900; letter-spacing: 2px; }
-
-        /* BOOKING MODAL */
-        .booking-buttons button { cursor: pointer; border: 0; color: white; }
-        .price-button { cursor: pointer; border: 0; background: transparent; color: white; font-family: inherit; font-weight: 900; letter-spacing: 1.5px; font-size: 11px; padding: 0; }
-        .booking-modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 25px; }
-        .booking-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.86); backdrop-filter: blur(8px); }
-        .booking-modal-card { position: relative; z-index: 1; width: min(760px, 100%); max-height: 92vh; overflow-y: auto; background: #0b0b0b; border: 1px solid #272727; padding: 48px; box-shadow: 0 30px 100px rgba(0,0,0,.6); }
-        .booking-close { position: absolute; top: 15px; right: 18px; border: 0; background: transparent; color: #aaa; font-size: 32px; cursor: pointer; line-height: 1; }
-        .booking-modal-card h2 { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(48px, 7vw, 82px); line-height: .88; margin: 16px 0 22px; }
-        .booking-modal-intro { color: #888; line-height: 1.6; max-width: 600px; margin-bottom: 30px; }
-        .booking-form { display: flex; flex-direction: column; gap: 18px; }
-        .booking-form label { display: flex; flex-direction: column; gap: 8px; color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 900; letter-spacing: 1.8px; }
-        .booking-form input, .booking-form select, .booking-form textarea { width: 100%; box-sizing: border-box; border: 1px solid #2b2b2b; background: #121212; color: white; padding: 14px; font: 14px Arial, sans-serif; outline: none; }
-        .booking-form input:focus, .booking-form select:focus, .booking-form textarea:focus { border-color: #e50914; }
-        .booking-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-        .payment-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .payment-option { text-align: left; cursor: pointer; border: 1px solid #292929; background: #101010; color: white; padding: 18px; display: flex; flex-direction: column; gap: 7px; }
-        .payment-option.active { border-color: #e50914; background: #18090a; }
-        .payment-option span { color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 900; letter-spacing: 1.5px; }
-        .payment-option strong { font-size: 24px; }
-        .payment-option small { color: #777; }
-        .booking-total { border-top: 1px solid #242424; border-bottom: 1px solid #242424; padding: 17px 0; display: flex; justify-content: space-between; align-items: center; }
-        .booking-total span { color: #777; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; letter-spacing: 2px; }
-        .booking-total strong { font-size: 28px; }
-        .booking-submit { cursor: pointer; border: 0; color: white; width: 100%; margin-top: 4px; }
-        .booking-payment-error { color: #ff5a61; margin: 12px 0 0; font-size: 13px; line-height: 1.5; }
-        .booking-payment-note { color: #666; font-size: 11px; line-height: 1.6; text-align: center; }
-        .booking-success { text-align: center; padding: 30px 10px 10px; }
-        .booking-success h2 { margin-bottom: 25px; }
-        .booking-success p { max-width: 520px; margin: 0 auto 30px; color: #888; line-height: 1.7; }
-        .success-mark { width: 58px; height: 58px; display: grid; place-items: center; margin: 0 auto 25px; border: 1px solid #e50914; color: #e50914; font-size: 28px; }
-
-        /* FOOTER */
-        footer { padding: 80px 7% 30px; background: #050505; }
-        .footer-top { display: flex; justify-content: space-between; padding-bottom: 70px; }
-        .footer-brand p { color: #666; margin-top: 20px; font-size: 14px; }
-        .footer-links { display: flex; gap: 100px; }
-        .footer-links div { display: flex; flex-direction: column; gap: 14px; }
-        .footer-links span { color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-size: 9px; letter-spacing: 2px; margin-bottom: 6px; }
-        .footer-links a { color: #777; font-size: 13px; transition: color .2s; }
-        .footer-links a:hover { color: white; }
-        .footer-bottom { border-top: 1px solid #1a1a1a; padding-top: 25px; display: flex; justify-content: space-between; color: #444; font-family: 'Barlow Condensed', sans-serif; font-size: 9px; letter-spacing: 1px; }
-
-        /* FOR THE CULTURE */
-        .culture { background: #0a0a0a; }
-        .culture-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 12px;
-          margin-top: 55px;
-        }
-        .culture-card {
-          min-height: 420px;
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          padding: 32px;
-          background: #111;
-          border: 1px solid #252525;
-          overflow: hidden;
-          transition: transform .3s ease, border-color .3s ease, background .3s ease;
-        }
-        .culture-card::after {
-          content: "";
-          position: absolute;
-          width: 180px;
-          height: 180px;
-          right: -70px;
-          bottom: -70px;
-          border-radius: 50%;
-          background: rgba(229,9,20,.08);
-          transition: transform .4s ease;
-        }
-        .culture-card:hover {
-          transform: translateY(-5px);
-          border-color: #e50914;
-          background: #151515;
-        }
-        .culture-card:hover::after { transform: scale(1.5); }
-        .culture-card-featured {
-          background: linear-gradient(145deg, #171717, #0d0d0d);
-          border-color: #e50914;
-        }
-        .culture-card-number {
-          position: relative;
-          z-index: 1;
-          color: #e50914;
-          font-family: 'Barlow Condensed', sans-serif;
-          font-size: 12px;
-          font-weight: 900;
-          letter-spacing: 1px;
-        }
-        .culture-card-content {
-          position: relative;
-          z-index: 1;
-        }
-        .culture-card-content > span {
-          color: #777;
-          font-family: 'Barlow Condensed', sans-serif;
-          font-size: 9px;
-          font-weight: 900;
-          letter-spacing: 2px;
-        }
-        .culture-card h3 {
-          font-family: 'Barlow Condensed', sans-serif;
-          font-size: 31px;
-          line-height: .95;
-          letter-spacing: -0.5px;
-          margin: 15px 0 18px;
-        }
-        .culture-card p {
-          color: #777;
-          font-size: 13px;
-          line-height: 1.7;
-          margin: 0 0 25px;
-        }
-        .culture-card strong {
-          color: #e50914;
-          font-family: 'Barlow Condensed', sans-serif;
-          font-size: 10px;
-          font-weight: 900;
-          letter-spacing: 1.2px;
-        }
-        .culture-statement {
-          margin-top: 12px;
-          padding: 35px;
-          border: 1px solid #242424;
-          background: #111;
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 50px;
-          align-items: center;
-        }
-        .culture-statement h3 {
-          font-family: 'Barlow Condensed', sans-serif;
-          font-size: 32px;
-          margin: 12px 0 0;
-          letter-spacing: 1px;
-        }
-        .culture-statement p {
-          color: #777;
-          line-height: 1.8;
-          font-size: 14px;
-          margin: 0;
-        }
-
-        /* ECOSYSTEM PREVIEWS */
-        .ecosystem-preview {
-          padding: 120px 7%;
-          background: #0b0b0b;
-          border-top: 1px solid #181818;
-        }
-        .ecosystem-preview.dark { background: #080808; }
-        .ecosystem-preview-inner {
-          max-width: 1200px;
-          margin: auto;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 70px;
-        }
-        .ecosystem-preview-inner > div:first-child { max-width: 700px; }
-        .ecosystem-preview h2 {
-          font-size: clamp(50px, 7vw, 95px);
-          margin-bottom: 25px;
-        }
-        .ecosystem-preview p {
-          max-width: 600px;
-          color: #777;
-          line-height: 1.8;
-          font-size: 15px;
-          margin: 0;
-        }
-        .ecosystem-status {
-          min-width: 260px;
-          padding: 30px;
-          border: 1px solid #2b2b2b;
-          background: #101010;
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-        .ecosystem-status span {
-          color: #e50914;
-          font-family: 'Barlow Condensed', sans-serif;
-          font-size: 9px;
-          font-weight: 900;
-          letter-spacing: 2px;
-        }
-        .ecosystem-status strong {
-          font-family: 'Barlow Condensed', sans-serif;
-          font-size: 26px;
-          letter-spacing: 1px;
-        }
-        .ecosystem-status small {
-          color: #555;
-          font-size: 9px;
-          line-height: 1.6;
-          letter-spacing: 1px;
-        }
-
-        /* ABOUT PREVIEW */
-        .about-preview {
-          padding: 120px 7%;
-          background: #111;
-          border-top: 1px solid #1c1c1c;
-        }
-        .about-preview-inner {
-          max-width: 1000px;
-          margin: auto;
-        }
-        .about-preview h2 { font-size: clamp(55px, 8vw, 110px); }
-        .about-preview p {
-          max-width: 620px;
-          color: #888;
-          line-height: 1.8;
-          font-size: 16px;
-          margin-bottom: 35px;
-        }
-
-        /* PROMO */
-        .promo-section { background: #0a0a0a; }
-
-        .promo-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 16px;
-          margin-top: 20px;
-        }
-
-        .promo-card {
-          position: relative;
-          overflow: hidden;
-          border: 1px solid #222;
-          aspect-ratio: 1 / 1;
-          transition: transform .3s ease, border-color .3s;
-        }
-
-        .promo-card:hover {
-          transform: translateY(-4px);
-          border-color: #e50914;
-        }
-
-        .promo-img {
-          width: 100%; height: 100%;
-          object-fit: cover; display: block;
-          transition: transform .5s ease;
-        }
-
-        .promo-card:hover .promo-img { transform: scale(1.04); }
-
-        /* RESPONSIVE */
-        @media (max-width: 900px) {
-          .nav-links {
-            display: none; position: absolute; top: 82px; left: 0; right: 0;
-            background: #0a0a0a; padding: 30px; flex-direction: column; border-bottom: 1px solid #222; max-height: calc(100vh - 82px); overflow-y: auto;
-          }
-          .nav-links.open { display: flex; }
-          .nav-button { display: none; }
-          .menu-button { display: block; }
-          .intro, .experience { grid-template-columns: 1fr; }
-          .experience-image { order: -1; }
-          .service-grid, .pricing-grid, .visual-service-grid { grid-template-columns: 1fr 1fr; }
-          .visual-portfolio-grid { grid-template-columns: 1fr 1fr; }
-          .visual-portfolio-heading { grid-template-columns: 1fr; gap: 25px; }
-          .visual-cta { flex-direction: column; align-items: flex-start; }
-          .visual-cta-buttons { justify-content: flex-start; }
-          .why-grid { grid-template-columns: 1fr 1fr; }
-          .gallery-grid { grid-template-columns: 1fr; }
-          .gallery-row2 { grid-template-columns: 1fr 1fr; }
-          .promo-grid { grid-template-columns: 1fr 1fr; }
-          .culture-grid { grid-template-columns: 1fr 1fr; }
-          .culture-statement { grid-template-columns: 1fr; gap: 25px; }
-          .ecosystem-preview-inner { flex-direction: column; align-items: flex-start; gap: 40px; }
-          .footer-top { flex-direction: column; gap: 50px; }
-          .footer-links { gap: 50px; }
-        }
-
-        @media (max-width: 600px) {
-          section { padding: 90px 6%; }
-          .hero-content { padding: 140px 6% 80px; }
-          h1 { font-size: 58px; }
-          h2 { font-size: 52px; }
-          .hero-buttons, .booking-buttons { flex-direction: column; }
-          .button { text-align: center; }
-          .service-grid, .pricing-grid, .visual-service-grid, .visual-portfolio-grid, .why-grid { grid-template-columns: 1fr; }
-          .visual-service-image { height: 260px; }
-          .visual-portfolio-heading { margin-top: 80px; }
-          .visual-cta { padding: 30px 22px; }
-          .visual-cta-buttons { flex-direction: column; width: 100%; }
-          .visual-cta-buttons .button { width: 100%; }
-          .gallery-row2 { grid-template-columns: 1fr; }
-          .promo-grid { grid-template-columns: 1fr 1fr; }
-          .culture-grid { grid-template-columns: 1fr; }
-          .culture-card { min-height: 360px; }
-          .culture-statement { padding: 25px; }
-          .ecosystem-preview, .about-preview { padding: 90px 6%; }
-          .ecosystem-status { width: 100%; min-width: 0; }
-          .stats { gap: 25px; }
-          .contact-details { flex-direction: column; gap: 25px; align-items: center; }
-          .booking-modal { padding: 10px; }
-          .booking-modal-card { padding: 35px 20px 25px; max-height: 96vh; }
-          .booking-form-grid, .payment-options { grid-template-columns: 1fr; }
-          .booking-total strong { font-size: 22px; }
-          .footer-bottom { flex-direction: column; gap: 12px; }
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800;900&family=Barlow+Condensed:wght@400;600;700;800;900&display=swap');
+        *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#080808;color:#fff;font-family:Barlow,Arial,sans-serif}a{text-decoration:none;color:inherit}button,input,select,textarea{font:inherit}.site{overflow:hidden;background:#080808}.nav{height:78px;position:fixed;z-index:100;inset:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 5%;background:rgba(5,5,5,.94);backdrop-filter:blur(12px);border-bottom:1px solid #222}.brand{display:flex;align-items:center;gap:10px}.brand-mark{display:grid;place-items:center;width:42px;height:42px;border:2px solid #e50914;color:#e50914;font-weight:900}.brand strong{display:block;font-family:'Barlow Condensed';letter-spacing:2px}.brand small{display:block;color:#777;font-size:8px;letter-spacing:2px}.nav-links{display:flex;gap:20px;font-family:'Barlow Condensed';font-size:11px;font-weight:800;letter-spacing:1px}.nav-links a:hover{color:#e50914}.nav-cta,.btn.red{background:#e50914}.nav-cta{padding:12px 18px;font-family:'Barlow Condensed';font-weight:900;font-size:11px}.menu{display:none;background:none;color:#fff;border:0;font-size:24px}.hero,.feature,.booking{min-height:100vh;position:relative;display:flex;align-items:center}.hero>img,.feature>img,.booking>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.9),rgba(0,0,0,.48),rgba(0,0,0,.18))}.hero-copy,.feature>div:last-child,.booking>div:last-child{position:relative;z-index:2;padding:150px 8%;max-width:1000px}.eyebrow,.section-no{color:#e50914;font-family:'Barlow Condensed';font-weight:900;letter-spacing:3px;font-size:11px}.hero h1{font:900 clamp(64px,10vw,140px)/.86 'Barlow Condensed';margin:24px 0}.hero h1 span,h2 span,.heading h3 span,.about h2 span{color:#e50914}.hero p,.heading>p,.split p,.coming p,.about p{max-width:650px;color:#bbb;line-height:1.7;font-size:16px}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}.btn{display:inline-block;padding:15px 22px;border:0;color:#fff;font-family:'Barlow Condensed';font-weight:900;letter-spacing:1.5px;cursor:pointer}.btn.ghost{border:1px solid #666;background:transparent}.est{display:block;color:#777;letter-spacing:4px;margin-top:70px}.hero-copy{padding-top:180px}.split,section{padding:120px 7%}.split{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center}.split img{width:100%;height:560px;object-fit:cover}.dark-split{background:#101010}.split h2,.heading h2,.booking h2,.about h2,.why h2{font:900 clamp(48px,7vw,90px)/.9 'Barlow Condensed';margin:20px 0}.stats{display:flex;gap:50px;margin-top:45px}.stats b{font:900 42px 'Barlow Condensed'}.stats small{display:block;color:#777;font:600 10px Barlow;letter-spacing:2px;margin-top:5px}.steps{margin-top:30px}.step{display:flex;gap:20px;padding:15px 0;border-bottom:1px solid #292929}.step>b{color:#e50914;font-family:'Barlow Condensed'}.step strong{font-family:'Barlow Condensed';letter-spacing:1px}.step p{margin:5px 0;font-size:14px}.heading{max-width:720px;margin-bottom:50px}.heading.center{margin-left:auto;margin-right:auto;text-align:center}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#333}.card{background:#0b0b0b;padding:35px;min-height:250px}.card>span{color:#e50914;font-family:'Barlow Condensed';font-weight:900}.card h3{font:800 30px 'Barlow Condensed';margin:20px 0}.card p{color:#aaa;line-height:1.6}.card a,.card strong{font:800 11px 'Barlow Condensed';letter-spacing:1.5px}.feature{min-height:70vh}.feature>div:last-child{padding-left:8%}.feature h2{font:900 clamp(50px,7vw,90px)/.9 'Barlow Condensed'}.visual-services{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}.visual-card{background:#111;border:1px solid #252525}.visual-image{height:340px;position:relative}.visual-image img{width:100%;height:100%;object-fit:cover}.visual-image b{position:absolute;top:15px;left:15px;background:#e50914;padding:6px 9px;font-family:'Barlow Condensed'}.visual-body{padding:28px}.visual-body h3{font:800 30px 'Barlow Condensed';margin:0 0 10px}.visual-price{color:#e50914;font-family:'Barlow Condensed';font-size:20px}.visual-body p{color:#aaa;line-height:1.6}.text-button{border:0;background:none;color:#fff;padding:0;font:800 11px 'Barlow Condensed';letter-spacing:1px;cursor:pointer}.portfolio-title{display:flex;justify-content:space-between;gap:30px;align-items:end;margin:90px 0 30px}.portfolio-title h3{font:900 46px/.9 'Barlow Condensed';margin:12px 0}.portfolio-title p{max-width:500px;color:#888}.portfolio{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.portfolio article{position:relative;aspect-ratio:1/1;overflow:hidden;background:#111}.portfolio img{width:100%;height:100%;object-fit:cover;transition:.3s}.portfolio article:hover img{transform:scale(1.05)}.portfolio span{position:absolute;bottom:0;left:0;right:0;padding:25px 12px 12px;background:linear-gradient(transparent,#000);font:800 11px 'Barlow Condensed'}.pricing{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}.price-card{background:#111;border:1px solid #252525;padding:30px;position:relative}.price-card.featured{border-color:#e50914}.price-card em{position:absolute;right:15px;top:15px;background:#e50914;padding:5px 8px;font:800 9px 'Barlow Condensed';font-style:normal}.price-card>span{color:#e50914;font:800 11px 'Barlow Condensed';letter-spacing:2px}.price-card h3{font:800 27px 'Barlow Condensed'}.price-card>strong{font:900 38px 'Barlow Condensed'}.price-card p{color:#777}.price-card button{background:#e50914;color:#fff;border:0;padding:12px 16px;font:800 11px 'Barlow Condensed';cursor:pointer}.visual-pricing{margin-top:25px;border:1px solid #252525;padding:30px;background:#101010}.visual-pricing h3{font:800 25px 'Barlow Condensed'}.visual-pricing>div{display:grid;grid-template-columns:1fr 1fr;gap:10px}.visual-pricing span{display:flex;justify-content:space-between;border-bottom:1px solid #282828;padding:12px;color:#aaa}.visual-pricing b{color:#fff}.gallery{display:grid;grid-template-columns:2fr 1fr 1fr;grid-auto-rows:260px;gap:8px}.gallery img{width:100%;height:100%;object-fit:cover}.gallery img:first-child{grid-row:span 2}.culture{background:#101010}.culture-cards{grid-template-columns:repeat(4,1fr)}.coming{background:#0b0b0b;border-top:1px solid #222}.coming h2{font:900 clamp(45px,7vw,90px) 'Barlow Condensed';max-width:800px}.status{display:inline-block;border:1px solid #e50914;color:#e50914;padding:8px 12px;font:800 10px 'Barlow Condensed';letter-spacing:2px}.about{background:#e50914}.about .section-no,.about h2 span{color:#fff}.about p{color:#eee}.about .btn.red{background:#080808}.promo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.promo-grid img{width:100%;aspect-ratio:1/1;object-fit:cover}.why{background:#111}.why-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:25px;margin-top:45px}.why-grid b{color:#e50914;font:900 25px 'Barlow Condensed'}.why-grid h3{font:800 25px 'Barlow Condensed'}.why-grid p{color:#888}.booking{min-height:75vh}.booking h2{font-size:clamp(48px,7vw,90px)}.contact{color:#aaa}.modal{position:fixed;z-index:200;inset:0;display:grid;place-items:center;padding:25px}.modal-bg{position:absolute;inset:0;background:rgba(0,0,0,.85)}.modal-card{position:relative;z-index:2;width:min(700px,100%);max-height:90vh;overflow:auto;background:#111;border:1px solid #333;padding:35px}.close{position:absolute;right:15px;top:10px;background:none;border:0;color:#fff;font-size:30px;cursor:pointer}.modal-card h2{font:900 55px/.9 'Barlow Condensed';margin:18px 0 30px}.modal-card form label{display:block;color:#999;font:800 10px 'Barlow Condensed';letter-spacing:1px;margin:14px 0}.modal-card input,.modal-card select,.modal-card textarea{width:100%;margin-top:7px;background:#090909;border:1px solid #333;color:#fff;padding:12px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.pay-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pay-options button{background:#090909;border:1px solid #333;color:#fff;padding:15px;text-align:left;cursor:pointer}.pay-options button.active{border-color:#e50914}.pay-options b{font-size:20px}.due{display:flex;justify-content:space-between;padding:18px 0;font:800 12px 'Barlow Condensed'}.due strong{font-size:25px}.submit{width:100%}.error{color:#ff5a5a}.success{text-align:center;padding:35px 0}.success-mark{font-size:55px;color:#e50914}.success .btn{margin-top:20px}footer{padding:55px 7% 25px;border-top:1px solid #222;display:grid;grid-template-columns:1fr 1fr;gap:30px}footer strong{font-family:'Barlow Condensed';letter-spacing:2px}footer p{color:#777}footer>div:nth-child(2){display:flex;gap:20px;flex-wrap:wrap;justify-content:flex-end}footer small{grid-column:1/-1;color:#555;border-top:1px solid #222;padding-top:20px}
+        @media(max-width:1000px){.nav-links{gap:10px}.nav-links a:nth-child(n+8){display:none}.visual-services,.pricing{grid-template-columns:1fr 1fr}.cards{grid-template-columns:1fr 1fr}.culture-cards{grid-template-columns:1fr 1fr}.portfolio{grid-template-columns:repeat(3,1fr)}.why-grid{grid-template-columns:1fr 1fr}.promo-grid{grid-template-columns:1fr 1fr}}
+        @media(max-width:700px){.nav{height:68px}.nav-cta{display:none}.menu{display:block}.nav-links{display:none;position:absolute;top:68px;left:0;right:0;background:#080808;padding:20px;flex-direction:column;gap:15px}.nav-links.open{display:flex}.nav-links a{display:block!important}.hero-copy{padding:130px 7% 80px}.split{grid-template-columns:1fr;padding:80px 7%;gap:35px}.split img{height:360px}.cards,.visual-services,.pricing,.culture-cards{grid-template-columns:1fr}.portfolio{grid-template-columns:1fr 1fr}.gallery{grid-template-columns:1fr 1fr;grid-auto-rows:220px}.gallery img:first-child{grid-row:auto}.visual-pricing>div,.form-grid,.pay-options{grid-template-columns:1fr}.portfolio-title{display:block}.why-grid{grid-template-columns:1fr}.promo-grid{grid-template-columns:1fr 1fr}section{padding:80px 7%}footer{grid-template-columns:1fr}footer>div:nth-child(2){justify-content:flex-start}footer small{grid-column:auto}}
       `}</style>
     </div>
   );
