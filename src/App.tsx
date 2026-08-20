@@ -42,6 +42,8 @@ import visual24 from "@/imports/visuals/visual_24.webp";
 import visual25 from "@/imports/visuals/visual_25.webp";
 import visual26 from "@/imports/visuals/visual_26.webp";
 import visual27 from "@/imports/visuals/visual_27.webp";
+import visual28 from "@/imports/visuals/visual_28.webp";
+import visual29 from "@/imports/visuals/visual_29.webp";
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -260,8 +262,14 @@ export default function App() {
     visual01, visual02, visual03, visual04, visual05, visual06, visual07, visual08, visual09,
     visual10, visual11, visual12, visual13, visual14, visual15, visual16, visual17, visual18,
     visual19, visual20, visual21, visual22, visual23, visual24, visual25, visual26, visual27,
+    visual28, visual29,
   ];
-  const visualSlides = [0, 1, 2].map((slide) => visualImages.slice(slide * 9, slide * 9 + 9));
+  // Keep the photography slider to three balanced slides while allowing new images to be added.
+  const visualSlides = [0, 1, 2].map((slide) => {
+    const start = slide * (visualImages.length === 29 ? 10 : 9);
+    const end = slide === 2 && visualImages.length === 29 ? visualImages.length : start + 10;
+    return visualImages.slice(start, end);
+  });
 
   return (
     <div className="site">
@@ -402,7 +410,7 @@ export default function App() {
           <div className="visual-grid">
             {visualSlides[visualSlide].map((image, index) => (
               <div className={`visual-grid-item visual-grid-item-${index + 1}`} key={`${visualSlide}-${index}`}>
-                <img src={image} alt={`Galaxy Fire Studios photography and visual production ${visualSlide * 9 + index + 1}`} loading="lazy" decoding="async" />
+                <img src={image} alt={`Galaxy Fire Studios photography and visual production ${visualSlide * 10 + index + 1}`} loading="lazy" decoding="async" width="1600" height="1067" />
               </div>
             ))}
           </div>
@@ -1064,11 +1072,9 @@ export default function App() {
         /* PHOTOGRAPHY & VISUALS */
         .visual-production { background: #0b0b0b; border-top: 1px solid #181818; }
         .visual-slider { margin-top: 55px; }
-        .visual-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 250px; gap: 12px; }
-        .visual-grid-item { position: relative; overflow: hidden; min-height: 250px; background: #111; border: 1px solid #222; }
-        .visual-grid-item:nth-child(1), .visual-grid-item:nth-child(5) { grid-row: span 2; }
-        .visual-grid-item:nth-child(9) { grid-column: span 2; }
-        .visual-grid-item img { width: 100%; height: 100%; display: block; object-fit: cover; transition: transform .55s ease, filter .35s ease; }
+        .visual-grid { column-count: 3; column-gap: 12px; }
+        .visual-grid-item { position: relative; overflow: hidden; display: block; width: 100%; margin: 0 0 12px; break-inside: avoid; background: #111; border: 1px solid #222; }
+        .visual-grid-item img { width: 100%; height: auto; display: block; object-fit: contain; transition: transform .55s ease, filter .35s ease; }
         .visual-grid-item:hover img { transform: scale(1.045); filter: brightness(1.08); }
         .visual-slider-controls { display: flex; justify-content: center; align-items: center; gap: 28px; margin-top: 28px; }
         .visual-slider-controls > button { width: 44px; height: 44px; border: 1px solid #333; background: #111; color: #fff; cursor: pointer; font-size: 20px; }
@@ -1428,8 +1434,7 @@ export default function App() {
           .hero-buttons, .booking-buttons { flex-direction: column; }
           .button { text-align: center; }
           .service-grid, .pricing-grid, .why-grid { grid-template-columns: 1fr; }
-          .visual-grid { grid-template-columns: 1fr; grid-auto-rows: 260px; }
-          .visual-grid-item:nth-child(1), .visual-grid-item:nth-child(5), .visual-grid-item:nth-child(9) { grid-row: auto; grid-column: auto; }
+          .visual-grid { column-count: 1; }
           .visual-services-pricing { grid-template-columns: 1fr; }
           .visual-cta { padding: 30px 22px; }
           .visual-cta-buttons { flex-direction: column; width: 100%; }
