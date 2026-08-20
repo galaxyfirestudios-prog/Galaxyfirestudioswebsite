@@ -23,36 +23,36 @@ import promoSuperstarsImg from "./imports/IMG_3360.PNG";
 import promoMixMasterImg from "./imports/IMG_3359.PNG";
 
 /* ============================================================
-   NEW 27 VISUAL IMAGES (UPDATED FILE NAMES - NO SPACES)
+   NEW 27 VISUAL IMAGES (MATCHED TO YOUR EXACT FOLDER NAMES)
    ============================================================ */
 
-import image01 from "./imports/Image-1.jpg";
-import image02 from "./imports/Image-2.jpg";
-import image03 from "./imports/Image-3.jpg";
-import image04 from "./imports/Image-4.jpg";
-import image05 from "./imports/Image-5.jpg";
-import image06 from "./imports/Image-6.jpg";
-import image07 from "./imports/Image-7.jpg";
-import image08 from "./imports/Image-8.jpg";
-import image09 from "./imports/Image-9.jpg";
-import image10 from "./imports/Image-10.jpg";
-import image11 from "./imports/Image-11.jpg";
-import image12 from "./imports/Image-12.jpg";
-import image13 from "./imports/Image-13.jpg";
-import image14 from "./imports/Image-14.jpg";
-import image15 from "./imports/Image-15.jpg";
-import image16 from "./imports/Image-16.jpg";
-import image17 from "./imports/Image-17.jpg";
-import image18 from "./imports/Image-18.jpg";
-import image19 from "./imports/Image-19.jpg";
-import image20 from "./imports/Image-20.jpg";
-import image21 from "./imports/Image-21.jpg";
-import image22 from "./imports/Image-22.jpg";
-import image23 from "./imports/Image-23.jpg";
-import image24 from "./imports/Image-24.jpg";
-import image25 from "./imports/Image-25.jpg";
-import image26 from "./imports/Image-26.jpg";
-import image27 from "./imports/Image-27.jpg";
+import image01 from "./imports/Image_1.jpg";
+import image02 from "./imports/Image_2.jpg";
+import image03 from "./imports/image_3.jpg";
+import image04 from "./imports/image_4.jpg";
+import image05 from "./imports/image_5.jpg";
+import image06 from "./imports/image_6.jpg";
+import image07 from "./imports/image_7.jpg";
+import image08 from "./imports/image_8.jpg";
+import image09 from "./imports/image_9.jpg";
+import image10 from "./imports/image_10.jpg";
+import image11 from "./imports/image_11.jpg";
+import image12 from "./imports/image_12.jpg";
+import image13 from "./imports/image_13.jpg";
+import image14 from "./imports/image_14.jpg";
+import image15 from "./imports/image_15.jpg";
+import image16 from "./imports/image_16.jpg";
+import image17 from "./imports/image_17.jpg";
+import image18 from "./imports/image_18.jpg";
+import image19 from "./imports/image_19.jpg";
+import image20 from "./imports/image_20.jpg";
+import image21 from "./imports/image_21.jpg";
+import image22 from "./imports/image_22.jpg";
+import image23 from "./imports/image_23.jpg";
+import image24 from "./imports/image_24.jpg";
+import image25 from "./imports/image_25.jpg";
+import image26 from "./imports/image_26.jpg";
+import image27 from "./imports/image_27.jpg";
 
 /* ============================================================
    NEW VISUAL IMAGE COLLECTION
@@ -307,7 +307,7 @@ export default function App() {
   };
 
   /* ============================================================
-     NEW IMAGE GROUPS (27 IMAGES / 3 SIMPLE SLIDERS)
+     IMAGE GROUPS (27 IMAGES / 3 SLIDERS)
      ============================================================ */
 
   const visualSetOne = visualImages.slice(0, 9);
