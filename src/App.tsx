@@ -15,15 +15,19 @@ import promoStudioTimeImg from "@/imports/IMG_3312.PNG";
 import promoBeatsImg from "@/imports/IMG_3365.PNG";
 import promoSuperstarsImg from "@/imports/IMG_3360.PNG";
 import promoMixMasterImg from "@/imports/IMG_3359.PNG";
-import image1 from "@/assets/galaxy-fire/1.png";
-import image2 from "@/assets/galaxy-fire/2.png";
-import image3 from "@/assets/galaxy-fire/3.png";
-import image4 from "@/assets/galaxy-fire/4.png";
-import image5 from "@/assets/galaxy-fire/5.png";
-import image6 from "@/assets/galaxy-fire/6.png";
-import image7 from "@/assets/galaxy-fire/7.png";
-import image8 from "@/assets/galaxy-fire/8.png";
-import image9 from "@/assets/galaxy-fire/9.png";
+import visualPhoto01 from "@/imports/_K4A3407-Enhanced-NR.jpg";
+import visualPhoto02 from "@/imports/_K4A3412-Enhanced-NR.jpg";
+import visualPhoto03 from "@/imports/_K4A3414-Enhanced-NR.jpg";
+import visualPhoto04 from "@/imports/_K4A3418-Enhanced-NR.jpg";
+import visualPhoto05 from "@/imports/_K4A3442-Enhanced-NR.jpg";
+import visualPhoto06 from "@/imports/_K4A3472-Enhanced-NR.jpg";
+import visualPhoto07 from "@/imports/_K4A3480-Enhanced-NR.jpg";
+import visualPhoto08 from "@/imports/_K4A3538-Enhanced-NR.jpg";
+import visualPhoto09 from "@/imports/_K4A3570-Enhanced-NR.jpg";
+import visualPhoto10 from "@/imports/_K4A3576-Enhanced-NR.jpg";
+import visualPhoto11 from "@/imports/_K4A3580-Enhanced-NR.jpg";
+import visualPhoto12 from "@/imports/_K4A3598-Enhanced-NR.jpg";
+import visualPhoto13 from "@/imports/_K4A3603-Enhanced-NR.jpg";
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -238,18 +242,22 @@ export default function App() {
   ];
 
   const visualServices = [
-    { number: "01", title: "PHOTOGRAPHY", text: "Artist portraits, cover-art photography, press photos, birthdays, events and editorial shoots.", image: image1, bookingService: "Artist Photoshoot" },
-    { number: "02", title: "VIDEOGRAPHY", text: "Music videos, performance films, lyric videos, visualizers, social content and event coverage.", image: image2, bookingService: "Music Video" },
-    { number: "03", title: "CREATIVE DIRECTION", text: "Music-video concepts, cover-art concepts, artist branding, visual storytelling and content planning.", image: image3 },
+    { number: "01", title: "PHOTOGRAPHY", text: "Artist portraits, cover-art photography, press photos, birthdays, events and editorial shoots.", image: visualPhoto01, bookingService: "Artist Photoshoot" },
+    { number: "02", title: "VIDEOGRAPHY", text: "Music videos, performance films, lyric videos, visualizers, social content and event coverage.", image: visualPhoto02, bookingService: "Music Video" },
+    { number: "03", title: "CREATIVE DIRECTION", text: "Music-video concepts, cover-art concepts, artist branding, visual storytelling and content planning.", image: visualPhoto03 },
   ];
 
   const visualPortfolio = [
-    { title: "ARTIST PORTRAITS", image: image4 },
-    { title: "COVER ART", image: image5 },
-    { title: "EVENTS", image: image6 },
-    { title: "BEHIND THE SCENES", image: image7 },
-    { title: "CAMPAIGNS", image: image8 },
-    { title: "MUSIC VIDEOS", image: image9 },
+    { title: "ARTIST PORTRAITS", image: visualPhoto04 },
+    { title: "EDITORIAL", image: visualPhoto05 },
+    { title: "CHARACTER", image: visualPhoto06 },
+    { title: "PORTRAIT STUDY", image: visualPhoto07 },
+    { title: "PERFORMANCE", image: visualPhoto08 },
+    { title: "CAMPAIGN", image: visualPhoto09 },
+    { title: "CAMPAIGN PORTRAIT", image: visualPhoto10 },
+    { title: "LIFESTYLE", image: visualPhoto11 },
+    { title: "VISUAL DETAILS", image: visualPhoto12 },
+    { title: "PRODUCT STORY", image: visualPhoto13 },
   ];
 
   return (
