@@ -15,6 +15,15 @@ import promoStudioTimeImg from "@/imports/IMG_3312.PNG";
 import promoBeatsImg from "@/imports/IMG_3365.PNG";
 import promoSuperstarsImg from "@/imports/IMG_3360.PNG";
 import promoMixMasterImg from "@/imports/IMG_3359.PNG";
+import image1 from "./assets/galaxy-fire/1.png";
+import image2 from "./assets/galaxy-fire/2.png";
+import image3 from "./assets/galaxy-fire/3.png";
+import image4 from "./assets/galaxy-fire/4.png";
+import image5 from "./assets/galaxy-fire/5.png";
+import image6 from "./assets/galaxy-fire/6.png";
+import image7 from "./assets/galaxy-fire/7.png";
+import image8 from "./assets/galaxy-fire/8.png";
+import image9 from "./assets/galaxy-fire/9.png";
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -229,18 +238,18 @@ export default function App() {
   ];
 
   const visualServices = [
-    { number: "01", title: "PHOTOGRAPHY", text: "Artist portraits, cover-art photography, press photos, birthdays, events and editorial shoots.", image: "/images/1.png", bookingService: "Artist Photoshoot" },
-    { number: "02", title: "VIDEOGRAPHY", text: "Music videos, performance films, lyric videos, visualizers, social content and event coverage.", image: "/images/2.png", bookingService: "Music Video" },
-    { number: "03", title: "CREATIVE DIRECTION", text: "Music-video concepts, cover-art concepts, artist branding, visual storytelling and content planning.", image: "/images/3.png" },
+    { number: "01", title: "PHOTOGRAPHY", text: "Artist portraits, cover-art photography, press photos, birthdays, events and editorial shoots.", image: image1, bookingService: "Artist Photoshoot" },
+    { number: "02", title: "VIDEOGRAPHY", text: "Music videos, performance films, lyric videos, visualizers, social content and event coverage.", image: image2, bookingService: "Music Video" },
+    { number: "03", title: "CREATIVE DIRECTION", text: "Music-video concepts, cover-art concepts, artist branding, visual storytelling and content planning.", image: image3 },
   ];
 
   const visualPortfolio = [
-    { title: "ARTIST PORTRAITS", image: "/images/4.png" },
-    { title: "COVER ART", image: "/images/5.png" },
-    { title: "EVENTS", image: "/images/6.png" },
-    { title: "BEHIND THE SCENES", image: "/images/7.png" },
-    { title: "CAMPAIGNS", image: "/images/8.png" },
-    { title: "MUSIC VIDEOS", image: "/images/9.png" },
+    { title: "ARTIST PORTRAITS", image: image4 },
+    { title: "COVER ART", image: image5 },
+    { title: "EVENTS", image: image6 },
+    { title: "BEHIND THE SCENES", image: image7 },
+    { title: "CAMPAIGNS", image: image8 },
+    { title: "MUSIC VIDEOS", image: image9 },
   ];
 
   return (
