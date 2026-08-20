@@ -15,33 +15,33 @@ import promoStudioTimeImg from "@/imports/IMG_3312.PNG";
 import promoBeatsImg from "@/imports/IMG_3365.PNG";
 import promoSuperstarsImg from "@/imports/IMG_3360.PNG";
 import promoMixMasterImg from "@/imports/IMG_3359.PNG";
-import visual01 from "@/imports/visuals/visual_01.jpg";
-import visual02 from "@/imports/visuals/visual_02.jpg";
-import visual03 from "@/imports/visuals/visual_03.jpg";
-import visual04 from "@/imports/visuals/visual_04.jpg";
-import visual05 from "@/imports/visuals/visual_05.jpg";
-import visual06 from "@/imports/visuals/visual_06.jpg";
-import visual07 from "@/imports/visuals/visual_07.jpg";
-import visual08 from "@/imports/visuals/visual_08.jpg";
-import visual09 from "@/imports/visuals/visual_09.jpg";
-import visual10 from "@/imports/visuals/visual_10.jpg";
-import visual11 from "@/imports/visuals/visual_11.jpg";
-import visual12 from "@/imports/visuals/visual_12.jpg";
-import visual13 from "@/imports/visuals/visual_13.jpg";
-import visual14 from "@/imports/visuals/visual_14.jpg";
-import visual15 from "@/imports/visuals/visual_15.jpg";
-import visual16 from "@/imports/visuals/visual_16.jpg";
-import visual17 from "@/imports/visuals/visual_17.jpg";
-import visual18 from "@/imports/visuals/visual_18.jpg";
-import visual19 from "@/imports/visuals/visual_19.jpg";
-import visual20 from "@/imports/visuals/visual_20.jpg";
-import visual21 from "@/imports/visuals/visual_21.jpg";
-import visual22 from "@/imports/visuals/visual_22.jpg";
-import visual23 from "@/imports/visuals/visual_23.jpg";
-import visual24 from "@/imports/visuals/visual_24.jpg";
-import visual25 from "@/imports/visuals/visual_25.jpg";
-import visual26 from "@/imports/visuals/visual_26.jpg";
-import visual27 from "@/imports/visuals/visual_27.jpg";
+import visual01 from "@/imports/visuals/visual_01.webp";
+import visual02 from "@/imports/visuals/visual_02.webp";
+import visual03 from "@/imports/visuals/visual_03.webp";
+import visual04 from "@/imports/visuals/visual_04.webp";
+import visual05 from "@/imports/visuals/visual_05.webp";
+import visual06 from "@/imports/visuals/visual_06.webp";
+import visual07 from "@/imports/visuals/visual_07.webp";
+import visual08 from "@/imports/visuals/visual_08.webp";
+import visual09 from "@/imports/visuals/visual_09.webp";
+import visual10 from "@/imports/visuals/visual_10.webp";
+import visual11 from "@/imports/visuals/visual_11.webp";
+import visual12 from "@/imports/visuals/visual_12.webp";
+import visual13 from "@/imports/visuals/visual_13.webp";
+import visual14 from "@/imports/visuals/visual_14.webp";
+import visual15 from "@/imports/visuals/visual_15.webp";
+import visual16 from "@/imports/visuals/visual_16.webp";
+import visual17 from "@/imports/visuals/visual_17.webp";
+import visual18 from "@/imports/visuals/visual_18.webp";
+import visual19 from "@/imports/visuals/visual_19.webp";
+import visual20 from "@/imports/visuals/visual_20.webp";
+import visual21 from "@/imports/visuals/visual_21.webp";
+import visual22 from "@/imports/visuals/visual_22.webp";
+import visual23 from "@/imports/visuals/visual_23.webp";
+import visual24 from "@/imports/visuals/visual_24.webp";
+import visual25 from "@/imports/visuals/visual_25.webp";
+import visual26 from "@/imports/visuals/visual_26.webp";
+import visual27 from "@/imports/visuals/visual_27.webp";
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -331,7 +331,7 @@ export default function App() {
           </div>
         </div>
         <div className="intro-image">
-          <img src={deskImg} alt="Galaxy Studios full desk setup with dual monitors and MPC" className="section-photo" />
+          <img src={deskImg} alt="Galaxy Studios full desk setup with dual monitors and MPC" className="section-photo" loading="lazy" decoding="async" />
         </div>
       </section>
 
@@ -339,7 +339,7 @@ export default function App() {
       {/* STUDIO EXPERIENCE */}
       <section className="experience">
         <div className="experience-image">
-          <img src={micWideImg} alt="Condenser microphone with acoustic shield in the recording room" className="section-photo" />
+          <img src={micWideImg} alt="Condenser microphone with acoustic shield in the recording room" className="section-photo" loading="lazy" decoding="async" />
         </div>
         <div className="experience-content">
           <div className="section-number">02 / THE EXPERIENCE</div>
@@ -379,7 +379,7 @@ export default function App() {
       {/* FEATURE BANNER */}
       <section className="feature">
         <div className="feature-image">
-          <img src={monitorsImg} alt="Studio monitor speakers and audio interface on the mixing desk" className="feature-photo" />
+          <img src={monitorsImg} alt="Studio monitor speakers and audio interface on the mixing desk" className="feature-photo" loading="lazy" decoding="async" />
           <div className="feature-overlay" />
           <div className="feature-content">
             <div className="eyebrow">THE GALAXY FIRE STANDARD</div>
@@ -402,7 +402,7 @@ export default function App() {
           <div className="visual-grid">
             {visualSlides[visualSlide].map((image, index) => (
               <div className={`visual-grid-item visual-grid-item-${index + 1}`} key={`${visualSlide}-${index}`}>
-                <img src={image} alt={`Galaxy Fire Studios photography and visual production ${visualSlide * 9 + index + 1}`} />
+                <img src={image} alt={`Galaxy Fire Studios photography and visual production ${visualSlide * 9 + index + 1}`} loading="lazy" decoding="async" />
               </div>
             ))}
           </div>
@@ -545,20 +545,20 @@ export default function App() {
         </div>
         <div className="gallery-grid">
           <div className="gallery-large">
-            <img src={heroImg} alt="Galaxy Studios control room with mixing desk and booth window" className="gallery-photo" />
+            <img src={heroImg} alt="Galaxy Studios control room with mixing desk and booth window" className="gallery-photo" loading="lazy" decoding="async" />
             <div className="gallery-caption">THE CONTROL ROOM</div>
           </div>
           <div className="gallery-col">
             <div className="gallery-small">
-              <img src={micCloseImg} alt="Condenser microphone in the red acoustic vocal booth" className="gallery-photo" />
+              <img src={micCloseImg} alt="Condenser microphone in the red acoustic vocal booth" className="gallery-photo" loading="lazy" decoding="async" />
               <div className="gallery-caption">THE VOCAL BOOTH</div>
             </div>
             <div className="gallery-small">
-              <img src={mpcLitImg} alt="AKAI MPC X with lit cyan performance pads" className="gallery-photo" />
+              <img src={mpcLitImg} alt="AKAI MPC X with lit cyan performance pads" className="gallery-photo" loading="lazy" decoding="async" />
               <div className="gallery-caption">PRODUCTION</div>
             </div>
             <div className="gallery-small">
-              <img src={speakerImg} alt="Studio monitor speaker cone close-up against red velvet wall" className="gallery-photo" />
+              <img src={speakerImg} alt="Studio monitor speaker cone close-up against red velvet wall" className="gallery-photo" loading="lazy" decoding="async" />
               <div className="gallery-caption">THE MONITORS</div>
             </div>
           </div>
@@ -567,15 +567,15 @@ export default function App() {
         {/* Second row */}
         <div className="gallery-row2">
           <div className="gallery-med">
-            <img src={deskImg} alt="Full studio desk with dual monitors, MPC and studio monitors" className="gallery-photo" />
+            <img src={deskImg} alt="Full studio desk with dual monitors, MPC and studio monitors" className="gallery-photo" loading="lazy" decoding="async" />
             <div className="gallery-caption">THE DESK</div>
           </div>
           <div className="gallery-med">
-            <img src={keyboardImg} alt="Studio keyboard with blue LED lighting" className="gallery-photo" />
+            <img src={keyboardImg} alt="Studio keyboard with blue LED lighting" className="gallery-photo" loading="lazy" decoding="async" />
             <div className="gallery-caption">THE KEYS</div>
           </div>
           <div className="gallery-med">
-            <img src={monitorsImg} alt="AKG headphones and studio monitor on mixing desk" className="gallery-photo" />
+            <img src={monitorsImg} alt="AKG headphones and studio monitor on mixing desk" className="gallery-photo" loading="lazy" decoding="async" />
             <div className="gallery-caption">MONITORING</div>
           </div>
         </div>
@@ -583,15 +583,15 @@ export default function App() {
         {/* Third row */}
         <div className="gallery-row2" style={{marginTop: '12px'}}>
           <div className="gallery-med">
-            <img src={micWideImg} alt="Microphone with acoustic shield in the recording room" className="gallery-photo" />
+            <img src={micWideImg} alt="Microphone with acoustic shield in the recording room" className="gallery-photo" loading="lazy" decoding="async" />
             <div className="gallery-caption">THE MIC SETUP</div>
           </div>
           <div className="gallery-med">
-            <img src={mpcDemoImg} alt="AKAI MPC X showing genre demo selection screen" className="gallery-photo" />
+            <img src={mpcDemoImg} alt="AKAI MPC X showing genre demo selection screen" className="gallery-photo" loading="lazy" decoding="async" />
             <div className="gallery-caption">THE MPC</div>
           </div>
           <div className="gallery-med">
-            <img src={interfaceImg} alt="Universal Audio interface close-up on the studio desk" className="gallery-photo" />
+            <img src={interfaceImg} alt="Universal Audio interface close-up on the studio desk" className="gallery-photo" loading="lazy" decoding="async" />
             <div className="gallery-caption">AUDIO INTERFACE</div>
           </div>
         </div>
@@ -746,16 +746,16 @@ export default function App() {
         </div>
         <div className="promo-grid">
           <div className="promo-card">
-            <img src={promoStudioTimeImg} alt="Need some studio time? Reach out today" className="promo-img" />
+            <img src={promoStudioTimeImg} alt="Need some studio time? Reach out today" className="promo-img" loading="lazy" decoding="async" />
           </div>
           <div className="promo-card">
-            <img src={promoBeatsImg} alt="Do you need beats or engineering? Contact us today" className="promo-img" />
+            <img src={promoBeatsImg} alt="Do you need beats or engineering? Contact us today" className="promo-img" loading="lazy" decoding="async" />
           </div>
           <div className="promo-card">
-            <img src={promoSuperstarsImg} alt="Bring out the superstar in you — contact us now" className="promo-img" />
+            <img src={promoSuperstarsImg} alt="Bring out the superstar in you — contact us now" className="promo-img" loading="lazy" decoding="async" />
           </div>
           <div className="promo-card">
-            <img src={promoMixMasterImg} alt="Need to mix and master your music? Reach out to us today" className="promo-img" />
+            <img src={promoMixMasterImg} alt="Need to mix and master your music? Reach out to us today" className="promo-img" loading="lazy" decoding="async" />
           </div>
         </div>
       </section>
@@ -778,7 +778,7 @@ export default function App() {
 
       {/* BOOKING */}
       <section className="booking" id="booking">
-        <img src={interfaceImg} alt="Studio audio interface" className="booking-photo" />
+        <img src={interfaceImg} alt="Studio audio interface" className="booking-photo" loading="lazy" decoding="async" />
         <div className="booking-overlay" />
         <div className="booking-content">
           <div className="eyebrow">GALAXY FIRE STUDIOS · EST. 2020</div>
