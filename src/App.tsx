@@ -15,15 +15,15 @@ import promoStudioTimeImg from "@/imports/IMG_3312.PNG";
 import promoBeatsImg from "@/imports/IMG_3365.PNG";
 import promoSuperstarsImg from "@/imports/IMG_3360.PNG";
 import promoMixMasterImg from "@/imports/IMG_3359.PNG";
-import image1 from "./assets/galaxy-fire/1.png";
-import image2 from "./assets/galaxy-fire/2.png";
-import image3 from "./assets/galaxy-fire/3.png";
-import image4 from "./assets/galaxy-fire/4.png";
-import image5 from "./assets/galaxy-fire/5.png";
-import image6 from "./assets/galaxy-fire/6.png";
-import image7 from "./assets/galaxy-fire/7.png";
-import image8 from "./assets/galaxy-fire/8.png";
-import image9 from "./assets/galaxy-fire/9.png";
+import image1 from "@/assets/galaxy-fire/1.png";
+import image2 from "@/assets/galaxy-fire/2.png";
+import image3 from "@/assets/galaxy-fire/3.png";
+import image4 from "@/assets/galaxy-fire/4.png";
+import image5 from "@/assets/galaxy-fire/5.png";
+import image6 from "@/assets/galaxy-fire/6.png";
+import image7 from "@/assets/galaxy-fire/7.png";
+import image8 from "@/assets/galaxy-fire/8.png";
+import image9 from "@/assets/galaxy-fire/9.png";
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
