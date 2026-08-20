@@ -23,11 +23,11 @@ import promoSuperstarsImg from "./imports/IMG_3360.PNG";
 import promoMixMasterImg from "./imports/IMG_3359.PNG";
 
 /* ============================================================
-   NEW 27 VISUAL IMAGES (MATCHED TO YOUR EXACT FOLDER NAMES)
+   NEW 27 VISUAL IMAGES (ALL LOWERCASE)
    ============================================================ */
 
-import image01 from "./imports/Image_1.jpg";
-import image02 from "./imports/Image_2.jpg";
+import image01 from "./imports/image_1.jpg";
+import image02 from "./imports/image_2.jpg";
 import image03 from "./imports/image_3.jpg";
 import image04 from "./imports/image_4.jpg";
 import image05 from "./imports/image_5.jpg";
