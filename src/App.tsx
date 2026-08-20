@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import logoImg from "@/imports/galaxy_studio_logo_for_video_without_background.png";
 import heroImg from "@/imports/bcff0804-5388-404a-8e04-15f201fad894.JPG";
 import deskImg from "@/imports/3fdd97c2-2891-4094-9214-196df630473f.JPG";
@@ -14,101 +15,6 @@ import promoStudioTimeImg from "@/imports/IMG_3312.PNG";
 import promoBeatsImg from "@/imports/IMG_3365.PNG";
 import promoSuperstarsImg from "@/imports/IMG_3360.PNG";
 import promoMixMasterImg from "@/imports/IMG_3359.PNG";
-
-/* ============================================================
-   27 VISUAL IMAGES (MATCHED TO YOUR LOWERCASE FILES)
-   ============================================================ */
-import image01 from "@/imports/image_1.jpg";
-import image02 from "@/imports/image_2.jpg";
-import image03 from "@/imports/image_3.jpg";
-import image04 from "@/imports/image_4.jpg";
-import image05 from "@/imports/image_5.jpg";
-import image06 from "@/imports/image_6.jpg";
-import image07 from "@/imports/image_7.jpg";
-import image08 from "@/imports/image_8.jpg";
-import image09 from "@/imports/image_9.jpg";
-import image10 from "@/imports/image_10.jpg";
-import image11 from "@/imports/image_11.jpg";
-import image12 from "@/imports/image_12.jpg";
-import image13 from "@/imports/image_13.jpg";
-import image14 from "@/imports/image_14.jpg";
-import image15 from "@/imports/image_15.jpg";
-import image16 from "@/imports/image_16.jpg";
-import image17 from "@/imports/image_17.jpg";
-import image18 from "@/imports/image_18.jpg";
-import image19 from "@/imports/image_19.jpg";
-import image20 from "@/imports/image_20.jpg";
-import image21 from "@/imports/image_21.jpg";
-import image22 from "@/imports/image_22.jpg";
-import image23 from "@/imports/image_23.jpg";
-import image24 from "@/imports/image_24.jpg";
-import image25 from "@/imports/image_25.jpg";
-import image26 from "@/imports/image_26.jpg";
-import image27 from "@/imports/image_27.jpg";
-
-const visualImages = [
-  image01, image02, image03, image04, image05, image06, image07, image08, image09,
-  image10, image11, image12, image13, image14, image15, image16, image17, image18,
-  image19, image20, image21, image22, image23, image24, image25, image26, image27
-];
-
-/* ============================================================
-   VISUAL SLIDER COMPONENT
-   ============================================================ */
-type VisualSliderProps = {
-  images: string[];
-  title: string;
-  number: string;
-};
-
-function VisualSlider({ images, title, number }: VisualSliderProps) {
-  const [current, setCurrent] = useState(0);
-
-  const next = () => {
-    setCurrent((value) => (value === images.length - 1 ? 0 : value + 1));
-  };
-
-  const previous = () => {
-    setCurrent((value) => (value === 0 ? images.length - 1 : value - 1));
-  };
-
-  return (
-    <div className="visual-slider">
-      <div className="visual-slider-image">
-        <img src={images[current]} alt={`${title} ${current + 1}`} />
-        <div className="visual-number">{number}</div>
-        <div className="slider-controls">
-          <button type="button" onClick={previous} aria-label="Previous image">
-            ←
-          </button>
-          <span>
-            {String(current + 1).padStart(2, "0")} / {String(images.length).padStart(2, "0")}
-          </span>
-          <button type="button" onClick={next} aria-label="Next image">
-            →
-          </button>
-        </div>
-      </div>
-      <div className="slider-info">
-        <div>
-          <span className="section-number">{number} / VISUAL PORTFOLIO</span>
-          <h3>{title}</h3>
-        </div>
-        <div className="slider-dots">
-          {images.map((_, index) => (
-            <button
-              type="button"
-              key={index}
-              className={index === current ? "active" : ""}
-              onClick={() => setCurrent(index)}
-              aria-label={`Show image ${index + 1}`}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -135,14 +41,6 @@ export default function App() {
     { title: "Mastering", price: 35000, unit: "per song" },
     { title: "Mix + Master", price: 100000, unit: "per song" },
     { title: "Production Session", price: 30000, unit: "per hour" },
-    { title: "Artist Photoshoot", price: 75000, unit: "starting price" },
-    { title: "Cover Art Shoot", price: 50000, unit: "starting price" },
-    { title: "Event Photography", price: 100000, unit: "starting price" },
-    { title: "Music Video", price: 250000, unit: "starting price" },
-    { title: "Performance Video", price: 150000, unit: "starting price" },
-    { title: "Visualizer", price: 100000, unit: "starting price" },
-    { title: "Lyric Video", price: 75000, unit: "starting price" },
-    { title: "Social Content Package", price: 100000, unit: "starting price" },
   ];
 
   const selectedService = bookingServices.find((service) => service.title === booking.service) || bookingServices[0];
@@ -178,6 +76,7 @@ export default function App() {
     event.preventDefault();
     setPaymentError("");
 
+    // Check studio availability before opening Paystack.
     if (
       booking.service === "The Fire Session" ||
       booking.service === "Studio Hour" ||
@@ -193,14 +92,19 @@ export default function App() {
       };
 
       try {
-        const availabilityResponse = await fetch("/api/check-availability", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            startAt: formatTimestamp(startAt),
-            endAt: formatTimestamp(endAt),
-          }),
-        });
+        const availabilityResponse = await fetch(
+          "/api/check-availability",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              startAt: formatTimestamp(startAt),
+              endAt: formatTimestamp(endAt),
+            }),
+          }
+        );
 
         if (!availabilityResponse.ok) {
           const errorText = await availabilityResponse.text();
@@ -211,12 +115,16 @@ export default function App() {
         const available = await availabilityResponse.json();
 
         if (available !== true) {
-          setPaymentError("Sorry, that time is already booked. Please choose another date or time.");
+          setPaymentError(
+            "Sorry, that time is already booked. Please choose another date or time."
+          );
           return;
         }
       } catch (error) {
         console.error("Availability check failed:", error);
-        setPaymentError("We could not check availability right now. Please try again.");
+        setPaymentError(
+          "We could not check availability right now. Please try again."
+        );
         return;
       }
     }
@@ -312,13 +220,9 @@ export default function App() {
     { number: "06", title: "RELEASE SUPPORT", text: "Get help preparing your music for release, including metadata, distribution guidance and release planning." },
   ];
 
-  /* 27 images split into 3 sets of 9 */
-  const visualSetOne = visualImages.slice(0, 9);
-  const visualSetTwo = visualImages.slice(9, 18);
-  const visualSetThree = visualImages.slice(18, 27);
-
   return (
     <div className="site">
+
       {/* NAVIGATION */}
       <header className="nav">
         <div className="logo">
@@ -333,8 +237,6 @@ export default function App() {
           <a href="#home" onClick={() => setMenuOpen(false)}>HOME</a>
           <a href="#studio" onClick={() => setMenuOpen(false)}>STUDIO</a>
           <a href="#services" onClick={() => setMenuOpen(false)}>SERVICES</a>
-          <a href="#visuals" onClick={() => setMenuOpen(false)}>VISUALS</a>
-          <a href="#pricing" onClick={() => setMenuOpen(false)}>PRICING</a>
           <a href="#booking" onClick={() => setMenuOpen(false)}>BOOK</a>
           <a href="#culture" onClick={() => setMenuOpen(false)}>FOR THE CULTURE</a>
           <a href="#radio" onClick={() => setMenuOpen(false)}>RADIO</a>
@@ -351,6 +253,7 @@ export default function App() {
           {menuOpen ? "✕" : "☰"}
         </button>
       </header>
+
 
       {/* HERO */}
       <section className="hero" id="home">
@@ -369,6 +272,7 @@ export default function App() {
         <div className="scroll">SCROLL TO EXPLORE <span>↓</span></div>
       </section>
 
+
       {/* INTRO */}
       <section className="intro" id="studio">
         <div className="intro-text">
@@ -386,6 +290,7 @@ export default function App() {
           <img src={deskImg} alt="Galaxy Studios full desk setup with dual monitors and MPC" className="section-photo" />
         </div>
       </section>
+
 
       {/* STUDIO EXPERIENCE */}
       <section className="experience">
@@ -406,6 +311,7 @@ export default function App() {
         </div>
       </section>
 
+
       {/* SERVICES */}
       <section className="services" id="services">
         <div className="section-heading">
@@ -425,29 +331,6 @@ export default function App() {
         </div>
       </section>
 
-      {/* VISUALS SECTION */}
-      <section id="visuals" className="visual-section">
-        <div className="section-heading">
-          <div className="section-number">04 / PHOTOGRAPHY &amp; VIDEOGRAPHY</div>
-          <h2>MAKE IT <br /><span>VISIBLE.</span></h2>
-        </div>
-
-        <VisualSlider
-          images={visualSetOne}
-          number="01"
-          title="PHOTOGRAPHY & CREATIVE VISUALS"
-        />
-        <VisualSlider
-          images={visualSetTwo}
-          number="02"
-          title="ARTIST & PROJECT VISUALS"
-        />
-        <VisualSlider
-          images={visualSetThree}
-          number="03"
-          title="VIDEOGRAPHY & VISUAL STORYTELLING"
-        />
-      </section>
 
       {/* FEATURE BANNER */}
       <section className="feature">
@@ -462,14 +345,16 @@ export default function App() {
         </div>
       </section>
 
+
       {/* PRICING */}
       <section className="pricing" id="pricing">
         <div className="section-heading center">
-          <div className="section-number">05 / PRICING</div>
+          <div className="section-number">04 / PRICING</div>
           <h2>STUDIO<br /><span>RATES.</span></h2>
           <p>Professional services. Straightforward pricing. No unnecessary complications.</p>
         </div>
         <div className="pricing-grid">
+
           <div className="price-card featured">
             <div className="popular">MOST POPULAR</div>
             <div className="price-category">RECORDING</div>
@@ -542,13 +427,15 @@ export default function App() {
             </ul>
             <button type="button" className="price-button" onClick={() => openBooking("Production Session")}>START CREATING →</button>
           </div>
+
         </div>
       </section>
+
 
       {/* GALLERY */}
       <section className="gallery" id="gallery">
         <div className="section-heading">
-          <div className="section-number">06 / GALLERY</div>
+          <div className="section-number">05 / GALLERY</div>
           <h2>INSIDE<br /><span>THE FIRE.</span></h2>
         </div>
         <div className="gallery-grid">
@@ -572,6 +459,7 @@ export default function App() {
           </div>
         </div>
 
+        {/* Second row */}
         <div className="gallery-row2">
           <div className="gallery-med">
             <img src={deskImg} alt="Full studio desk with dual monitors, MPC and studio monitors" className="gallery-photo" />
@@ -587,7 +475,8 @@ export default function App() {
           </div>
         </div>
 
-        <div className="gallery-row2" style={{ marginTop: '12px' }}>
+        {/* Third row */}
+        <div className="gallery-row2" style={{marginTop: '12px'}}>
           <div className="gallery-med">
             <img src={micWideImg} alt="Microphone with acoustic shield in the recording room" className="gallery-photo" />
             <div className="gallery-caption">THE MIC SETUP</div>
@@ -602,6 +491,7 @@ export default function App() {
           </div>
         </div>
       </section>
+
 
       {/* FOR THE CULTURE */}
       <section className="culture" id="culture">
@@ -669,7 +559,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* ECOSYSTEM PREVIEWS */}
+      {/* ECOSYSTEM COMING SOON */}
       <section className="ecosystem-preview" id="radio">
         <div className="ecosystem-preview-inner">
           <div>
@@ -765,6 +655,7 @@ export default function App() {
         </div>
       </section>
 
+
       {/* WHY GALAXY FIRE */}
       <section className="why">
         <div className="why-content">
@@ -779,6 +670,7 @@ export default function App() {
         </div>
       </section>
 
+
       {/* BOOKING */}
       <section className="booking" id="booking">
         <img src={interfaceImg} alt="Studio audio interface" className="booking-photo" />
@@ -791,14 +683,13 @@ export default function App() {
             <button type="button" className="button red" onClick={() => openBooking()}>BOOK & PAY ONLINE</button>
             <a href="https://wa.me/2348035345977" className="button outline">BOOK VIA WHATSAPP</a>
           </div>
-          <div className="contact-details" id="contact">
+          <div className="contact-details">
             <div><span>EMAIL</span>galaxyfirestudios@gmail.com</div>
             <div><span>PHONE / WHATSAPP</span>+234 803 534 5977</div>
           </div>
         </div>
       </section>
 
-      {/* BOOKING MODAL */}
       {bookingOpen && (
         <div className="booking-modal" role="dialog" aria-modal="true" aria-labelledby="booking-title">
           <div className="booking-modal-backdrop" onClick={closeBooking} />
@@ -818,69 +709,613 @@ export default function App() {
                       ))}
                     </select>
                   </label>
-
-                  <div className="form-row">
-                    <label>
-                      DATE
-                      <input type="date" required value={booking.date} onChange={(e) => updateBooking("date", e.target.value)} />
-                    </label>
-                    <label>
-                      TIME
-                      <input type="time" required value={booking.time} onChange={(e) => updateBooking("time", e.target.value)} />
-                    </label>
+                  <div className="booking-form-grid">
+                    <label>DATE<input required type="date" min={new Date().toISOString().split("T")[0]} value={booking.date} onChange={(e) => updateBooking("date", e.target.value)} /></label>
+                    <label>PREFERRED TIME<input required type="time" value={booking.time} onChange={(e) => updateBooking("time", e.target.value)} /></label>
                   </div>
-
-                  <div className="form-row">
-                    <label>
-                      FULL NAME
-                      <input type="text" required placeholder="Your Name" value={booking.name} onChange={(e) => updateBooking("name", e.target.value)} />
-                    </label>
-                    <label>
-                      PHONE
-                      <input type="tel" required placeholder="+234..." value={booking.phone} onChange={(e) => updateBooking("phone", e.target.value)} />
-                    </label>
+                  <div className="booking-form-grid">
+                    <label>FULL NAME<input required type="text" placeholder="Your name" value={booking.name} onChange={(e) => updateBooking("name", e.target.value)} /></label>
+                    <label>PHONE / WHATSAPP<input required type="tel" placeholder="080..." value={booking.phone} onChange={(e) => updateBooking("phone", e.target.value)} /></label>
                   </div>
-
-                  <label>
-                    EMAIL ADDRESS
-                    <input type="email" required placeholder="you@example.com" value={booking.email} onChange={(e) => updateBooking("email", e.target.value)} />
-                  </label>
-
-                  <label>
-                    SESSION NOTES (OPTIONAL)
-                    <textarea placeholder="Tell us about your project or requests..." value={booking.notes} onChange={(e) => updateBooking("notes", e.target.value)} />
-                  </label>
-
+                  <label>EMAIL<input required type="email" placeholder="you@example.com" value={booking.email} onChange={(e) => updateBooking("email", e.target.value)} /></label>
+                  <label>NOTES / SONG DETAILS<textarea rows={3} placeholder="Tell us anything we should know before the session..." value={booking.notes} onChange={(e) => updateBooking("notes", e.target.value)} /></label>
                   <div className="payment-options">
-                    <label className={booking.payment === "deposit" ? "selected" : ""}>
-                      <input type="radio" name="payment" value="deposit" checked={booking.payment === "deposit"} onChange={() => updateBooking("payment", "deposit")} />
-                      <span>50% DEPOSIT ({formatNaira(Math.round(selectedService.price * 0.5))})</span>
-                    </label>
-                    <label className={booking.payment === "full" ? "selected" : ""}>
-                      <input type="radio" name="payment" value="full" checked={booking.payment === "full"} onChange={() => updateBooking("payment", "full")} />
-                      <span>FULL AMOUNT ({formatNaira(selectedService.price)})</span>
-                    </label>
+                    <button type="button" className={booking.payment === "deposit" ? "payment-option active" : "payment-option"} onClick={() => updateBooking("payment", "deposit")}><span>50% DEPOSIT</span><strong>{formatNaira(selectedService.price * 0.5)}</strong><small>Secure your booking</small></button>
+                    <button type="button" className={booking.payment === "full" ? "payment-option active" : "payment-option"} onClick={() => updateBooking("payment", "full")}><span>FULL PAYMENT</span><strong>{formatNaira(selectedService.price)}</strong><small>Pay in full</small></button>
                   </div>
-
-                  {paymentError && <div className="payment-error">{paymentError}</div>}
-
-                  <button type="submit" className="button red full-width" disabled={paymentProcessing}>
-                    {paymentProcessing ? "PROCESSING..." : `PAY ${formatNaira(amountDue)} NOW →`}
+                  <div className="booking-total"><span>AMOUNT DUE</span><strong>{formatNaira(amountDue)}</strong></div>
+                  <button className="button red booking-submit" type="submit" disabled={paymentProcessing}>
+                    {paymentProcessing ? "OPENING PAYSTACK..." : `PAY ${formatNaira(amountDue)} WITH PAYSTACK →`}
                   </button>
+                  {paymentError && <p className="booking-payment-error" role="alert">{paymentError}</p>}
+                  <p className="booking-payment-note">Secure payment is processed by Paystack. Your booking is confirmed only after the payment is verified.</p>
                 </form>
               </>
             ) : (
               <div className="booking-success">
-                <div className="section-number">BOOKING / CONFIRMED</div>
-                <h2>YOU'RE<br /><span>BOOKED.</span></h2>
-                <p>Thank you! Your payment has been processed and your booking is received.</p>
-                <div className="ref-box">REFERENCE: <strong>{paymentReference}</strong></div>
-                <button type="button" className="button red" onClick={closeBooking}>DONE</button>
+                <div className="success-mark">✓</div>
+                <div className="section-number">BOOKING REQUEST SENT</div>
+                <h2>YOU'RE ON<br /><span>THE LIST.</span></h2>
+                <p>Your payment has been received and verified. Galaxy Fire Studios will contact you to confirm your session slot.</p>
+                {paymentReference && <p className="booking-reference">PAYMENT REFERENCE: <strong>{paymentReference}</strong></p>}
+                <div className="booking-success-actions">
+                  <a className="button outline" href={`https://wa.me/2348035345977?text=${encodeURIComponent(`Hi Galaxy Fire Studios, I just paid for ${booking.service}. Payment reference: ${paymentReference}. My preferred date/time is ${booking.date} at ${booking.time}.`)}`} target="_blank" rel="noreferrer">MESSAGE US ON WHATSAPP</a>
+                  <button type="button" className="button red" onClick={closeBooking}>DONE</button>
+                </div>
               </div>
             )}
           </div>
         </div>
       )}
+
+      {/* FOOTER */}
+      <footer id="contact">
+        <div className="footer-top">
+          <div className="footer-brand">
+            <div className="logo">
+              <img src={logoImg} alt="Galaxy Studios logo" className="logo-img" />
+              <div>
+                <div className="logo-title">GALAXY FIRE</div>
+                <div className="logo-sub">STUDIOS · EST. 2020</div>
+              </div>
+            </div>
+            <p>Record. Create. Ignite.</p>
+          </div>
+          <div className="footer-links">
+            <div>
+              <span>EXPLORE</span>
+              <a href="#home">Home</a>
+              <a href="#studio">Studio</a>
+              <a href="#services">Services</a>
+              <a href="#booking">Book a Session</a>
+              <a href="#culture">For the Culture</a>
+              <a href="#beats">Beats</a>
+              <a href="#shop">Shop</a>
+            </div>
+            <div>
+              <span>CONTACT</span>
+              <a href="#booking">Book a Session</a>
+              <a href="mailto:galaxyfirestudios@gmail.com">Email Us</a>
+              <a href="https://wa.me/2348035345977">WhatsApp</a>
+            </div>
+          </div>
+        </div>
+        <div className="footer-bottom">
+          <span>© 2026 GALAXY FIRE STUDIOS</span>
+          <span>EST. 2020 · NIGERIA</span>
+        </div>
+      </footer>
+
+
+      <style>{`
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+          margin: 0;
+          font-family: 'Barlow', Arial, sans-serif;
+          background: #080808;
+          color: white;
+        }
+
+        .site { background: #080808; overflow: hidden; }
+        a { color: inherit; text-decoration: none; }
+
+        /* NAV */
+        .nav {
+          position: fixed; top: 0; left: 0; right: 0; height: 82px; z-index: 100;
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 0 5%;
+          background: rgba(5,5,5,.92);
+          backdrop-filter: blur(14px);
+          border-bottom: 1px solid rgba(255,255,255,.07);
+        }
+
+        .logo { display: flex; align-items: center; gap: 12px; }
+
+        .logo-img {
+          width: 46px; height: 46px;
+          object-fit: contain;
+          border-radius: 50%;
+        }
+
+        .logo-title { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 900; letter-spacing: 2px; }
+        .logo-sub { margin-top: 3px; font-size: 8px; letter-spacing: 2px; color: #888; font-family: 'Barlow Condensed', sans-serif; }
+
+        .nav-links { display: flex; gap: 34px; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 800; letter-spacing: 1.5px; }
+        .nav-links a { transition: color .2s; }
+        .nav-links a:hover { color: #e50914; }
+
+        .nav-button {
+          padding: 13px 22px;
+          background: #e50914;
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 11px; font-weight: 900; letter-spacing: 1px;
+        }
+
+        .menu-button { display: none; background: none; color: white; border: none; font-size: 22px; cursor: pointer; }
+
+        /* HERO */
+        .hero { min-height: 100vh; position: relative; display: flex; align-items: center; }
+
+        .hero-photo {
+          position: absolute; inset: 0; width: 100%; height: 100%;
+          object-fit: cover; object-position: center;
+        }
+
+        .hero-overlay {
+          position: absolute; inset: 0;
+          background: linear-gradient(90deg, rgba(0,0,0,.88) 0%, rgba(0,0,0,.5) 60%, rgba(0,0,0,.2) 100%);
+        }
+
+        .hero-content {
+          position: relative; z-index: 2;
+          max-width: 1100px; padding: 150px 8% 100px;
+        }
+
+        .eyebrow, .section-number {
+          color: #e50914; font-family: 'Barlow Condensed', sans-serif;
+          font-size: 11px; font-weight: 900; letter-spacing: 3px;
+        }
+
+        h1 {
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: clamp(60px, 9vw, 130px);
+          line-height: .88; margin: 25px 0; font-weight: 900; letter-spacing: -2px;
+        }
+
+        h1 span, h2 span { color: #e50914; }
+
+        .hero-content p { max-width: 500px; color: #ccc; font-size: 17px; line-height: 1.7; }
+
+        .hero-buttons, .booking-buttons { display: flex; gap: 14px; margin-top: 35px; flex-wrap: wrap; }
+
+        .button { padding: 16px 24px; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 900; letter-spacing: 1.5px; }
+        .button.red { background: #e50914; }
+        .button.outline { border: 1px solid rgba(255,255,255,.45); }
+        .button:hover { opacity: .88; }
+
+        .hero-est { margin-top: 80px; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 4px; color: #888; }
+
+        .scroll {
+          position: absolute; bottom: 30px; right: 6%;
+          display: flex; align-items: center; gap: 12px;
+          font-family: 'Barlow Condensed', sans-serif; font-size: 9px; letter-spacing: 2px; color: #aaa;
+        }
+        .scroll span { color: #e50914; font-size: 20px; }
+
+        /* SECTIONS */
+        section { padding: 130px 7%; }
+
+        h2 {
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: clamp(50px, 7vw, 100px);
+          line-height: .9; letter-spacing: -2px; margin: 25px 0; font-weight: 900;
+        }
+
+        /* SECTION PHOTOS */
+        .section-photo { width: 100%; height: 100%; min-height: 580px; object-fit: cover; display: block; }
+
+        /* INTRO */
+        .intro {
+          display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
+          background: #0b0b0b;
+        }
+
+        .intro-text p { max-width: 540px; color: #aaa; line-height: 1.8; font-size: 16px; }
+        .intro-image { min-height: 580px; overflow: hidden; }
+
+        .stats { display: flex; gap: 50px; margin-top: 50px; }
+        .stats div { display: flex; flex-direction: column; gap: 6px; }
+        .stats strong { font-family: 'Barlow Condensed', sans-serif; color: #e50914; font-size: 34px; font-weight: 900; }
+        .stats span { font-family: 'Barlow Condensed', sans-serif; font-size: 9px; color: #666; letter-spacing: 2px; }
+
+        /* EXPERIENCE */
+        .experience {
+          display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
+          background: #0e0e0e;
+        }
+        .experience-image { min-height: 580px; overflow: hidden; }
+        .experience-content > p { max-width: 520px; color: #aaa; line-height: 1.8; font-size: 16px; }
+        .experience-content h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; letter-spacing: 1px; margin-top: -5px; font-weight: 700; }
+
+        .steps { margin-top: 45px; }
+        .step { display: flex; gap: 25px; padding: 22px 0; border-top: 1px solid #222; }
+        .step > span { color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 15px; }
+        .step strong { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: 2px; }
+        .step p { margin: 7px 0 0; color: #666; font-size: 13px; }
+
+        /* SERVICES */
+        .services { background: #080808; }
+
+        .section-heading { max-width: 650px; margin-bottom: 70px; }
+        .section-heading.center { margin-left: auto; margin-right: auto; text-align: center; }
+        .section-heading p { color: #777; line-height: 1.7; font-size: 15px; }
+
+        .service-grid {
+          display: grid; grid-template-columns: repeat(3, 1fr);
+          border-top: 1px solid #242424; border-left: 1px solid #242424;
+        }
+
+        .service-card {
+          min-height: 340px; padding: 40px;
+          border-right: 1px solid #242424; border-bottom: 1px solid #242424;
+          transition: background .25s;
+        }
+        .service-card:hover { background: #141414; }
+        .service-number { color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 900; letter-spacing: 1px; }
+        .service-card h3 { font-family: 'Barlow Condensed', sans-serif; margin-top: 70px; font-size: 20px; letter-spacing: 1px; }
+        .service-card p { color: #777; line-height: 1.7; font-size: 13px; }
+        .service-card a { display: inline-block; margin-top: 20px; color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 900; letter-spacing: 1px; }
+
+        /* FEATURE */
+        .feature { padding: 0; }
+        .feature-image { min-height: 680px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .feature-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; }
+        .feature-overlay { position: absolute; inset: 0; background: linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.88)); }
+        .feature-content { position: relative; text-align: center; z-index: 1; }
+        .feature-content h2 { font-size: clamp(55px, 8vw, 115px); }
+
+        /* PRICING */
+        .pricing { background: #0b0b0b; }
+        .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; max-width: 1250px; margin: auto; }
+
+        .price-card { position: relative; background: #111; border: 1px solid #252525; padding: 40px; }
+        .price-card.featured { border-color: #e50914; }
+
+        .popular { position: absolute; top: 0; right: 0; padding: 8px 12px; background: #e50914; font-family: 'Barlow Condensed', sans-serif; font-size: 9px; font-weight: 900; letter-spacing: 1px; }
+        .price-category { color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 900; letter-spacing: 2px; }
+        .price-card h3 { font-family: 'Barlow Condensed', sans-serif; margin-top: 28px; font-size: 20px; letter-spacing: .5px; }
+        .price { font-family: 'Barlow Condensed', sans-serif; font-size: 42px; font-weight: 900; margin: 22px 0 8px; }
+        .price-detail { color: #555; font-family: 'Barlow Condensed', sans-serif; font-size: 9px; letter-spacing: 2px; }
+        .price-card ul { padding: 22px 0; margin: 0; list-style: none; border-top: 1px solid #252525; border-bottom: 1px solid #252525; margin-top: 28px; }
+        .price-card li { padding: 7px 0; color: #999; font-size: 12px; }
+        .price-card li::before { content: "✓"; color: #e50914; margin-right: 10px; }
+        .price-button { display: block; margin-top: 22px; padding: 14px; text-align: center; border: 1px solid #383838; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 900; letter-spacing: 1px; transition: border-color .2s, color .2s; }
+        .price-button:hover { border-color: #e50914; color: #e50914; }
+
+        /* GALLERY */
+        .gallery { background: #080808; }
+
+        .gallery-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+
+        .gallery-large { position: relative; overflow: hidden; min-height: 640px; }
+        .gallery-col { display: flex; flex-direction: column; gap: 12px; }
+        .gallery-small { position: relative; overflow: hidden; flex: 1; min-height: 200px; }
+
+        .gallery-photo { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s ease; }
+        .gallery-large:hover .gallery-photo,
+        .gallery-small:hover .gallery-photo,
+        .gallery-med:hover .gallery-photo { transform: scale(1.04); }
+
+        .gallery-caption {
+          position: absolute; bottom: 0; left: 0; right: 0;
+          padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,.75));
+          font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 900; letter-spacing: 2px; color: rgba(255,255,255,.75);
+        }
+
+        .gallery-row2 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; }
+        .gallery-med { position: relative; overflow: hidden; min-height: 280px; }
+
+        /* WHY */
+        .why { background: #111; }
+        .why-content { max-width: 1200px; margin: auto; }
+        .why-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 35px; margin-top: 80px; }
+        .why-grid strong { color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 900; }
+        .why-grid h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 15px; letter-spacing: 1px; margin-top: 30px; }
+        .why-grid p { color: #666; font-size: 13px; line-height: 1.6; }
+
+        /* BOOKING */
+        .booking { min-height: 750px; position: relative; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
+        .booking-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+        .booking-overlay { position: absolute; inset: 0; background: linear-gradient(rgba(0,0,0,.72), rgba(0,0,0,.92)); }
+        .booking-content { position: relative; z-index: 1; max-width: 900px; padding: 0 5%; }
+        .booking-content h2 { font-size: clamp(55px, 8vw, 110px); }
+        .booking-content p { max-width: 520px; margin: auto; color: #999; line-height: 1.7; }
+        .booking-buttons { justify-content: center; }
+
+        .contact-details { display: flex; justify-content: center; gap: 70px; margin-top: 80px; }
+        .contact-details div { display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+        .contact-details span { color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-size: 8px; font-weight: 900; letter-spacing: 2px; }
+
+        /* BOOKING MODAL */
+        .booking-buttons button { cursor: pointer; border: 0; color: white; }
+        .price-button { cursor: pointer; border: 0; background: transparent; color: white; font-family: inherit; font-weight: 900; letter-spacing: 1.5px; font-size: 11px; padding: 0; }
+        .booking-modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 25px; }
+        .booking-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.86); backdrop-filter: blur(8px); }
+        .booking-modal-card { position: relative; z-index: 1; width: min(760px, 100%); max-height: 92vh; overflow-y: auto; background: #0b0b0b; border: 1px solid #272727; padding: 48px; box-shadow: 0 30px 100px rgba(0,0,0,.6); }
+        .booking-close { position: absolute; top: 15px; right: 18px; border: 0; background: transparent; color: #aaa; font-size: 32px; cursor: pointer; line-height: 1; }
+        .booking-modal-card h2 { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(48px, 7vw, 82px); line-height: .88; margin: 16px 0 22px; }
+        .booking-modal-intro { color: #888; line-height: 1.6; max-width: 600px; margin-bottom: 30px; }
+        .booking-form { display: flex; flex-direction: column; gap: 18px; }
+        .booking-form label { display: flex; flex-direction: column; gap: 8px; color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 900; letter-spacing: 1.8px; }
+        .booking-form input, .booking-form select, .booking-form textarea { width: 100%; box-sizing: border-box; border: 1px solid #2b2b2b; background: #121212; color: white; padding: 14px; font: 14px Arial, sans-serif; outline: none; }
+        .booking-form input:focus, .booking-form select:focus, .booking-form textarea:focus { border-color: #e50914; }
+        .booking-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .payment-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .payment-option { text-align: left; cursor: pointer; border: 1px solid #292929; background: #101010; color: white; padding: 18px; display: flex; flex-direction: column; gap: 7px; }
+        .payment-option.active { border-color: #e50914; background: #18090a; }
+        .payment-option span { color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 900; letter-spacing: 1.5px; }
+        .payment-option strong { font-size: 24px; }
+        .payment-option small { color: #777; }
+        .booking-total { border-top: 1px solid #242424; border-bottom: 1px solid #242424; padding: 17px 0; display: flex; justify-content: space-between; align-items: center; }
+        .booking-total span { color: #777; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; letter-spacing: 2px; }
+        .booking-total strong { font-size: 28px; }
+        .booking-submit { cursor: pointer; border: 0; color: white; width: 100%; margin-top: 4px; }
+        .booking-payment-error { color: #ff5a61; margin: 12px 0 0; font-size: 13px; line-height: 1.5; }
+        .booking-payment-note { color: #666; font-size: 11px; line-height: 1.6; text-align: center; }
+        .booking-success { text-align: center; padding: 30px 10px 10px; }
+        .booking-success h2 { margin-bottom: 25px; }
+        .booking-success p { max-width: 520px; margin: 0 auto 30px; color: #888; line-height: 1.7; }
+        .success-mark { width: 58px; height: 58px; display: grid; place-items: center; margin: 0 auto 25px; border: 1px solid #e50914; color: #e50914; font-size: 28px; }
+
+        /* FOOTER */
+        footer { padding: 80px 7% 30px; background: #050505; }
+        .footer-top { display: flex; justify-content: space-between; padding-bottom: 70px; }
+        .footer-brand p { color: #666; margin-top: 20px; font-size: 14px; }
+        .footer-links { display: flex; gap: 100px; }
+        .footer-links div { display: flex; flex-direction: column; gap: 14px; }
+        .footer-links span { color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-size: 9px; letter-spacing: 2px; margin-bottom: 6px; }
+        .footer-links a { color: #777; font-size: 13px; transition: color .2s; }
+        .footer-links a:hover { color: white; }
+        .footer-bottom { border-top: 1px solid #1a1a1a; padding-top: 25px; display: flex; justify-content: space-between; color: #444; font-family: 'Barlow Condensed', sans-serif; font-size: 9px; letter-spacing: 1px; }
+
+        /* FOR THE CULTURE */
+        .culture { background: #0a0a0a; }
+        .culture-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 12px;
+          margin-top: 55px;
+        }
+        .culture-card {
+          min-height: 420px;
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 32px;
+          background: #111;
+          border: 1px solid #252525;
+          overflow: hidden;
+          transition: transform .3s ease, border-color .3s ease, background .3s ease;
+        }
+        .culture-card::after {
+          content: "";
+          position: absolute;
+          width: 180px;
+          height: 180px;
+          right: -70px;
+          bottom: -70px;
+          border-radius: 50%;
+          background: rgba(229,9,20,.08);
+          transition: transform .4s ease;
+        }
+        .culture-card:hover {
+          transform: translateY(-5px);
+          border-color: #e50914;
+          background: #151515;
+        }
+        .culture-card:hover::after { transform: scale(1.5); }
+        .culture-card-featured {
+          background: linear-gradient(145deg, #171717, #0d0d0d);
+          border-color: #e50914;
+        }
+        .culture-card-number {
+          position: relative;
+          z-index: 1;
+          color: #e50914;
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 12px;
+          font-weight: 900;
+          letter-spacing: 1px;
+        }
+        .culture-card-content {
+          position: relative;
+          z-index: 1;
+        }
+        .culture-card-content > span {
+          color: #777;
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 9px;
+          font-weight: 900;
+          letter-spacing: 2px;
+        }
+        .culture-card h3 {
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 31px;
+          line-height: .95;
+          letter-spacing: -0.5px;
+          margin: 15px 0 18px;
+        }
+        .culture-card p {
+          color: #777;
+          font-size: 13px;
+          line-height: 1.7;
+          margin: 0 0 25px;
+        }
+        .culture-card strong {
+          color: #e50914;
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: 1.2px;
+        }
+        .culture-statement {
+          margin-top: 12px;
+          padding: 35px;
+          border: 1px solid #242424;
+          background: #111;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 50px;
+          align-items: center;
+        }
+        .culture-statement h3 {
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 32px;
+          margin: 12px 0 0;
+          letter-spacing: 1px;
+        }
+        .culture-statement p {
+          color: #777;
+          line-height: 1.8;
+          font-size: 14px;
+          margin: 0;
+        }
+
+        /* ECOSYSTEM PREVIEWS */
+        .ecosystem-preview {
+          padding: 120px 7%;
+          background: #0b0b0b;
+          border-top: 1px solid #181818;
+        }
+        .ecosystem-preview.dark { background: #080808; }
+        .ecosystem-preview-inner {
+          max-width: 1200px;
+          margin: auto;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 70px;
+        }
+        .ecosystem-preview-inner > div:first-child { max-width: 700px; }
+        .ecosystem-preview h2 {
+          font-size: clamp(50px, 7vw, 95px);
+          margin-bottom: 25px;
+        }
+        .ecosystem-preview p {
+          max-width: 600px;
+          color: #777;
+          line-height: 1.8;
+          font-size: 15px;
+          margin: 0;
+        }
+        .ecosystem-status {
+          min-width: 260px;
+          padding: 30px;
+          border: 1px solid #2b2b2b;
+          background: #101010;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .ecosystem-status span {
+          color: #e50914;
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 9px;
+          font-weight: 900;
+          letter-spacing: 2px;
+        }
+        .ecosystem-status strong {
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 26px;
+          letter-spacing: 1px;
+        }
+        .ecosystem-status small {
+          color: #555;
+          font-size: 9px;
+          line-height: 1.6;
+          letter-spacing: 1px;
+        }
+
+        /* ABOUT PREVIEW */
+        .about-preview {
+          padding: 120px 7%;
+          background: #111;
+          border-top: 1px solid #1c1c1c;
+        }
+        .about-preview-inner {
+          max-width: 1000px;
+          margin: auto;
+        }
+        .about-preview h2 { font-size: clamp(55px, 8vw, 110px); }
+        .about-preview p {
+          max-width: 620px;
+          color: #888;
+          line-height: 1.8;
+          font-size: 16px;
+          margin-bottom: 35px;
+        }
+
+        /* PROMO */
+        .promo-section { background: #0a0a0a; }
+
+        .promo-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 16px;
+          margin-top: 20px;
+        }
+
+        .promo-card {
+          position: relative;
+          overflow: hidden;
+          border: 1px solid #222;
+          aspect-ratio: 1 / 1;
+          transition: transform .3s ease, border-color .3s;
+        }
+
+        .promo-card:hover {
+          transform: translateY(-4px);
+          border-color: #e50914;
+        }
+
+        .promo-img {
+          width: 100%; height: 100%;
+          object-fit: cover; display: block;
+          transition: transform .5s ease;
+        }
+
+        .promo-card:hover .promo-img { transform: scale(1.04); }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+          .nav-links {
+            display: none; position: absolute; top: 82px; left: 0; right: 0;
+            background: #0a0a0a; padding: 30px; flex-direction: column; border-bottom: 1px solid #222; max-height: calc(100vh - 82px); overflow-y: auto;
+          }
+          .nav-links.open { display: flex; }
+          .nav-button { display: none; }
+          .menu-button { display: block; }
+          .intro, .experience { grid-template-columns: 1fr; }
+          .experience-image { order: -1; }
+          .service-grid, .pricing-grid { grid-template-columns: 1fr 1fr; }
+          .why-grid { grid-template-columns: 1fr 1fr; }
+          .gallery-grid { grid-template-columns: 1fr; }
+          .gallery-row2 { grid-template-columns: 1fr 1fr; }
+          .promo-grid { grid-template-columns: 1fr 1fr; }
+          .culture-grid { grid-template-columns: 1fr 1fr; }
+          .culture-statement { grid-template-columns: 1fr; gap: 25px; }
+          .ecosystem-preview-inner { flex-direction: column; align-items: flex-start; gap: 40px; }
+          .footer-top { flex-direction: column; gap: 50px; }
+          .footer-links { gap: 50px; }
+        }
+
+        @media (max-width: 600px) {
+          section { padding: 90px 6%; }
+          .hero-content { padding: 140px 6% 80px; }
+          h1 { font-size: 58px; }
+          h2 { font-size: 52px; }
+          .hero-buttons, .booking-buttons { flex-direction: column; }
+          .button { text-align: center; }
+          .service-grid, .pricing-grid, .why-grid { grid-template-columns: 1fr; }
+          .gallery-row2 { grid-template-columns: 1fr; }
+          .promo-grid { grid-template-columns: 1fr 1fr; }
+          .culture-grid { grid-template-columns: 1fr; }
+          .culture-card { min-height: 360px; }
+          .culture-statement { padding: 25px; }
+          .ecosystem-preview, .about-preview { padding: 90px 6%; }
+          .ecosystem-status { width: 100%; min-width: 0; }
+          .stats { gap: 25px; }
+          .contact-details { flex-direction: column; gap: 25px; align-items: center; }
+          .booking-modal { padding: 10px; }
+          .booking-modal-card { padding: 35px 20px 25px; max-height: 96vh; }
+          .booking-form-grid, .payment-options { grid-template-columns: 1fr; }
+          .booking-total strong { font-size: 22px; }
+          .footer-bottom { flex-direction: column; gap: 12px; }
+        }
+      `}</style>
     </div>
   );
 }
