@@ -15,38 +15,20 @@ import promoStudioTimeImg from "@/imports/IMG_3312.PNG";
 import promoBeatsImg from "@/imports/IMG_3365.PNG";
 import promoSuperstarsImg from "@/imports/IMG_3360.PNG";
 import promoMixMasterImg from "@/imports/IMG_3359.PNG";
-import visual01 from "@/imports/visuals/visual_01.webp";
-import visual02 from "@/imports/visuals/visual_02.webp";
-import visual03 from "@/imports/visuals/visual_03.webp";
-import visual04 from "@/imports/visuals/visual_04.webp";
-import visual05 from "@/imports/visuals/visual_05.webp";
-import visual06 from "@/imports/visuals/visual_06.webp";
-import visual07 from "@/imports/visuals/visual_07.webp";
-import visual08 from "@/imports/visuals/visual_08.webp";
-import visual09 from "@/imports/visuals/visual_09.webp";
-import visual10 from "@/imports/visuals/visual_10.webp";
-import visual11 from "@/imports/visuals/visual_11.webp";
-import visual12 from "@/imports/visuals/visual_12.webp";
-import visual13 from "@/imports/visuals/visual_13.webp";
-import visual14 from "@/imports/visuals/visual_14.webp";
-import visual15 from "@/imports/visuals/visual_15.webp";
-import visual16 from "@/imports/visuals/visual_16.webp";
-import visual17 from "@/imports/visuals/visual_17.webp";
-import visual18 from "@/imports/visuals/visual_18.webp";
-import visual19 from "@/imports/visuals/visual_19.webp";
-import visual20 from "@/imports/visuals/visual_20.webp";
-import visual21 from "@/imports/visuals/visual_21.webp";
-import visual22 from "@/imports/visuals/visual_22.webp";
-import visual23 from "@/imports/visuals/visual_23.webp";
-import visual24 from "@/imports/visuals/visual_24.webp";
-import visual25 from "@/imports/visuals/visual_25.webp";
-import visual26 from "@/imports/visuals/visual_26.webp";
-import visual27 from "@/imports/visuals/visual_27.webp";
+import image1 from "./assets/galaxy-fire/1.png";
+import image2 from "./assets/galaxy-fire/2.png";
+import image3 from "./assets/galaxy-fire/3.png";
+import image4 from "./assets/galaxy-fire/4.png";
+import image5 from "./assets/galaxy-fire/5.png";
+import image6 from "./assets/galaxy-fire/6.png";
+import image7 from "./assets/galaxy-fire/7.png";
+import image8 from "./assets/galaxy-fire/8.png";
+import image9 from "./assets/galaxy-fire/9.png";
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [visualSlide, setVisualSlide] = useState(0);
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [currentVisualSlide, setCurrentVisualSlide] = useState(0);
   const [bookingSubmitted, setBookingSubmitted] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState("");
@@ -256,12 +238,25 @@ export default function App() {
     { number: "06", title: "RELEASE SUPPORT", text: "Get help preparing your music for release, including metadata, distribution guidance and release planning." },
   ];
 
-  const visualImages = [
-    visual01, visual02, visual03, visual04, visual05, visual06, visual07, visual08, visual09,
-    visual10, visual11, visual12, visual13, visual14, visual15, visual16, visual17, visual18,
-    visual19, visual20, visual21, visual22, visual23, visual24, visual25, visual26, visual27,
+  const visualServices = [
+    { number: "01", title: "PHOTOGRAPHY", text: "Artist portraits, cover-art photography, press photos, birthdays, events and editorial shoots.", image: image1, bookingService: "Artist Photoshoot" },
+    { number: "02", title: "VIDEOGRAPHY", text: "Music videos, performance films, lyric videos, visualizers, social content and event coverage.", image: image2, bookingService: "Music Video" },
+    { number: "03", title: "CREATIVE DIRECTION", text: "Music-video concepts, cover-art concepts, artist branding, visual storytelling and content planning.", image: image3 },
   ];
-  const visualSlides = [0, 1, 2].map((slide) => visualImages.slice(slide * 9, slide * 9 + 9));
+
+  const visualPortfolio = [
+    { title: "ARTIST PORTRAITS", image: image1 },
+    { title: "CREATIVE VISUALS", image: image2 },
+    { title: "ARTIST PHOTOGRAPHY", image: image3 },
+    { title: "COVER ART", image: image4 },
+    { title: "EVENTS", image: image5 },
+    { title: "BEHIND THE SCENES", image: image6 },
+    { title: "CAMPAIGNS", image: image7 },
+    { title: "PERFORMANCE VISUALS", image: image8 },
+    { title: "MUSIC VIDEOS", image: image9 },
+  ];
+
+  const currentVisual = visualPortfolio[currentVisualSlide];
 
   return (
     <div className="site">
@@ -280,7 +275,6 @@ export default function App() {
           <a href="#home" onClick={() => setMenuOpen(false)}>HOME</a>
           <a href="#studio" onClick={() => setMenuOpen(false)}>STUDIO</a>
           <a href="#services" onClick={() => setMenuOpen(false)}>SERVICES</a>
-          <a href="#visuals" onClick={() => setMenuOpen(false)}>VISUALS</a>
           <a href="#booking" onClick={() => setMenuOpen(false)}>BOOK</a>
           <a href="#culture" onClick={() => setMenuOpen(false)}>FOR THE CULTURE</a>
           <a href="#radio" onClick={() => setMenuOpen(false)}>RADIO</a>
@@ -331,7 +325,7 @@ export default function App() {
           </div>
         </div>
         <div className="intro-image">
-          <img src={deskImg} alt="Galaxy Studios full desk setup with dual monitors and MPC" className="section-photo" loading="lazy" decoding="async" />
+          <img src={deskImg} alt="Galaxy Studios full desk setup with dual monitors and MPC" className="section-photo" />
         </div>
       </section>
 
@@ -339,7 +333,7 @@ export default function App() {
       {/* STUDIO EXPERIENCE */}
       <section className="experience">
         <div className="experience-image">
-          <img src={micWideImg} alt="Condenser microphone with acoustic shield in the recording room" className="section-photo" loading="lazy" decoding="async" />
+          <img src={micWideImg} alt="Condenser microphone with acoustic shield in the recording room" className="section-photo" />
         </div>
         <div className="experience-content">
           <div className="section-number">02 / THE EXPERIENCE</div>
@@ -379,7 +373,7 @@ export default function App() {
       {/* FEATURE BANNER */}
       <section className="feature">
         <div className="feature-image">
-          <img src={monitorsImg} alt="Studio monitor speakers and audio interface on the mixing desk" className="feature-photo" loading="lazy" decoding="async" />
+          <img src={monitorsImg} alt="Studio monitor speakers and audio interface on the mixing desk" className="feature-photo" />
           <div className="feature-overlay" />
           <div className="feature-content">
             <div className="eyebrow">THE GALAXY FIRE STANDARD</div>
@@ -390,51 +384,83 @@ export default function App() {
       </section>
 
 
-      {/* PHOTOGRAPHY & VISUALS */}
+      {/* VISUAL PRODUCTION — PHASE 2 */}
       <section className="visual-production" id="visuals">
         <div className="section-heading">
-          <div className="section-number">04 / PHOTOGRAPHY &amp; VISUALS</div>
-          <h2>BRING YOUR<br /><span>SOUND TO LIFE.</span></h2>
-          <p>Professional photography, music videos and creative visual production designed to give your music and brand the visual identity it deserves.</p>
+          <div className="section-number">04 / VISUAL PRODUCTION</div>
+          <h2>MAKE IT<br /><span>VISIBLE.</span></h2>
+          <p>Photography, videography and creative direction built around the artist, the record and the story behind it.</p>
         </div>
 
-        <div className="visual-slider">
-          <div className="visual-grid">
-            {visualSlides[visualSlide].map((image, index) => (
-              <div className={`visual-grid-item visual-grid-item-${index + 1}`} key={`${visualSlide}-${index}`}>
-                <img src={image} alt={`Galaxy Fire Studios photography and visual production ${visualSlide * 9 + index + 1}`} loading="lazy" decoding="async" />
+        <div className="visual-service-grid">
+          {visualServices.map((service) => (
+            <article className="visual-service-card" key={service.number}>
+              <div className="visual-service-image">
+                <img src={service.image} alt={service.title} />
+                <span>{service.number}</span>
               </div>
-            ))}
-          </div>
-          <div className="visual-slider-controls">
-            <button type="button" onClick={() => setVisualSlide((visualSlide + 2) % 3)} aria-label="Previous visual slide">←</button>
-            <div className="visual-slider-dots">
-              {visualSlides.map((_, index) => (
-                <button type="button" key={index} className={index === visualSlide ? "active" : ""} onClick={() => setVisualSlide(index)} aria-label={`Show visual slide ${index + 1}`} />
-              ))}
-            </div>
-            <button type="button" onClick={() => setVisualSlide((visualSlide + 1) % 3)} aria-label="Next visual slide">→</button>
-          </div>
+              <div className="visual-service-body">
+                <h3>{service.title}</h3>
+                <p>{service.text}</p>
+                {service.bookingService ? (
+                  <button type="button" className="visual-link" onClick={() => openBooking(service.bookingService)}>BOOK A VISUAL SESSION →</button>
+                ) : (
+                  <a className="visual-link" href="https://wa.me/2348035345977?text=Hi%20Galaxy%20Fire%20Studios%2C%20I%27d%20like%20a%20creative%20direction%20quote." target="_blank" rel="noreferrer">GET A CREATIVE QUOTE →</a>
+                )}
+              </div>
+            </article>
+          ))}
         </div>
 
-        <div className="visual-services-pricing">
-          <div className="visual-price-group">
-            <div className="visual-price-title">PHOTOGRAPHY</div>
-            <div className="visual-price-row"><span>Artist Photoshoot</span><strong>₦75,000</strong></div>
-            <div className="visual-price-row"><span>Cover Art Shoot</span><strong>₦50,000</strong></div>
-            <div className="visual-price-row"><span>Event Photography</span><strong>₦100,000</strong></div>
+        <div className="visual-portfolio-heading">
+          <div>
+            <div className="section-number">PORTFOLIO</div>
+            <h3>SELECTED<br /><span>VISUAL WORK.</span></h3>
           </div>
-          <div className="visual-price-group">
-            <div className="visual-price-title">VIDEOGRAPHY</div>
-            <div className="visual-price-row"><span>Music Video</span><strong>From ₦250,000</strong></div>
-            <div className="visual-price-row"><span>Performance Video</span><strong>From ₦150,000</strong></div>
-            <div className="visual-price-row"><span>Visualizer</span><strong>From ₦100,000</strong></div>
-            <div className="visual-price-row"><span>Lyric Video</span><strong>From ₦75,000</strong></div>
-            <div className="visual-price-row"><span>Social Content Package</span><strong>From ₦100,000</strong></div>
+          <p>More work can be added here as the visual archive grows. The gallery is intentionally flexible so new images can be dropped into <strong>public/images</strong> without rebuilding the whole site.</p>
+        </div>
+
+        <div className="visual-slider" aria-label="Galaxy Fire Studios visual portfolio">
+          <div className="visual-slide">
+            <img
+              src={currentVisual.image}
+              alt={currentVisual.title}
+              loading={currentVisualSlide === 0 ? "eager" : "lazy"}
+              decoding="async"
+            />
+            <div className="visual-slide-caption">{currentVisual.title}</div>
           </div>
-          <div className="visual-price-group">
-            <div className="visual-price-title">CREATIVE DIRECTION</div>
-            <div className="visual-price-row"><span>Creative Direction</span><strong>Custom Quote</strong></div>
+
+          <div className="visual-slider-controls">
+            <button
+              type="button"
+              className="visual-slider-button"
+              onClick={() =>
+                setCurrentVisualSlide(
+                  (currentVisualSlide - 1 + visualPortfolio.length) % visualPortfolio.length
+                )
+              }
+              aria-label="Previous visual"
+            >
+              ←
+            </button>
+
+            <span className="visual-slider-counter" aria-live="polite">
+              {currentVisualSlide + 1} / {visualPortfolio.length}
+            </span>
+
+            <button
+              type="button"
+              className="visual-slider-button"
+              onClick={() =>
+                setCurrentVisualSlide(
+                  (currentVisualSlide + 1) % visualPortfolio.length
+                )
+              }
+              aria-label="Next visual"
+            >
+              →
+            </button>
           </div>
         </div>
 
@@ -445,6 +471,7 @@ export default function App() {
           </div>
           <div className="visual-cta-buttons">
             <button type="button" className="button red" onClick={() => openBooking("Artist Photoshoot")}>BOOK A VISUAL SESSION</button>
+            <a href="#visuals" className="button outline">VIEW PORTFOLIO</a>
             <a href="https://wa.me/2348035345977?text=Hi%20Galaxy%20Fire%20Studios%2C%20I%27d%20like%20a%20quote%20for%20a%20visual%20production%20project." className="button outline" target="_blank" rel="noreferrer">GET A QUOTE</a>
           </div>
         </div>
@@ -545,20 +572,20 @@ export default function App() {
         </div>
         <div className="gallery-grid">
           <div className="gallery-large">
-            <img src={heroImg} alt="Galaxy Studios control room with mixing desk and booth window" className="gallery-photo" loading="lazy" decoding="async" />
+            <img src={heroImg} alt="Galaxy Studios control room with mixing desk and booth window" className="gallery-photo" />
             <div className="gallery-caption">THE CONTROL ROOM</div>
           </div>
           <div className="gallery-col">
             <div className="gallery-small">
-              <img src={micCloseImg} alt="Condenser microphone in the red acoustic vocal booth" className="gallery-photo" loading="lazy" decoding="async" />
+              <img src={micCloseImg} alt="Condenser microphone in the red acoustic vocal booth" className="gallery-photo" />
               <div className="gallery-caption">THE VOCAL BOOTH</div>
             </div>
             <div className="gallery-small">
-              <img src={mpcLitImg} alt="AKAI MPC X with lit cyan performance pads" className="gallery-photo" loading="lazy" decoding="async" />
+              <img src={mpcLitImg} alt="AKAI MPC X with lit cyan performance pads" className="gallery-photo" />
               <div className="gallery-caption">PRODUCTION</div>
             </div>
             <div className="gallery-small">
-              <img src={speakerImg} alt="Studio monitor speaker cone close-up against red velvet wall" className="gallery-photo" loading="lazy" decoding="async" />
+              <img src={speakerImg} alt="Studio monitor speaker cone close-up against red velvet wall" className="gallery-photo" />
               <div className="gallery-caption">THE MONITORS</div>
             </div>
           </div>
@@ -567,15 +594,15 @@ export default function App() {
         {/* Second row */}
         <div className="gallery-row2">
           <div className="gallery-med">
-            <img src={deskImg} alt="Full studio desk with dual monitors, MPC and studio monitors" className="gallery-photo" loading="lazy" decoding="async" />
+            <img src={deskImg} alt="Full studio desk with dual monitors, MPC and studio monitors" className="gallery-photo" />
             <div className="gallery-caption">THE DESK</div>
           </div>
           <div className="gallery-med">
-            <img src={keyboardImg} alt="Studio keyboard with blue LED lighting" className="gallery-photo" loading="lazy" decoding="async" />
+            <img src={keyboardImg} alt="Studio keyboard with blue LED lighting" className="gallery-photo" />
             <div className="gallery-caption">THE KEYS</div>
           </div>
           <div className="gallery-med">
-            <img src={monitorsImg} alt="AKG headphones and studio monitor on mixing desk" className="gallery-photo" loading="lazy" decoding="async" />
+            <img src={monitorsImg} alt="AKG headphones and studio monitor on mixing desk" className="gallery-photo" />
             <div className="gallery-caption">MONITORING</div>
           </div>
         </div>
@@ -583,15 +610,15 @@ export default function App() {
         {/* Third row */}
         <div className="gallery-row2" style={{marginTop: '12px'}}>
           <div className="gallery-med">
-            <img src={micWideImg} alt="Microphone with acoustic shield in the recording room" className="gallery-photo" loading="lazy" decoding="async" />
+            <img src={micWideImg} alt="Microphone with acoustic shield in the recording room" className="gallery-photo" />
             <div className="gallery-caption">THE MIC SETUP</div>
           </div>
           <div className="gallery-med">
-            <img src={mpcDemoImg} alt="AKAI MPC X showing genre demo selection screen" className="gallery-photo" loading="lazy" decoding="async" />
+            <img src={mpcDemoImg} alt="AKAI MPC X showing genre demo selection screen" className="gallery-photo" />
             <div className="gallery-caption">THE MPC</div>
           </div>
           <div className="gallery-med">
-            <img src={interfaceImg} alt="Universal Audio interface close-up on the studio desk" className="gallery-photo" loading="lazy" decoding="async" />
+            <img src={interfaceImg} alt="Universal Audio interface close-up on the studio desk" className="gallery-photo" />
             <div className="gallery-caption">AUDIO INTERFACE</div>
           </div>
         </div>
@@ -746,16 +773,16 @@ export default function App() {
         </div>
         <div className="promo-grid">
           <div className="promo-card">
-            <img src={promoStudioTimeImg} alt="Need some studio time? Reach out today" className="promo-img" loading="lazy" decoding="async" />
+            <img src={promoStudioTimeImg} alt="Need some studio time? Reach out today" className="promo-img" />
           </div>
           <div className="promo-card">
-            <img src={promoBeatsImg} alt="Do you need beats or engineering? Contact us today" className="promo-img" loading="lazy" decoding="async" />
+            <img src={promoBeatsImg} alt="Do you need beats or engineering? Contact us today" className="promo-img" />
           </div>
           <div className="promo-card">
-            <img src={promoSuperstarsImg} alt="Bring out the superstar in you — contact us now" className="promo-img" loading="lazy" decoding="async" />
+            <img src={promoSuperstarsImg} alt="Bring out the superstar in you — contact us now" className="promo-img" />
           </div>
           <div className="promo-card">
-            <img src={promoMixMasterImg} alt="Need to mix and master your music? Reach out to us today" className="promo-img" loading="lazy" decoding="async" />
+            <img src={promoMixMasterImg} alt="Need to mix and master your music? Reach out to us today" className="promo-img" />
           </div>
         </div>
       </section>
@@ -778,7 +805,7 @@ export default function App() {
 
       {/* BOOKING */}
       <section className="booking" id="booking">
-        <img src={interfaceImg} alt="Studio audio interface" className="booking-photo" loading="lazy" decoding="async" />
+        <img src={interfaceImg} alt="Studio audio interface" className="booking-photo" />
         <div className="booking-overlay" />
         <div className="booking-content">
           <div className="eyebrow">GALAXY FIRE STUDIOS · EST. 2020</div>
@@ -1061,26 +1088,36 @@ export default function App() {
         .feature-content { position: relative; text-align: center; z-index: 1; }
         .feature-content h2 { font-size: clamp(55px, 8vw, 115px); }
 
-        /* PHOTOGRAPHY & VISUALS */
+        /* VISUAL PRODUCTION */
         .visual-production { background: #0b0b0b; border-top: 1px solid #181818; }
-        .visual-slider { margin-top: 55px; }
-        .visual-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 250px; gap: 12px; }
-        .visual-grid-item { position: relative; overflow: hidden; min-height: 250px; background: #111; border: 1px solid #222; }
-        .visual-grid-item:nth-child(1), .visual-grid-item:nth-child(5) { grid-row: span 2; }
-        .visual-grid-item:nth-child(9) { grid-column: span 2; }
-        .visual-grid-item img { width: 100%; height: 100%; display: block; object-fit: contain; object-position: center; background: #111; transition: transform .55s ease, filter .35s ease; }
-        .visual-grid-item:hover img { transform: scale(1.045); filter: brightness(1.08); }
-        .visual-slider-controls { display: flex; justify-content: center; align-items: center; gap: 28px; margin-top: 28px; }
-        .visual-slider-controls > button { width: 44px; height: 44px; border: 1px solid #333; background: #111; color: #fff; cursor: pointer; font-size: 20px; }
-        .visual-slider-controls > button:hover { border-color: #e50914; color: #e50914; }
-        .visual-slider-dots { display: flex; gap: 8px; }
-        .visual-slider-dots button { width: 7px; height: 7px; padding: 0; border: 0; border-radius: 50%; background: #555; cursor: pointer; }
-        .visual-slider-dots button.active { background: #e50914; transform: scale(1.25); }
-        .visual-services-pricing { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 65px; }
-        .visual-price-group { border: 1px solid #242424; background: #0e0e0e; padding: 28px; }
-        .visual-price-title { color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; letter-spacing: 2px; font-size: 13px; margin-bottom: 16px; }
-        .visual-price-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; padding: 14px 0; border-top: 1px solid #202020; color: #bbb; font-size: 13px; line-height: 1.45; }
-        .visual-price-row strong { color: #fff; font-family: 'Barlow Condensed', sans-serif; font-size: 16px; white-space: nowrap; }
+        .visual-service-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+        .visual-service-card { background: #111; border: 1px solid #252525; overflow: hidden; transition: transform .3s ease, border-color .3s ease; }
+        .visual-service-card:hover { transform: translateY(-5px); border-color: #e50914; }
+        .visual-service-image { position: relative; height: 300px; overflow: hidden; background: #080808; }
+        .visual-service-image img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s ease; }
+        .visual-service-card:hover .visual-service-image img { transform: scale(1.04); }
+        .visual-service-image span { position: absolute; top: 18px; left: 18px; color: white; background: #e50914; padding: 7px 10px; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 900; }
+        .visual-service-body { padding: 30px; }
+        .visual-service-body h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 25px; letter-spacing: 1px; margin: 0 0 14px; }
+        .visual-service-body p { color: #777; font-size: 13px; line-height: 1.7; min-height: 88px; margin: 0; }
+        .visual-link { margin-top: 24px; padding: 0; border: 0; background: transparent; color: #e50914; cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 900; letter-spacing: 1.2px; }
+        .visual-portfolio-heading { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: end; margin: 110px 0 35px; }
+        .visual-portfolio-heading h3 { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(38px, 5vw, 65px); line-height: .9; margin: 18px 0 0; }
+        .visual-portfolio-heading h3 span { color: #e50914; }
+        .visual-portfolio-heading p { color: #777; font-size: 14px; line-height: 1.8; margin: 0; }
+        .visual-portfolio-heading strong { color: #aaa; }
+        .visual-slider { width: 100%; margin-top: 35px; }
+        .visual-slide { position: relative; width: 100%; min-height: 260px; display: flex; align-items: center; justify-content: center; background: #111; border: 1px solid #252525; border-radius: 14px; overflow: hidden; padding: 18px; }
+        .visual-slide img { display: block; width: auto; height: auto; max-width: 100%; max-height: 75vh; object-fit: contain; object-position: center; }
+        .visual-slide-caption { position: absolute; left: 0; right: 0; bottom: 0; padding: 45px 22px 20px; background: linear-gradient(transparent, rgba(0,0,0,.88)); font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 900; letter-spacing: 2px; }
+        .visual-slider-controls { display: flex; justify-content: center; align-items: center; gap: 22px; margin-top: 24px; }
+        .visual-slider-button { width: 48px; height: 48px; border: 1px solid #333; border-radius: 50%; background: #151515; color: #fff; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: background .2s ease, border-color .2s ease, transform .2s ease; }
+        .visual-slider-button:hover { background: #e50914; border-color: #e50914; transform: scale(1.05); }
+        .visual-slider-counter { min-width: 60px; text-align: center; color: #aaa; font-size: 14px; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 1px; }
+        .visual-cta { margin-top: 55px; padding: 45px; border: 1px solid #292929; background: linear-gradient(135deg, #151515, #0c0c0c); display: flex; align-items: center; justify-content: space-between; gap: 40px; }
+        .visual-cta h3 { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(42px, 6vw, 70px); line-height: .88; margin: 15px 0 0; }
+        .visual-cta h3 span { color: #e50914; }
+        .visual-cta-buttons { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
 
         /* PRICING */
         .pricing { background: #0b0b0b; }
@@ -1406,7 +1443,9 @@ export default function App() {
           .menu-button { display: block; }
           .intro, .experience { grid-template-columns: 1fr; }
           .experience-image { order: -1; }
-          .service-grid, .pricing-grid, .visual-services-pricing { grid-template-columns: 1fr 1fr; }
+          .service-grid, .pricing-grid, .visual-service-grid { grid-template-columns: 1fr 1fr; }
+
+          .visual-portfolio-heading { grid-template-columns: 1fr; gap: 25px; }
           .visual-cta { flex-direction: column; align-items: flex-start; }
           .visual-cta-buttons { justify-content: flex-start; }
           .why-grid { grid-template-columns: 1fr 1fr; }
@@ -1427,10 +1466,12 @@ export default function App() {
           h2 { font-size: 52px; }
           .hero-buttons, .booking-buttons { flex-direction: column; }
           .button { text-align: center; }
-          .service-grid, .pricing-grid, .why-grid { grid-template-columns: 1fr; }
-          .visual-grid { grid-template-columns: 1fr; grid-auto-rows: 260px; }
-          .visual-grid-item:nth-child(1), .visual-grid-item:nth-child(5), .visual-grid-item:nth-child(9) { grid-row: auto; grid-column: auto; }
-          .visual-services-pricing { grid-template-columns: 1fr; }
+          .service-grid, .pricing-grid, .visual-service-grid, .why-grid { grid-template-columns: 1fr; }
+          .visual-service-image { height: 260px; }
+          .visual-slide { min-height: 220px; padding: 10px; }
+          .visual-slide img { max-height: 70vh; }
+          .visual-slider-button { width: 44px; height: 44px; }
+          .visual-portfolio-heading { margin-top: 80px; }
           .visual-cta { padding: 30px 22px; }
           .visual-cta-buttons { flex-direction: column; width: 100%; }
           .visual-cta-buttons .button { width: 100%; }
