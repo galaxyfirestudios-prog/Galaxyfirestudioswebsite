@@ -1068,7 +1068,7 @@ export default function App() {
         .visual-grid-item { position: relative; overflow: hidden; min-height: 250px; background: #111; border: 1px solid #222; }
         .visual-grid-item:nth-child(1), .visual-grid-item:nth-child(5) { grid-row: span 2; }
         .visual-grid-item:nth-child(9) { grid-column: span 2; }
-        .visual-grid-item img { width: 100%; height: 100%; display: block; object-fit: cover; transition: transform .55s ease, filter .35s ease; }
+        .visual-grid-item img { width: 100%; height: 100%; display: block; object-fit: contain; object-position: center; background: #111; transition: transform .55s ease, filter .35s ease; }
         .visual-grid-item:hover img { transform: scale(1.045); filter: brightness(1.08); }
         .visual-slider-controls { display: flex; justify-content: center; align-items: center; gap: 28px; margin-top: 28px; }
         .visual-slider-controls > button { width: 44px; height: 44px; border: 1px solid #333; background: #111; color: #fff; cursor: pointer; font-size: 20px; }
