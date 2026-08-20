@@ -15,15 +15,33 @@ import promoStudioTimeImg from "@/imports/IMG_3312.PNG";
 import promoBeatsImg from "@/imports/IMG_3365.PNG";
 import promoSuperstarsImg from "@/imports/IMG_3360.PNG";
 import promoMixMasterImg from "@/imports/IMG_3359.PNG";
-import image1 from "./assets/galaxy-fire/1.png";
-import image2 from "./assets/galaxy-fire/2.png";
-import image3 from "./assets/galaxy-fire/3.png";
-import image4 from "./assets/galaxy-fire/4.png";
-import image5 from "./assets/galaxy-fire/5.png";
-import image6 from "./assets/galaxy-fire/6.png";
-import image7 from "./assets/galaxy-fire/7.png";
-import image8 from "./assets/galaxy-fire/8.png";
-import image9 from "./assets/galaxy-fire/9.png";
+import image1 from "@/imports/Image 1.jpg";
+import image2 from "@/imports/Image 2.jpg";
+import image3 from "@/imports/Image 3.jpg";
+import image4 from "@/imports/Image 4.jpg";
+import image5 from "@/imports/Image 5.jpg";
+import image6 from "@/imports/Image 6.jpg";
+import image7 from "@/imports/Image 7.jpg";
+import image8 from "@/imports/Image 8.jpg";
+import image9 from "@/imports/Image 9.jpg";
+import image10 from "@/imports/Image 10.jpg";
+import image11 from "@/imports/Image 11.jpg";
+import image12 from "@/imports/Image 12.jpg";
+import image13 from "@/imports/Image 13.jpg";
+import image14 from "@/imports/Image 14.jpg";
+import image15 from "@/imports/Image 15.jpg";
+import image16 from "@/imports/Image 16.jpg";
+import image17 from "@/imports/Image 17.jpg";
+import image18 from "@/imports/Image 18.jpg";
+import image19 from "@/imports/Image 19.jpg";
+import image20 from "@/imports/Image 20.jpg";
+import image21 from "@/imports/Image 21.jpg";
+import image22 from "@/imports/Image 22.jpg";
+import image23 from "@/imports/Image 23.jpg";
+import image24 from "@/imports/Image 24.jpg";
+import image25 from "@/imports/Image 25.jpg";
+import image26 from "@/imports/Image 26.jpg";
+import image27 from "@/imports/Image 27.jpg";
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -238,9 +256,29 @@ export default function App() {
   ];
 
   const visualServices = [
-    { number: "01", title: "PHOTOGRAPHY", text: "Artist portraits, cover-art photography, press photos, birthdays, events and editorial shoots.", image: image1, bookingService: "Artist Photoshoot" },
-    { number: "02", title: "VIDEOGRAPHY", text: "Music videos, performance films, lyric videos, visualizers, social content and event coverage.", image: image2, bookingService: "Music Video" },
-    { number: "03", title: "CREATIVE DIRECTION", text: "Music-video concepts, cover-art concepts, artist branding, visual storytelling and content planning.", image: image3 },
+    {
+      number: "01",
+      title: "PHOTOGRAPHY",
+      text: "Artist portraits, cover-art photography, press photos, birthdays, events and editorial shoots.",
+      image: image1,
+      price: "₦75,000+",
+      bookingService: "Artist Photoshoot",
+    },
+    {
+      number: "02",
+      title: "VIDEOGRAPHY",
+      text: "Music videos, performance films, lyric videos, visualizers, social content and event coverage.",
+      image: image2,
+      price: "₦250,000+",
+      bookingService: "Music Video",
+    },
+    {
+      number: "03",
+      title: "CREATIVE DIRECTION",
+      text: "Music-video concepts, cover-art concepts, artist branding, visual storytelling and content planning.",
+      image: image3,
+      price: "CUSTOM QUOTE",
+    },
   ];
 
   const visualPortfolio = [
@@ -250,6 +288,24 @@ export default function App() {
     { title: "BEHIND THE SCENES", image: image7 },
     { title: "CAMPAIGNS", image: image8 },
     { title: "MUSIC VIDEOS", image: image9 },
+    { title: "PERFORMANCE FILMS", image: image10 },
+    { title: "VISUALIZERS", image: image11 },
+    { title: "LYRIC VIDEOS", image: image12 },
+    { title: "SOCIAL CONTENT", image: image13 },
+    { title: "EDITORIAL", image: image14 },
+    { title: "ARTIST BRANDING", image: image15 },
+    { title: "STUDIO SESSIONS", image: image16 },
+    { title: "LIVE EVENTS", image: image17 },
+    { title: "PRESS PHOTOS", image: image18 },
+    { title: "CREATIVE CAMPAIGNS", image: image19 },
+    { title: "COVER CONCEPTS", image: image20 },
+    { title: "MUSIC VIDEO BTS", image: image21 },
+    { title: "CONTENT CREATION", image: image22 },
+    { title: "PORTRAIT SERIES", image: image23 },
+    { title: "PERFORMANCE", image: image24 },
+    { title: "VISUAL STORYTELLING", image: image25 },
+    { title: "CAMERA WORK", image: image26 },
+    { title: "GALAXY FIRE VISUALS", image: image27 },
   ];
 
   return (
@@ -269,6 +325,7 @@ export default function App() {
           <a href="#home" onClick={() => setMenuOpen(false)}>HOME</a>
           <a href="#studio" onClick={() => setMenuOpen(false)}>STUDIO</a>
           <a href="#services" onClick={() => setMenuOpen(false)}>SERVICES</a>
+          <a href="#visuals" onClick={() => setMenuOpen(false)}>VISUALS</a>
           <a href="#booking" onClick={() => setMenuOpen(false)}>BOOK</a>
           <a href="#culture" onClick={() => setMenuOpen(false)}>FOR THE CULTURE</a>
           <a href="#radio" onClick={() => setMenuOpen(false)}>RADIO</a>
@@ -395,6 +452,7 @@ export default function App() {
               </div>
               <div className="visual-service-body">
                 <h3>{service.title}</h3>
+                <div className="visual-service-price">{service.price}</div>
                 <p>{service.text}</p>
                 {service.bookingService ? (
                   <button type="button" className="visual-link" onClick={() => openBooking(service.bookingService)}>BOOK A VISUAL SESSION →</button>
