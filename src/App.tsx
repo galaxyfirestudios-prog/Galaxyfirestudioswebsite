@@ -416,6 +416,7 @@ export default function App() {
   const [beatProgress, setBeatProgress] = useState(0);
   const [beatSearch, setBeatSearch] = useState("");
   const [beatFilter, setBeatFilter] = useState("ALL");
+  const [beatDropdownOpen, setBeatDropdownOpen] = useState(false);
   const [vinylRotation, setVinylRotation] = useState(0);
   const [vinylState, setVinylState] = useState<"stopped" | "playing" | "slowing">("stopped");
   const beatAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -609,6 +610,18 @@ export default function App() {
     const matchesFilter = beatFilter === "ALL" || beat.mode === beatFilter;
     return matchesSearch && matchesFilter;
   });
+
+  const selectBeatFromMenu = (beat: typeof beats[number]) => {
+    stopBeatPreview(false);
+    const audio = beatAudioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+    setSelectedBeat(beat);
+    setBeatProgress(0);
+    setBeatDropdownOpen(false);
+  };
 
   useEffect(() => {
     const audio = beatAudioRef.current;
@@ -1106,13 +1119,9 @@ export default function App() {
               <h2>FIND YOUR<br /><span>SOUND.</span></h2>
               <p>Original Galaxy Fire beats, ready for your next record. Preview for 15 seconds, choose your license, and keep creating.</p>
             </div>
-            <div className="beats-search-wrap">
-              <input value={beatSearch} onChange={(event) => setBeatSearch(event.target.value)} placeholder="SEARCH BEATS..." aria-label="Search beats" />
-              <div className="beat-filter-buttons">
-                {["ALL", "MAJOR", "MINOR"].map((filter) => (
-                  <button key={filter} className={beatFilter === filter ? "active" : ""} onClick={() => setBeatFilter(filter)}>{filter}</button>
-                ))}
-              </div>
+            <div className="beats-heading-note">
+              <span>VINYL PREVIEW PLAYER</span>
+              <small>SELECT A BEAT FROM THE PLAYER</small>
             </div>
           </div>
 
@@ -1124,10 +1133,76 @@ export default function App() {
                 <div className="vinyl-shine" />
               </div>
               <div className="tonearm"><div className="tonearm-head" /></div>
+
               <div className="turntable-control">
                 <span>33⅓ RPM</span>
                 <span>{vinylState === "playing" ? "PLAYING" : vinylState === "slowing" ? "STOPPING" : "READY"}</span>
               </div>
+
+              <div className={`beat-selector ${beatDropdownOpen ? "open" : ""}`}>
+                <button
+                  type="button"
+                  className="beat-selector-trigger"
+                  onClick={() => setBeatDropdownOpen((open) => !open)}
+                  aria-expanded={beatDropdownOpen}
+                  aria-haspopup="listbox"
+                >
+                  <span className="beat-selector-icon">♪</span>
+                  <span className="beat-selector-current">
+                    <small>SELECT BEAT</small>
+                    <strong>{selectedBeat.title}</strong>
+                  </span>
+                  <span className="beat-selector-meta">{selectedBeat.key} · {selectedBeat.bpm} BPM</span>
+                  <span className="beat-selector-chevron">{beatDropdownOpen ? "⌃" : "⌄"}</span>
+                </button>
+
+                {beatDropdownOpen && (
+                  <div className="beat-selector-menu" role="listbox" aria-label="Galaxy Fire beats">
+                    <div className="beat-selector-tools">
+                      <input
+                        value={beatSearch}
+                        onChange={(event) => setBeatSearch(event.target.value)}
+                        placeholder="SEARCH BEATS..."
+                        aria-label="Search beats"
+                        autoFocus
+                      />
+                      <div className="beat-selector-filters">
+                        {["ALL", "MAJOR", "MINOR"].map((filter) => (
+                          <button
+                            type="button"
+                            key={filter}
+                            className={beatFilter === filter ? "active" : ""}
+                            onClick={() => setBeatFilter(filter)}
+                          >
+                            {filter}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="beat-selector-list">
+                      {filteredBeats.length > 0 ? filteredBeats.map((beat) => (
+                        <button
+                          type="button"
+                          key={beat.id}
+                          className={`beat-selector-option ${selectedBeat.id === beat.id ? "selected" : ""}`}
+                          onClick={() => selectBeatFromMenu(beat)}
+                          role="option"
+                          aria-selected={selectedBeat.id === beat.id}
+                        >
+                          <span className="beat-selector-option-icon">{selectedBeat.id === beat.id ? "●" : "›"}</span>
+                          <span className="beat-selector-option-title">{beat.title}</span>
+                          <span className="beat-selector-option-meta">{beat.key}</span>
+                          <span className="beat-selector-option-bpm">{beat.bpm}</span>
+                        </button>
+                      )) : (
+                        <div className="beat-selector-empty">NO BEATS MATCH YOUR SEARCH.</div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <button className="vinyl-play" onClick={() => playBeat(selectedBeat)} aria-label={beatPlaying ? "Pause preview" : "Play preview"}>
                 {beatPlaying ? "Ⅱ" : "▶"}
               </button>
@@ -1161,26 +1236,13 @@ export default function App() {
                   );
                 })}
               </div>
-              {beatSoldMap[selectedBeat.id] && <div className="beat-sold-banner">EXCLUSIVE SOLD · THIS BEAT REMAINS AVAILABLE TO PREVIEW BUT CANNOT BE PURCHASED EXCLUSIVELY.</div>}
+              {beatSoldMap[selectedBeat.id] && <div className="beat-sold-banner">SOLD · THIS BEAT REMAINS AVAILABLE TO PREVIEW BUT CANNOT BE PURCHASED.</div>}
               {beatPurchaseSuccess && <div className="beat-purchase-success">{beatPurchaseSuccess}</div>}
               {beatPurchaseError && <div className="beat-purchase-error">{beatPurchaseError}</div>}
               <div className="beat-license-note">Payments are verified server-side through Paystack. Exclusive purchases are recorded so the beat can remain visible and playable while being blocked from future purchase.</div>
             </div>
           </div>
 
-          <div className="beats-table">
-            <div className="beats-table-head"><span>ALL BEATS</span><span>BPM</span><span>KEY</span><span>MODE</span><span>MOOD</span><span>PREVIEW</span></div>
-            {filteredBeats.map((beat) => (
-              <div key={beat.id} className={`beat-row ${selectedBeat.id === beat.id ? "selected" : ""}`} onClick={() => { setSelectedBeat(beat); setBeatProgress(0); stopBeatPreview(false); }}>
-                <span className="beat-row-title"><i>{selectedBeat.id === beat.id && beatPlaying ? "Ⅱ" : "▶"}</i>{beat.title}{beatSoldMap[beat.id] && <em className="beat-sold-tag">SOLD</em>}</span>
-                <span>{beat.bpm}</span>
-                <span>{beat.key}</span>
-                <span>{beat.mode}</span>
-                <span>{beat.mood}</span>
-                <button className="beat-row-action" onClick={(event) => { event.stopPropagation(); playBeat(beat); }}>{selectedBeat.id === beat.id && beatPlaying ? "PAUSE" : "PLAY 15s"}</button>
-              </div>
-            ))}
-          </div>
           <audio ref={beatAudioRef} preload="none" aria-hidden="true" />
         </div>
       </section>
@@ -2060,6 +2122,36 @@ export default function App() {
           .footer-bottom { flex-direction: column; gap: 12px; }
         }
 
+        /* COMPACT VINYL BEAT SELECTOR */
+        .beats-heading-note { min-width:240px; display:flex; flex-direction:column; align-items:flex-end; gap:7px; color:#e50914; font-size:9px; letter-spacing:.18em; font-weight:700; text-align:right; }
+        .beats-heading-note small { color:#555; font-size:8px; letter-spacing:.13em; font-weight:500; }
+        .beat-selector { position:absolute; z-index:8; left:8%; right:8%; bottom:100px; }
+        .beat-selector-trigger { width:100%; display:flex; align-items:center; gap:12px; min-height:58px; padding:9px 14px; border:1px solid #333; border-radius:10px; background:rgba(8,8,8,.96); color:#fff; box-shadow:0 14px 35px rgba(0,0,0,.42); cursor:pointer; text-align:left; backdrop-filter:blur(10px); }
+        .beat-selector-trigger:hover,.beat-selector.open .beat-selector-trigger { border-color:#e50914; box-shadow:0 0 28px rgba(229,9,20,.13),0 14px 35px rgba(0,0,0,.42); }
+        .beat-selector-icon { display:grid; place-items:center; width:32px; height:32px; border:1px solid #e50914; border-radius:8px; color:#e50914; font-size:15px; flex:none; }
+        .beat-selector-current { min-width:0; display:flex; flex:1; flex-direction:column; gap:4px; }
+        .beat-selector-current small { color:#555; font-size:7px; letter-spacing:.16em; }
+        .beat-selector-current strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; letter-spacing:.03em; }
+        .beat-selector-meta { color:#777; white-space:nowrap; font-size:8px; letter-spacing:.06em; }
+        .beat-selector-chevron { width:20px; color:#e50914; text-align:center; font-size:17px; flex:none; }
+        .beat-selector-menu { position:absolute; left:0; right:0; bottom:calc(100% + 8px); border:1px solid #333; border-radius:10px; background:rgba(7,7,7,.98); box-shadow:0 20px 55px rgba(0,0,0,.65); overflow:hidden; backdrop-filter:blur(14px); }
+        .beat-selector-tools { padding:10px; border-bottom:1px solid #202020; background:#0a0a0a; }
+        .beat-selector-tools input { width:100%; box-sizing:border-box; padding:10px 11px; border:1px solid #292929; outline:none; background:#111; color:#fff; font-size:9px; letter-spacing:.11em; text-transform:uppercase; }
+        .beat-selector-tools input:focus { border-color:#e50914; }
+        .beat-selector-filters { display:flex; gap:6px; margin-top:7px; }
+        .beat-selector-filters button { flex:1; padding:7px 6px; border:1px solid #242424; background:#101010; color:#666; font-size:7px; letter-spacing:.14em; cursor:pointer; }
+        .beat-selector-filters button:hover,.beat-selector-filters button.active { color:#fff; border-color:#e50914; background:#160606; }
+        .beat-selector-list { max-height:235px; overflow-y:auto; }
+        .beat-selector-option { width:100%; min-height:46px; display:grid; grid-template-columns:22px minmax(0,1fr) 72px 52px; align-items:center; gap:8px; padding:8px 12px; border:0; border-bottom:1px solid #181818; background:#090909; color:#777; cursor:pointer; text-align:left; }
+        .beat-selector-option:last-child { border-bottom:0; }
+        .beat-selector-option:hover,.beat-selector-option.selected { background:linear-gradient(90deg,#160606,#090909); color:#fff; }
+        .beat-selector-option-icon { color:#555; font-size:9px; }
+        .beat-selector-option.selected .beat-selector-option-icon { color:#e50914; }
+        .beat-selector-option-title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#ddd; font-size:10px; }
+        .beat-selector-option-meta,.beat-selector-option-bpm { color:#666; font-size:8px; text-align:right; white-space:nowrap; }
+        .beat-selector-option.selected .beat-selector-option-meta,.beat-selector-option.selected .beat-selector-option-bpm { color:#aaa; }
+        .beat-selector-empty { padding:20px 12px; color:#555; text-align:center; font-size:8px; letter-spacing:.13em; }
+
         /* GALAXY FIRE BEATS MARKETPLACE */
         .beats-marketplace { background:#050505; padding:120px 5%; border-top:1px solid #1b1b1b; overflow:hidden; }
         .beats-shell { max-width:1500px; margin:0 auto; }
@@ -2134,14 +2226,18 @@ export default function App() {
         }
         @media (max-width: 700px) {
           .beats-marketplace { padding:90px 6%; }
-          .vinyl-player { min-height:390px; }
+          .beats-heading-note { width:100%; align-items:flex-start; text-align:left; }
+          .vinyl-player { min-height:430px; }
           .vinyl-platter { width:78%; }
           .tonearm { width:130px; right:2%; top:13%; }
+          .beat-selector { left:5%; right:5%; bottom:92px; }
+          .beat-selector-meta { display:none; }
+          .beat-selector-option { grid-template-columns:20px minmax(0,1fr) 58px; }
+          .beat-selector-option-bpm { display:none; }
+          .beat-selector-list { max-height:205px; }
           .beat-feature-info { padding:32px 20px; }
           .beat-meta { grid-template-columns:repeat(2,1fr); }
           .beat-license-grid { grid-template-columns:1fr 1fr; }
-          .beats-table { overflow-x:auto; }
-          .beats-table-head,.beat-row { min-width:720px; }
         }
 
         /* GALAXY FIRE PRO AUDIO STORE */
