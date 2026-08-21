@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import logoImg from "@/imports/galaxy_studio_logo_for_video_without_background.png";
 import heroImg from "@/imports/bcff0804-5388-404a-8e04-15f201fad894.JPG";
@@ -401,6 +401,132 @@ export default function App() {
     return visualImages.slice(start, end);
   });
 
+  const beatArt = "/beats/galaxy-records-art.png";
+  const beats = [
+    { id: "beat-01", title: "Crimson Motion", bpm: 110, key: "G♯ Minor", mode: "Minor", mood: "Dark / Cinematic", genre: "Galaxy Fire Original", preview: "/beats/beat_1_gsharp_minor_110.mp3" },
+    { id: "beat-02", title: "Night Protocol", bpm: 110, key: "C♯ Minor", mode: "Minor", mood: "Moody / Driven", genre: "Galaxy Fire Original", preview: "/beats/beat_2_csharp_minor_110.mp3" },
+    { id: "beat-03", title: "Golden Current", bpm: 97, key: "C Major", mode: "Major", mood: "Warm / Uplifting", genre: "Galaxy Fire Original", preview: "/beats/beat_3_c_major_97.mp3" },
+    { id: "beat-04", title: "Midnight Pressure", bpm: 102, key: "A♯ Minor", mode: "Minor", mood: "Intense / Atmospheric", genre: "Galaxy Fire Original", preview: "/beats/beat_4_asharp_minor_102.mp3" },
+    { id: "beat-05", title: "Velvet Heat", bpm: 100, key: "A Minor", mode: "Minor", mood: "Smooth / Emotional", genre: "Galaxy Fire Original", preview: "/beats/beat_5_a_minor_100.mp3" },
+    { id: "beat-06", title: "Dark Frequency", bpm: 110, key: "D Minor", mode: "Minor", mood: "Heavy / Focused", genre: "Galaxy Fire Original", preview: "/beats/beat_6_d_minor_110.mp3" },
+  ];
+  const [selectedBeat, setSelectedBeat] = useState(beats[0]);
+  const [beatPlaying, setBeatPlaying] = useState(false);
+  const [beatProgress, setBeatProgress] = useState(0);
+  const [beatSearch, setBeatSearch] = useState("");
+  const [beatFilter, setBeatFilter] = useState("ALL");
+  const [vinylRotation, setVinylRotation] = useState(0);
+  const [vinylState, setVinylState] = useState<"stopped" | "playing" | "slowing">("stopped");
+  const beatAudioRef = useRef<HTMLAudioElement | null>(null);
+  const vinylFrameRef = useRef<number | null>(null);
+  const vinylLastFrameRef = useRef<number | null>(null);
+  const stopTimerRef = useRef<number | null>(null);
+
+  const stopBeatPreview = (slow = true) => {
+    const audio = beatAudioRef.current;
+    if (stopTimerRef.current) window.clearTimeout(stopTimerRef.current);
+    if (audio) {
+      audio.pause();
+      audio.currentTime = Math.min(audio.currentTime, 15);
+    }
+    setBeatPlaying(false);
+    if (slow) {
+      setVinylState("slowing");
+      stopTimerRef.current = window.setTimeout(() => {
+        setVinylState("stopped");
+        setBeatProgress((current) => Math.min(current, 15));
+      }, 1100);
+    } else {
+      setVinylState("stopped");
+    }
+  };
+
+  const playBeat = async (beat: typeof beats[number]) => {
+    const audio = beatAudioRef.current;
+    if (!audio) return;
+    if (stopTimerRef.current) window.clearTimeout(stopTimerRef.current);
+    if (selectedBeat.id !== beat.id) {
+      audio.pause();
+      audio.currentTime = 0;
+      setSelectedBeat(beat);
+      setBeatProgress(0);
+    } else if (beatPlaying) {
+      stopBeatPreview(true);
+      return;
+    }
+    audio.src = beat.preview;
+    audio.currentTime = 0;
+    try {
+      await audio.play();
+      setBeatPlaying(true);
+      setVinylState("playing");
+    } catch (error) {
+      console.error(error);
+      setBeatPlaying(false);
+      setVinylState("stopped");
+    }
+  };
+
+  const filteredBeats = beats.filter((beat) => {
+    const matchesSearch = `${beat.title} ${beat.key} ${beat.bpm} ${beat.mood} ${beat.genre}`.toLowerCase().includes(beatSearch.toLowerCase());
+    const matchesFilter = beatFilter === "ALL" || beat.mode === beatFilter;
+    return matchesSearch && matchesFilter;
+  });
+
+  useEffect(() => {
+    const audio = beatAudioRef.current;
+    if (!audio) return;
+    const onTimeUpdate = () => {
+      const current = Math.min(audio.currentTime, 15);
+      setBeatProgress(current);
+      if (current >= 14.98) stopBeatPreview(true);
+    };
+    const onEnded = () => stopBeatPreview(true);
+    audio.addEventListener("timeupdate", onTimeUpdate);
+    audio.addEventListener("ended", onEnded);
+    return () => {
+      audio.removeEventListener("timeupdate", onTimeUpdate);
+      audio.removeEventListener("ended", onEnded);
+      audio.pause();
+      if (stopTimerRef.current) window.clearTimeout(stopTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    const spin = (timestamp: number) => {
+      if (vinylState === "playing") {
+        if (vinylLastFrameRef.current === null) vinylLastFrameRef.current = timestamp;
+        const delta = timestamp - vinylLastFrameRef.current;
+        vinylLastFrameRef.current = timestamp;
+        setVinylRotation((rotation) => (rotation + delta * (360 / 1800)) % 360);
+        vinylFrameRef.current = requestAnimationFrame(spin);
+      } else {
+        vinylLastFrameRef.current = null;
+        vinylFrameRef.current = null;
+      }
+    };
+    if (vinylState === "playing") vinylFrameRef.current = requestAnimationFrame(spin);
+    return () => {
+      if (vinylFrameRef.current) cancelAnimationFrame(vinylFrameRef.current);
+      vinylFrameRef.current = null;
+    };
+  }, [vinylState]);
+
+  useEffect(() => {
+    if (vinylState !== "slowing") return;
+    const start = performance.now();
+    const initial = vinylRotation;
+    const duration = 1100;
+    const easeOut = (value: number) => 1 - Math.pow(1 - value, 3);
+    const animateStop = (now: number) => {
+      const progress = Math.min(1, (now - start) / duration);
+      setVinylRotation((initial + 90 * (1 - easeOut(progress))) % 360);
+      if (progress < 1) requestAnimationFrame(animateStop);
+    };
+    requestAnimationFrame(animateStop);
+  }, [vinylState]);
+
+
   return (
     <div className="site">
 
@@ -774,7 +900,7 @@ export default function App() {
             <div className="culture-card-content">
               <span>PRODUCERS &amp; ARTISTS</span>
               <h3>BEATS<br />MARKETPLACE</h3>
-              <p>Discover beats by genre, mood, BPM and producer, then take the record to Galaxy Fire.</p>
+              <p>Discover original Galaxy Fire beats by BPM, key and mood, then choose the license that fits your record.</p>
               <strong>EXPLORE BEATS →</strong>
             </div>
           </a>
@@ -835,17 +961,80 @@ export default function App() {
         </div>
       </section>
 
-      <section className="ecosystem-preview" id="beats">
-        <div className="ecosystem-preview-inner">
-          <div>
-            <div className="section-number">11 / BEATS</div>
-            <h2>FIND YOUR<br /><span>SOUND.</span></h2>
-            <p>
-              The Beats Marketplace will let artists preview beats, explore producers and
-              purchase the right license for their next record.
-            </p>
+      <section className="beats-marketplace" id="beats">
+        <div className="beats-shell">
+          <div className="beats-heading">
+            <div>
+              <div className="section-number">11 / GALAXY FIRE BEATS</div>
+              <h2>FIND YOUR<br /><span>SOUND.</span></h2>
+              <p>Original Galaxy Fire beats, ready for your next record. Preview for 15 seconds, choose your license, and keep creating.</p>
+            </div>
+            <div className="beats-search-wrap">
+              <input value={beatSearch} onChange={(event) => setBeatSearch(event.target.value)} placeholder="SEARCH BEATS..." aria-label="Search beats" />
+              <div className="beat-filter-buttons">
+                {["ALL", "MAJOR", "MINOR"].map((filter) => (
+                  <button key={filter} className={beatFilter === filter ? "active" : ""} onClick={() => setBeatFilter(filter)}>{filter}</button>
+                ))}
+              </div>
+            </div>
           </div>
-          <a href="#booking" className="button red">WORK WITH A PRODUCER →</a>
+
+          <div className="beat-feature">
+            <div className={`vinyl-player ${vinylState}`}>
+              <div className="vinyl-platter">
+                <div className="vinyl-grooves" />
+                <img src={beatArt} alt="Galaxy Records Limited artwork" className="vinyl-label" style={{ transform: `rotate(${vinylRotation}deg)` }} />
+                <div className="vinyl-shine" />
+              </div>
+              <div className="tonearm"><div className="tonearm-head" /></div>
+              <div className="turntable-control">
+                <span>33⅓ RPM</span>
+                <span>{vinylState === "playing" ? "PLAYING" : vinylState === "slowing" ? "STOPPING" : "READY"}</span>
+              </div>
+              <button className="vinyl-play" onClick={() => playBeat(selectedBeat)} aria-label={beatPlaying ? "Pause preview" : "Play preview"}>
+                {beatPlaying ? "Ⅱ" : "▶"}
+              </button>
+            </div>
+
+            <div className="beat-feature-info">
+              <div className="now-playing-label">{beatPlaying ? "NOW PLAYING" : "BEAT PREVIEW"}</div>
+              <h3>{selectedBeat.title}</h3>
+              <div className="beat-meta">
+                <span>BPM <b>{selectedBeat.bpm}</b></span>
+                <span>KEY <b>{selectedBeat.key}</b></span>
+                <span>MODE <b>{selectedBeat.mode}</b></span>
+                <span>MOOD <b>{selectedBeat.mood}</b></span>
+              </div>
+              <p>Galaxy Fire original production. Preview is limited to 15 seconds before the vinyl slows to a stop.</p>
+              <div className="beat-progress-row">
+                <div className="beat-progress"><span style={{ width: `${Math.min(100, (beatProgress / 15) * 100)}%` }} /></div>
+                <span>{Math.floor(beatProgress).toString().padStart(2, "0")} / 15</span>
+              </div>
+
+              <div className="beat-license-grid">
+                <div><small>BASIC</small><strong>₦20,000</strong><span>MP3 Lease</span><button>SELECT</button></div>
+                <div><small>PREMIUM</small><strong>₦40,000</strong><span>WAV Lease</span><button>SELECT</button></div>
+                <div className="featured"><small>UNLIMITED</small><strong>₦80,000</strong><span>Unlimited Use</span><button>SELECT</button></div>
+                <div><small>EXCLUSIVE</small><strong>₦150,000</strong><span>Exclusive Rights</span><button>SELECT</button></div>
+              </div>
+              <div className="beat-license-note">Secure purchase and delivery will be connected to the existing Paystack flow after the catalogue is finalized.</div>
+            </div>
+          </div>
+
+          <div className="beats-table">
+            <div className="beats-table-head"><span>ALL BEATS</span><span>BPM</span><span>KEY</span><span>MODE</span><span>MOOD</span><span>PREVIEW</span></div>
+            {filteredBeats.map((beat) => (
+              <div key={beat.id} className={`beat-row ${selectedBeat.id === beat.id ? "selected" : ""}`} onClick={() => { setSelectedBeat(beat); setBeatProgress(0); stopBeatPreview(false); }}>
+                <span className="beat-row-title"><i>{selectedBeat.id === beat.id && beatPlaying ? "Ⅱ" : "▶"}</i>{beat.title}</span>
+                <span>{beat.bpm}</span>
+                <span>{beat.key}</span>
+                <span>{beat.mode}</span>
+                <span>{beat.mood}</span>
+                <button className="beat-row-action" onClick={(event) => { event.stopPropagation(); playBeat(beat); }}>{selectedBeat.id === beat.id && beatPlaying ? "PAUSE" : "PLAY 15s"}</button>
+              </div>
+            ))}
+          </div>
+          <audio ref={beatAudioRef} preload="none" aria-hidden="true" />
         </div>
       </section>
 
@@ -1683,6 +1872,86 @@ export default function App() {
           .booking-form-grid, .payment-options { grid-template-columns: 1fr; }
           .booking-total strong { font-size: 22px; }
           .footer-bottom { flex-direction: column; gap: 12px; }
+        }
+
+        /* GALAXY FIRE BEATS MARKETPLACE */
+        .beats-marketplace { background:#050505; padding:120px 5%; border-top:1px solid #1b1b1b; overflow:hidden; }
+        .beats-shell { max-width:1500px; margin:0 auto; }
+        .beats-heading { display:flex; justify-content:space-between; align-items:flex-end; gap:40px; margin-bottom:50px; }
+        .beats-heading h2 { margin:12px 0 0; }
+        .beats-heading p { max-width:700px; color:#777; line-height:1.8; margin:20px 0 0; }
+        .beats-search-wrap { width:min(430px,100%); }
+        .beats-search-wrap input { width:100%; box-sizing:border-box; background:#0b0b0b; color:#fff; border:1px solid #2b2b2b; padding:16px 18px; outline:none; text-transform:uppercase; letter-spacing:.08em; font-size:11px; }
+        .beats-search-wrap input:focus { border-color:#e50914; }
+        .beat-filter-buttons { display:flex; gap:8px; margin-top:10px; }
+        .beat-filter-buttons button { flex:1; background:#101010; color:#777; border:1px solid #252525; padding:10px 12px; font-size:9px; letter-spacing:.14em; cursor:pointer; }
+        .beat-filter-buttons button:hover,.beat-filter-buttons button.active { color:#fff; border-color:#e50914; background:#150606; }
+        .beat-feature { display:grid; grid-template-columns:minmax(420px,1.08fr) minmax(460px,.92fr); gap:0; background:linear-gradient(135deg,#0b0b0b,#070707); border:1px solid #242424; box-shadow:0 30px 80px rgba(0,0,0,.45); }
+        .vinyl-player { min-height:560px; position:relative; overflow:hidden; background:radial-gradient(circle at 50% 48%,#161616 0,#090909 52%,#050505 100%); border-right:1px solid #222; display:flex; align-items:center; justify-content:center; }
+        .vinyl-player::before { content:""; position:absolute; inset:7%; border:1px solid rgba(229,9,20,.35); border-radius:50%; box-shadow:0 0 80px rgba(229,9,20,.08); }
+        .vinyl-platter { width:min(74%,520px); aspect-ratio:1; position:relative; border-radius:50%; background:repeating-radial-gradient(circle,#050505 0 3px,#0e0e0e 3px 5px,#070707 5px 7px); box-shadow:0 0 0 8px #111,0 0 0 11px #2a2a2a,0 0 60px rgba(229,9,20,.28); transform-origin:center; }
+        .vinyl-platter::before { content:""; position:absolute; inset:3%; border-radius:50%; border:1px solid rgba(255,255,255,.08); box-shadow:inset 0 0 30px rgba(255,255,255,.04); }
+        .vinyl-grooves { position:absolute; inset:8%; border-radius:50%; background:repeating-radial-gradient(circle,transparent 0 5px,rgba(255,255,255,.055) 6px 7px,transparent 8px 11px); opacity:.65; }
+        .vinyl-label { position:absolute; inset:25%; width:50%; height:50%; border-radius:50%; object-fit:cover; display:block; border:1px solid #3b3b3b; box-shadow:0 0 0 5px #090909,0 0 25px rgba(229,9,20,.16); transition:transform .05s linear; }
+        .vinyl-shine { position:absolute; inset:0; border-radius:50%; background:linear-gradient(115deg,transparent 0 38%,rgba(255,255,255,.12) 45%,transparent 52% 100%); mix-blend-mode:screen; pointer-events:none; }
+        .tonearm { position:absolute; width:190px; height:15px; background:linear-gradient(90deg,#222,#aaa,#333); border-radius:12px; right:7%; top:15%; transform:rotate(43deg); transform-origin:92% 50%; box-shadow:0 0 10px rgba(255,255,255,.12); }
+        .tonearm::before { content:""; position:absolute; right:-8px; top:-16px; width:44px; height:44px; border-radius:50%; border:9px solid #202020; box-shadow:inset 0 0 0 2px #aaa; }
+        .tonearm-head { position:absolute; left:-14px; top:2px; width:34px; height:10px; background:#111; border-radius:3px; box-shadow:0 0 8px rgba(229,9,20,.4); }
+        .turntable-control { position:absolute; left:28px; bottom:24px; display:flex; flex-direction:column; gap:5px; color:#666; font-size:8px; letter-spacing:.18em; text-transform:uppercase; }
+        .turntable-control span:last-child { color:#e50914; }
+        .vinyl-play { position:absolute; left:50%; bottom:24px; transform:translateX(-50%); width:62px; height:62px; border-radius:50%; border:1px solid #e50914; background:#090909; color:#fff; font-size:18px; cursor:pointer; box-shadow:0 0 25px rgba(229,9,20,.2); }
+        .vinyl-play:hover { background:#e50914; }
+        .vinyl-player.slowing .vinyl-platter { animation:vinylSlow .95s ease-out both; }
+        .vinyl-player.playing .vinyl-platter { box-shadow:0 0 0 8px #111,0 0 0 11px #2a2a2a,0 0 90px rgba(229,9,20,.38); }
+        @keyframes vinylSlow { from { filter:brightness(1); } to { filter:brightness(.84); } }
+        .beat-feature-info { padding:52px 48px 44px; display:flex; flex-direction:column; justify-content:center; }
+        .now-playing-label { color:#e50914; font-size:10px; letter-spacing:.18em; font-weight:700; }
+        .beat-feature-info h3 { font-size:clamp(42px,4vw,72px); line-height:.95; margin:14px 0 22px; letter-spacing:-.04em; }
+        .beat-meta { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+        .beat-meta span { border:1px solid #242424; background:#0c0c0c; padding:12px; color:#666; font-size:8px; letter-spacing:.13em; text-transform:uppercase; }
+        .beat-meta b { display:block; color:#fff; margin-top:6px; font-size:11px; letter-spacing:0; text-transform:none; }
+        .beat-feature-info > p { color:#777; line-height:1.7; font-size:13px; max-width:640px; margin:22px 0; }
+        .beat-progress-row { display:flex; align-items:center; gap:12px; color:#777; font-size:10px; margin-bottom:30px; }
+        .beat-progress { flex:1; height:4px; background:#222; overflow:hidden; }
+        .beat-progress span { display:block; height:100%; background:#e50914; transition:width .08s linear; }
+        .beat-license-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+        .beat-license-grid > div { min-height:140px; padding:16px 12px; border:1px solid #252525; background:#0b0b0b; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+        .beat-license-grid > div.featured { border-color:#e50914; box-shadow:0 0 24px rgba(229,9,20,.12); }
+        .beat-license-grid small { color:#aaa; font-weight:700; letter-spacing:.12em; }
+        .beat-license-grid strong { font-size:17px; margin:9px 0 4px; }
+        .beat-license-grid span { color:#666; font-size:9px; }
+        .beat-license-grid button { margin-top:13px; width:100%; padding:8px 4px; border:1px solid #333; background:#111; color:#fff; font-size:8px; letter-spacing:.1em; cursor:pointer; }
+        .beat-license-grid button:hover,.beat-license-grid .featured button { border-color:#e50914; background:#e50914; }
+        .beat-license-note { color:#555; font-size:9px; line-height:1.6; margin-top:18px; }
+        .beats-table { margin-top:22px; border:1px solid #242424; background:#080808; }
+        .beats-table-head,.beat-row { display:grid; grid-template-columns:2.2fr .6fr .9fr .8fr 1.3fr .8fr; align-items:center; gap:12px; }
+        .beats-table-head { padding:15px 20px; color:#555; border-bottom:1px solid #222; font-size:8px; letter-spacing:.15em; text-transform:uppercase; }
+        .beat-row { width:100%; padding:0 20px; min-height:66px; border:0; border-bottom:1px solid #1c1c1c; background:#080808; color:#777; text-align:left; font:inherit; cursor:pointer; }
+        .beat-row:last-child { border-bottom:0; }
+        .beat-row:hover,.beat-row.selected { background:linear-gradient(90deg,#120606,#080808); color:#fff; }
+        .beat-row-title { display:flex; align-items:center; gap:12px; color:#ddd; font-size:12px; }
+        .beat-row-title i { display:grid; place-items:center; width:30px; height:30px; border:1px solid #292929; border-radius:50%; background:#101010; color:#fff; font-style:normal; font-size:9px; }
+        .beat-row.selected .beat-row-title i { border-color:#e50914; color:#e50914; }
+        .beat-row > span:not(.beat-row-title) { font-size:10px; }
+        .beat-row-action { justify-self:end; background:none; border:0; cursor:pointer; padding:8px 0; color:#e50914 !important; font-size:8px !important; letter-spacing:.12em; font-weight:700; }
+        @media (max-width: 1000px) {
+          .beats-heading { flex-direction:column; align-items:flex-start; }
+          .beats-search-wrap { width:100%; }
+          .beat-feature { grid-template-columns:1fr; }
+          .vinyl-player { min-height:520px; border-right:0; border-bottom:1px solid #222; }
+          .beat-feature-info { padding:40px 30px; }
+          .beat-license-grid { grid-template-columns:repeat(2,1fr); }
+        }
+        @media (max-width: 700px) {
+          .beats-marketplace { padding:90px 6%; }
+          .vinyl-player { min-height:390px; }
+          .vinyl-platter { width:78%; }
+          .tonearm { width:130px; right:2%; top:13%; }
+          .beat-feature-info { padding:32px 20px; }
+          .beat-meta { grid-template-columns:repeat(2,1fr); }
+          .beat-license-grid { grid-template-columns:1fr 1fr; }
+          .beats-table { overflow-x:auto; }
+          .beats-table-head,.beat-row { min-width:720px; }
         }
 
         /* GALAXY FIRE PRO AUDIO STORE */
