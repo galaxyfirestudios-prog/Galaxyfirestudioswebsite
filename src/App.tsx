@@ -1132,7 +1132,16 @@ export default function App() {
                 <img src={beatArt} alt="Galaxy Records Limited artwork" className="vinyl-label" />
                 <div className="vinyl-shine" />
               </div>
-              <div className={`tonearm ${vinylState}`}><div className="tonearm-head" /></div>
+              <div className={`tonearm tonearm-${vinylState}`} aria-hidden="true">
+                <div className="tonearm-pivot" />
+                <div className="tonearm-bar" />
+                <div className="tonearm-head">
+                  <div className="dj-cartridge">
+                    <span className="dj-cartridge-shell" />
+                    <span className="dj-stylus" />
+                  </div>
+                </div>
+              </div>
 
               <div className="turntable-control">
                 <span>33⅓ RPM</span>
@@ -2202,15 +2211,12 @@ export default function App() {
         .vinyl-grooves { position:absolute; inset:8%; border-radius:50%; background:repeating-radial-gradient(circle,transparent 0 5px,rgba(255,255,255,.055) 6px 7px,transparent 8px 11px); opacity:.65; }
         .vinyl-label { position:absolute; inset:25%; width:50%; height:50%; border-radius:50%; object-fit:cover; display:block; border:1px solid #3b3b3b; box-shadow:0 0 0 5px #090909,0 0 25px rgba(229,9,20,.16); transition:transform .05s linear; }
         .vinyl-shine { position:absolute; inset:0; border-radius:50%; background:linear-gradient(115deg,transparent 0 38%,rgba(255,255,255,.12) 45%,transparent 52% 100%); mix-blend-mode:screen; pointer-events:none; }
-        .tonearm { position:absolute; width:190px; height:15px; background:linear-gradient(90deg,#222,#aaa,#333); border-radius:12px; right:7%; top:15%; transform:rotate(43deg); transform-origin:92% 50%; box-shadow:0 0 10px rgba(255,255,255,.12); }
         .tonearm::before { content:""; position:absolute; right:-8px; top:-16px; width:44px; height:44px; border-radius:50%; border:9px solid #202020; box-shadow:inset 0 0 0 2px #aaa; }
-        .tonearm-head { position:absolute; left:-14px; top:2px; width:34px; height:10px; background:#111; border-radius:3px; box-shadow:0 0 8px rgba(229,9,20,.4); }
         .turntable-control { position:absolute; left:28px; bottom:24px; display:flex; flex-direction:column; gap:5px; color:#666; font-size:8px; letter-spacing:.18em; text-transform:uppercase; }
         .turntable-control span:last-child { color:#e50914; }
         .vinyl-play { position:absolute; left:50%; bottom:24px; transform:translateX(-50%); width:62px; height:62px; border-radius:50%; border:1px solid #e50914; background:#090909; color:#fff; font-size:18px; cursor:pointer; box-shadow:0 0 25px rgba(229,9,20,.2); }
         .vinyl-play:hover { background:#e50914; }
         .vinyl-player.playing .vinyl-platter { box-shadow:0 0 0 8px #111,0 0 0 11px #2a2a2a,0 0 90px rgba(229,9,20,.38); }
-        .tonearm { transition:transform .65s cubic-bezier(.22,.61,.36,1), filter .3s ease; }
         .tonearm.playing, .tonearm.slowing { transform:rotate(58deg); filter:brightness(1.08); }
         .tonearm.stopped { transform:rotate(43deg); }
         .beat-feature-info { padding:44px 42px 38px; display:flex; flex-direction:column; justify-content:center; }
@@ -2260,7 +2266,6 @@ export default function App() {
           .beats-heading-note { width:100%; align-items:flex-start; text-align:left; }
           .vinyl-player { min-height:520px; }
           .vinyl-platter { width:74%; }
-          .tonearm { width:130px; right:2%; top:13%; }
           .beat-selector { width:100%; margin-bottom:22px; }
           .beat-selector-meta { display:none; }
           .beat-selector-option { grid-template-columns:20px minmax(0,1fr) 58px; }
@@ -2349,7 +2354,109 @@ export default function App() {
         .checkout-total { display:flex; justify-content:space-between; align-items:center; margin:25px 0; padding:18px 0; border-top:1px solid #333; border-bottom:1px solid #333; }
         .checkout-total span { color:#777; font-size:10px; letter-spacing:.12em; }
         .checkout-total strong { font-size:24px; }
-      `}</style>
+      `}
+        /* DJ TURNTABLE TONEARM + CARTRIDGE */
+        .tonearm {
+          position:absolute;
+          z-index:7;
+          width:220px;
+          height:180px;
+          right:4%;
+          top:6%;
+          transform-origin:88% 15%;
+          transform:rotate(-18deg);
+          transition:transform .72s cubic-bezier(.22,.61,.36,1);
+          pointer-events:none;
+        }
+        .tonearm-pivot {
+          position:absolute;
+          right:0;
+          top:0;
+          width:34px;
+          height:34px;
+          border-radius:50%;
+          border:2px solid #777;
+          background:radial-gradient(circle at 35% 30%,#e0e0e0 0 10%,#666 12% 44%,#161616 47% 100%);
+          box-shadow:0 5px 11px rgba(0,0,0,.55);
+        }
+        .tonearm-bar {
+          position:absolute;
+          right:26px;
+          top:11px;
+          width:160px;
+          height:13px;
+          border-radius:10px;
+          background:linear-gradient(180deg,#dedede 0%,#858585 45%,#252525 100%);
+          box-shadow:0 4px 7px rgba(0,0,0,.45);
+          transform:rotate(25deg);
+          transform-origin:right center;
+        }
+        .tonearm-head {
+          position:absolute;
+          left:14px;
+          top:82px;
+          width:58px;
+          height:38px;
+          transform:rotate(25deg);
+          transform-origin:right center;
+        }
+        .dj-cartridge {
+          position:relative;
+          width:46px;
+          height:29px;
+          border-radius:4px 8px 8px 4px;
+          background:linear-gradient(145deg,#292929,#050505);
+          border:1px solid #888;
+          box-shadow:0 6px 9px rgba(0,0,0,.6);
+        }
+        .dj-cartridge-shell {
+          position:absolute;
+          left:6px;
+          top:5px;
+          width:20px;
+          height:9px;
+          border-radius:2px;
+          background:#626262;
+        }
+        .dj-stylus {
+          position:absolute;
+          right:-5px;
+          bottom:-8px;
+          width:2px;
+          height:15px;
+          border-radius:2px;
+          background:#ededed;
+          transform:rotate(-15deg);
+          transform-origin:top center;
+          box-shadow:0 0 3px rgba(255,255,255,.5);
+        }
+        .dj-stylus::after {
+          content:"";
+          position:absolute;
+          left:-1px;
+          bottom:-2px;
+          width:4px;
+          height:4px;
+          border-radius:50%;
+          background:#0b0b0b;
+          border:1px solid #aaa;
+        }
+        .tonearm-playing {
+          transform:rotate(8deg);
+        }
+        .tonearm-slowing {
+          transform:rotate(-2deg);
+        }
+        .tonearm-ready {
+          transform:rotate(-18deg);
+        }
+
+        @media (max-width:700px) {
+          .tonearm { width:165px; height:140px; right:-1%; top:5%; }
+          .tonearm-bar { width:112px; }
+          .tonearm-head { left:6px; top:65px; transform:rotate(25deg) scale(.88); }
+        }
+</style>
     </div>
   );
 }
