@@ -1139,6 +1139,12 @@ export default function App() {
                 <span>{vinylState === "playing" ? "PLAYING" : vinylState === "slowing" ? "STOPPING" : "READY"}</span>
               </div>
 
+              <button className="vinyl-play" onClick={() => playBeat(selectedBeat)} aria-label={beatPlaying ? "Pause preview" : "Play preview"}>
+                {beatPlaying ? "Ⅱ" : "▶"}
+              </button>
+            </div>
+
+            <div className="beat-feature-info">
               <div className={`beat-selector ${beatDropdownOpen ? "open" : ""}`}>
                 <button
                   type="button"
@@ -1203,12 +1209,6 @@ export default function App() {
                 )}
               </div>
 
-              <button className="vinyl-play" onClick={() => playBeat(selectedBeat)} aria-label={beatPlaying ? "Pause preview" : "Play preview"}>
-                {beatPlaying ? "Ⅱ" : "▶"}
-              </button>
-            </div>
-
-            <div className="beat-feature-info">
               <div className="now-playing-label">{beatPlaying ? "NOW PLAYING" : "BEAT PREVIEW"}</div>
               <h3>{selectedBeat.title}</h3>
               <div className="beat-meta">
@@ -2123,31 +2123,61 @@ export default function App() {
         }
 
         /* COMPACT VINYL BEAT SELECTOR */
-        .beats-heading-note { min-width:240px; display:flex; flex-direction:column; align-items:flex-end; gap:7px; color:#e50914; font-size:9px; letter-spacing:.18em; font-weight:700; text-align:right; }
+        .beats-heading-note { min-width:200px; display:flex; flex-direction:column; align-items:flex-end; gap:7px; color:#e50914; font-size:9px; letter-spacing:.18em; font-weight:700; text-align:right; }
         .beats-heading-note small { color:#555; font-size:8px; letter-spacing:.13em; font-weight:500; }
-        .beat-selector { position:absolute; z-index:8; left:8%; right:8%; bottom:100px; }
-        .beat-selector-trigger { width:100%; display:flex; align-items:center; gap:12px; min-height:58px; padding:9px 14px; border:1px solid #333; border-radius:10px; background:rgba(8,8,8,.96); color:#fff; box-shadow:0 14px 35px rgba(0,0,0,.42); cursor:pointer; text-align:left; backdrop-filter:blur(10px); }
+        .beat-selector { position:relative; z-index:20; width:100%; margin:0 0 24px; }
+        .beat-selector-trigger { width:100%; display:flex; align-items:center; gap:12px; min-height:50px; padding:7px 11px; border:1px solid #333; border-radius:10px; background:rgba(8,8,8,.96); color:#fff; box-shadow:0 14px 35px rgba(0,0,0,.42); cursor:pointer; text-align:left; backdrop-filter:blur(10px); }
         .beat-selector-trigger:hover,.beat-selector.open .beat-selector-trigger { border-color:#e50914; box-shadow:0 0 28px rgba(229,9,20,.13),0 14px 35px rgba(0,0,0,.42); }
-        .beat-selector-icon { display:grid; place-items:center; width:32px; height:32px; border:1px solid #e50914; border-radius:8px; color:#e50914; font-size:15px; flex:none; }
+        .beat-selector-icon { display:grid; place-items:center; width:28px; height:28px; border:1px solid #e50914; border-radius:8px; color:#e50914; font-size:13px; flex:none; }
         .beat-selector-current { min-width:0; display:flex; flex:1; flex-direction:column; gap:4px; }
         .beat-selector-current small { color:#555; font-size:7px; letter-spacing:.16em; }
-        .beat-selector-current strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; letter-spacing:.03em; }
+        .beat-selector-current strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; letter-spacing:.03em; }
         .beat-selector-meta { color:#777; white-space:nowrap; font-size:8px; letter-spacing:.06em; }
         .beat-selector-chevron { width:20px; color:#e50914; text-align:center; font-size:17px; flex:none; }
-        .beat-selector-menu { position:absolute; left:0; right:0; bottom:calc(100% + 8px); border:1px solid #333; border-radius:10px; background:rgba(7,7,7,.98); box-shadow:0 20px 55px rgba(0,0,0,.65); overflow:hidden; backdrop-filter:blur(14px); }
+        .beat-selector-menu { position:absolute; z-index:30; left:0; right:0; top:calc(100% + 8px); border:1px solid #333; border-radius:10px; background:rgba(7,7,7,.98); box-shadow:0 20px 55px rgba(0,0,0,.65); overflow:hidden; backdrop-filter:blur(14px); }
         .beat-selector-tools { padding:10px; border-bottom:1px solid #202020; background:#0a0a0a; }
-        .beat-selector-tools input { width:100%; box-sizing:border-box; padding:10px 11px; border:1px solid #292929; outline:none; background:#111; color:#fff; font-size:9px; letter-spacing:.11em; text-transform:uppercase; }
+        .beat-selector-tools input { width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #292929; outline:none; background:#111; color:#fff; font-size:9px; letter-spacing:.11em; text-transform:uppercase; }
         .beat-selector-tools input:focus { border-color:#e50914; }
         .beat-selector-filters { display:flex; gap:6px; margin-top:7px; }
         .beat-selector-filters button { flex:1; padding:7px 6px; border:1px solid #242424; background:#101010; color:#666; font-size:7px; letter-spacing:.14em; cursor:pointer; }
         .beat-selector-filters button:hover,.beat-selector-filters button.active { color:#fff; border-color:#e50914; background:#160606; }
-        .beat-selector-list { max-height:235px; overflow-y:auto; }
-        .beat-selector-option { width:100%; min-height:46px; display:grid; grid-template-columns:22px minmax(0,1fr) 72px 52px; align-items:center; gap:8px; padding:8px 12px; border:0; border-bottom:1px solid #181818; background:#090909; color:#777; cursor:pointer; text-align:left; }
+        .beat-selector-list { max-height:190px; overflow-y:auto; }
+        .beat-selector-option { width:100%; min-height:40px; display:grid; grid-template-columns:22px minmax(0,1fr) 72px 52px; align-items:center; gap:8px; padding:8px 12px; border:0; border-bottom:1px solid #181818; background:#090909; color:#777; cursor:pointer; text-align:left; }
         .beat-selector-option:last-child { border-bottom:0; }
         .beat-selector-option:hover,.beat-selector-option.selected { background:linear-gradient(90deg,#160606,#090909); color:#fff; }
         .beat-selector-option-icon { color:#555; font-size:9px; }
         .beat-selector-option.selected .beat-selector-option-icon { color:#e50914; }
-        .beat-selector-option-title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#ddd; font-size:10px; }
+        .beat-selector-option-title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#ddd; font-size:9px; }
+        .beat-selector-option-meta,.beat-selector-option-bpm { color:#666; font-size:8px; text-align:right; white-space:nowrap; }
+        .beat-selector-option.selected .beat-selector-option-meta,.beat-selector-option.selected .beat-selector-option-bpm { color:#aaa; }
+        .beat-selector-empty { padding:20px 12px; color:#555; text-align:center; font-size:8px; letter-spacing:.13em; }
+
+        /* COMPACT VINYL BEAT SELECTOR */
+        .beats-heading-note { min-width:200px; display:flex; flex-direction:column; align-items:flex-end; gap:7px; color:#e50914; font-size:9px; letter-spacing:.18em; font-weight:700; text-align:right; }
+        .beats-heading-note small { color:#555; font-size:8px; letter-spacing:.13em; font-weight:500; }
+        .beat-selector { position:relative; z-index:20; width:100%; margin:0 0 24px; }
+        .beat-selector-trigger { width:100%; display:flex; align-items:center; gap:12px; min-height:50px; padding:7px 11px; border:1px solid #333; border-radius:10px; background:rgba(8,8,8,.96); color:#fff; box-shadow:0 14px 35px rgba(0,0,0,.42); cursor:pointer; text-align:left; backdrop-filter:blur(10px); }
+        .beat-selector-trigger:hover,.beat-selector.open .beat-selector-trigger { border-color:#e50914; box-shadow:0 0 28px rgba(229,9,20,.13),0 14px 35px rgba(0,0,0,.42); }
+        .beat-selector-icon { display:grid; place-items:center; width:28px; height:28px; border:1px solid #e50914; border-radius:8px; color:#e50914; font-size:13px; flex:none; }
+        .beat-selector-current { min-width:0; display:flex; flex:1; flex-direction:column; gap:4px; }
+        .beat-selector-current small { color:#555; font-size:7px; letter-spacing:.16em; }
+        .beat-selector-current strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; letter-spacing:.03em; }
+        .beat-selector-meta { color:#777; white-space:nowrap; font-size:8px; letter-spacing:.06em; }
+        .beat-selector-chevron { width:20px; color:#e50914; text-align:center; font-size:17px; flex:none; }
+        .beat-selector-menu { position:absolute; z-index:30; left:0; right:0; top:calc(100% + 8px); border:1px solid #333; border-radius:10px; background:rgba(7,7,7,.98); box-shadow:0 20px 55px rgba(0,0,0,.65); overflow:hidden; backdrop-filter:blur(14px); }
+        .beat-selector-tools { padding:10px; border-bottom:1px solid #202020; background:#0a0a0a; }
+        .beat-selector-tools input { width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid #292929; outline:none; background:#111; color:#fff; font-size:9px; letter-spacing:.11em; text-transform:uppercase; }
+        .beat-selector-tools input:focus { border-color:#e50914; }
+        .beat-selector-filters { display:flex; gap:6px; margin-top:7px; }
+        .beat-selector-filters button { flex:1; padding:7px 6px; border:1px solid #242424; background:#101010; color:#666; font-size:7px; letter-spacing:.14em; cursor:pointer; }
+        .beat-selector-filters button:hover,.beat-selector-filters button.active { color:#fff; border-color:#e50914; background:#160606; }
+        .beat-selector-list { max-height:190px; overflow-y:auto; }
+        .beat-selector-option { width:100%; min-height:40px; display:grid; grid-template-columns:22px minmax(0,1fr) 72px 52px; align-items:center; gap:8px; padding:8px 12px; border:0; border-bottom:1px solid #181818; background:#090909; color:#777; cursor:pointer; text-align:left; }
+        .beat-selector-option:last-child { border-bottom:0; }
+        .beat-selector-option:hover,.beat-selector-option.selected { background:linear-gradient(90deg,#160606,#090909); color:#fff; }
+        .beat-selector-option-icon { color:#555; font-size:9px; }
+        .beat-selector-option.selected .beat-selector-option-icon { color:#e50914; }
+        .beat-selector-option-title { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#ddd; font-size:9px; }
         .beat-selector-option-meta,.beat-selector-option-bpm { color:#666; font-size:8px; text-align:right; white-space:nowrap; }
         .beat-selector-option.selected .beat-selector-option-meta,.beat-selector-option.selected .beat-selector-option-bpm { color:#aaa; }
         .beat-selector-empty { padding:20px 12px; color:#555; text-align:center; font-size:8px; letter-spacing:.13em; }
@@ -2211,7 +2241,7 @@ export default function App() {
         .beat-sold-tag { color:#e50914; border:1px solid #5c1a1a; padding:4px 6px; font-style:normal; font-size:7px; letter-spacing:.1em; }
         .beat-row-title i { display:grid; place-items:center; width:30px; height:30px; border:1px solid #292929; border-radius:50%; background:#101010; color:#fff; font-style:normal; font-size:9px; }
         .beat-row.selected .beat-row-title i { border-color:#e50914; color:#e50914; }
-        .beat-row > span:not(.beat-row-title) { font-size:10px; }
+        .beat-row > span:not(.beat-row-title) { font-size:9px; }
         .beat-row-action { justify-self:end; background:none; border:0; cursor:pointer; padding:8px 0; color:#e50914 !important; font-size:8px !important; letter-spacing:.12em; font-weight:700; }
         @media (max-width: 1000px) {
           .beat-checkout-modal { padding:30px 22px; }
@@ -2227,14 +2257,14 @@ export default function App() {
         @media (max-width: 700px) {
           .beats-marketplace { padding:90px 6%; }
           .beats-heading-note { width:100%; align-items:flex-start; text-align:left; }
-          .vinyl-player { min-height:430px; }
-          .vinyl-platter { width:78%; }
+          .vinyl-player { min-height:390px; }
+          .vinyl-platter { width:70%; }
           .tonearm { width:130px; right:2%; top:13%; }
-          .beat-selector { left:5%; right:5%; bottom:92px; }
+          .beat-selector { width:100%; margin-bottom:22px; }
           .beat-selector-meta { display:none; }
           .beat-selector-option { grid-template-columns:20px minmax(0,1fr) 58px; }
           .beat-selector-option-bpm { display:none; }
-          .beat-selector-list { max-height:205px; }
+          .beat-selector-list { max-height:175px; }
           .beat-feature-info { padding:32px 20px; }
           .beat-meta { grid-template-columns:repeat(2,1fr); }
           .beat-license-grid { grid-template-columns:1fr 1fr; }
@@ -2268,7 +2298,7 @@ export default function App() {
         .store-filter,.cart-button { background:#111; color:#aaa; border:1px solid #292929; padding:11px 14px; text-transform:uppercase; font-size:10px; letter-spacing:.12em; cursor:pointer; }
         .store-filter:hover,.store-filter.active { color:#fff; border-color:#e50914; }
         .cart-button { color:#fff; min-width:120px; }
-        .cart-button span { display:inline-grid; place-items:center; width:22px; height:22px; margin-left:7px; border-radius:50%; background:#e50914; font-size:10px; }
+        .cart-button span { display:inline-grid; place-items:center; width:22px; height:22px; margin-left:7px; border-radius:50%; background:#e50914; font-size:9px; }
         .store-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
         .product-card { background:#0f0f0f; border:1px solid #222; overflow:hidden; transition:transform .25s,border-color .25s; }
         .product-card:hover { transform:translateY(-4px); border-color:#444; }
