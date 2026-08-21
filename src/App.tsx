@@ -15,17 +15,44 @@ import promoStudioTimeImg from "@/imports/IMG_3312.PNG";
 import promoBeatsImg from "@/imports/IMG_3365.PNG";
 import promoSuperstarsImg from "@/imports/IMG_3360.PNG";
 import promoMixMasterImg from "@/imports/IMG_3359.PNG";
+import visual01 from "@/imports/visuals/visual_01.webp";
+import visual02 from "@/imports/visuals/visual_02.webp";
+import visual03 from "@/imports/visuals/visual_03.webp";
+import visual04 from "@/imports/visuals/visual_04.webp";
+import visual05 from "@/imports/visuals/visual_05.webp";
+import visual06 from "@/imports/visuals/visual_06.webp";
+import visual07 from "@/imports/visuals/visual_07.webp";
+import visual08 from "@/imports/visuals/visual_08.webp";
+import visual09 from "@/imports/visuals/visual_09.webp";
+import visual10 from "@/imports/visuals/visual_10.webp";
+import visual11 from "@/imports/visuals/visual_11.webp";
+import visual12 from "@/imports/visuals/visual_12.webp";
+import visual13 from "@/imports/visuals/visual_13.webp";
+import visual14 from "@/imports/visuals/visual_14.webp";
+import visual15 from "@/imports/visuals/visual_15.webp";
+import visual16 from "@/imports/visuals/visual_16.webp";
+import visual17 from "@/imports/visuals/visual_17.webp";
+import visual18 from "@/imports/visuals/visual_18.webp";
+import visual19 from "@/imports/visuals/visual_19.webp";
+import visual20 from "@/imports/visuals/visual_20.webp";
+import visual21 from "@/imports/visuals/visual_21.webp";
+import visual22 from "@/imports/visuals/visual_22.webp";
+import visual23 from "@/imports/visuals/visual_23.webp";
+import visual24 from "@/imports/visuals/visual_24.webp";
+import visual25 from "@/imports/visuals/visual_25.webp";
+import visual26 from "@/imports/visuals/visual_26.webp";
+import visual27 from "@/imports/visuals/visual_27.webp";
+import visual28 from "@/imports/visuals/visual_28.webp";
+import visual29 from "@/imports/visuals/visual_29.webp";
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [visualSlide, setVisualSlide] = useState(0);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingSubmitted, setBookingSubmitted] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
-  const [shopCategory, setShopCategory] = useState("ALL");
-  const [cart, setCart] = useState<Array<{ name: string; price: number; qty: number }>>([]);
-  const [cartOpen, setCartOpen] = useState(false);
   const [booking, setBooking] = useState({
     service: "The Fire Session",
     date: "",
@@ -44,6 +71,14 @@ export default function App() {
     { title: "Mastering", price: 35000, unit: "per song" },
     { title: "Mix + Master", price: 100000, unit: "per song" },
     { title: "Production Session", price: 30000, unit: "per hour" },
+    { title: "Artist Photoshoot", price: 75000, unit: "starting price" },
+    { title: "Cover Art Shoot", price: 50000, unit: "starting price" },
+    { title: "Event Photography", price: 100000, unit: "starting price" },
+    { title: "Music Video", price: 250000, unit: "starting price" },
+    { title: "Performance Video", price: 150000, unit: "starting price" },
+    { title: "Visualizer", price: 100000, unit: "starting price" },
+    { title: "Lyric Video", price: 75000, unit: "starting price" },
+    { title: "Social Content Package", price: 100000, unit: "starting price" },
   ];
 
   const selectedService = bookingServices.find((service) => service.title === booking.service) || bookingServices[0];
@@ -214,88 +249,6 @@ export default function App() {
     }
   };
 
-  // Product images are hotlinked from reputable product/manufacturer/retailer pages so the catalogue shows the real gear immediately.
-  const productImages: Record<string, string> = {
-    at2020: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Audio-technica_AT2020.JPG",
-    at2035: micWideImg,
-    at2050: micCloseImg,
-    at2020usb: micWideImg,
-    se4400: micWideImg,
-    behr_c1: "https://www.rekormuzik.com/UserFiles/Fotograflar/org/1057-7679-jpg-7679.jpg",
-    se_x1a: "https://f.fcdn.app/imgs/ebb194/www.palaciodelamusica.com.uy/pmusuy/bfdc/webp/catalogo/X1A-X1A_1/1024-1024/microfono-condensador-se-electronics-x1a-microfono-condensador-se-electronics-x1a.jpg",
-    behr_c3: micWideImg,
-    m20x: "https://thumbs.static-thomann.de/thumb//bdbmagic/pics/prod/331902.jpg",
-    m30x: monitorsImg,
-    m40x: "https://cdn11.bigcommerce.com/s-hsjzdjtp1u/images/stencil/1280x1280/products/64698/55844/casque-audio-technica-ath-m40x-zoom__16015.1718060705.jpg?c=1",
-    m50x: monitorsImg,
-    hd280: "https://thumbs.static-thomann.de/thumb//bdbmagic/pics/prod/400099.jpg",
-    umc204: interfaceImg,
-    minifuse1: interfaceImg,
-    ssl2: interfaceImg,
-    yamaha_hs5: "https://www.bonnersmusic.co.uk/cdn/shop/products/yamaha-hs5-w_e3c7a1a2-e710-490a-946e-d6a5bfaa0b8a.jpg?v=1704218616&width=1946",
-    iloud: monitorsImg,
-    mpkmini: "https://ortizo.com.co/cdn/shop/files/SE00883.jpg?v=1755619114&width=480",
-  };
-
-  const storeProducts = [
-    { id: "at2020", name: "Audio-Technica AT2020", category: "MICROPHONES", price: 187500, marketPrice: 150000, stock: 5, badge: "BEST SELLER", image: productImages.at2020, description: "Cardioid condenser microphone for clean, detailed vocal and instrument recording." },
-    { id: "at2035", name: "Audio-Technica AT2035", category: "MICROPHONES", price: 356250, marketPrice: 285000, stock: 3, badge: "PRO VOCALS", image: productImages.at2035, description: "Large-diaphragm condenser with a smooth, detailed response for serious vocal recording." },
-    { id: "at2050", name: "Audio-Technica AT2050", category: "MICROPHONES", price: 481250, marketPrice: 385000, stock: 2, badge: "VERSATILE", image: productImages.at2050, description: "Multi-pattern condenser for vocals, instruments and flexible studio recording." },
-    { id: "at2020usb", name: "Audio-Technica AT2020USB+", category: "MICROPHONES", price: 243750, marketPrice: 195000, stock: 3, badge: "USB", image: productImages.at2020usb, description: "USB condenser microphone for creators, vocalists and home studios." },
-    { id: "se-x1a", name: "sE Electronics X1 A", category: "MICROPHONES", price: 182500, marketPrice: 146000, stock: 3, badge: "VALUE PICK", image: productImages.se_x1a, description: "Accessible large-diaphragm condenser for vocals, voiceover and instruments." },
-    { id: "se4400", name: "sE Electronics sE4400", category: "MICROPHONES", price: 1061250, marketPrice: 849000, stock: 1, badge: "ELITE", image: productImages.se4400, description: "Premium multi-pattern condenser built for demanding studio sessions." },
-    { id: "uad-sd1", name: "Universal Audio SD-1", category: "MICROPHONES", price: 537500, marketPrice: 430000, stock: 1, badge: "BROADCAST", image: micCloseImg, description: "Dynamic microphone suited to vocals, broadcast, podcasting and spoken word." },
-    { id: "behr-c1", name: "Behringer C-1", category: "MICROPHONES", price: 98125, marketPrice: 78500, stock: 5, badge: "STARTER", image: productImages.behr_c1, description: "Affordable large-diaphragm condenser for first studios and project setups." },
-    { id: "m20x", name: "Audio-Technica ATH-M20x", category: "HEADPHONES", price: 106250, marketPrice: 85000, stock: 8, badge: "STARTER", image: productImages.m20x, description: "Closed-back monitoring headphones for recording, editing and everyday studio work." },
-    { id: "m30x", name: "Audio-Technica ATH-M30x", category: "HEADPHONES", price: 156250, marketPrice: 125000, stock: 5, badge: "STUDIO", image: productImages.m30x, description: "Professional closed-back headphones with detailed midrange monitoring." },
-    { id: "m40x", name: "Audio-Technica ATH-M40x", category: "HEADPHONES", price: 225000, marketPrice: 180000, stock: 5, badge: "MIXING", image: productImages.m40x, description: "Accurate, foldable monitoring headphones designed for critical listening." },
-    { id: "m50x", name: "Audio-Technica ATH-M50x", category: "HEADPHONES", price: 287500, marketPrice: 230000, stock: 5, badge: "PRO", image: productImages.m50x, description: "Industry-popular closed-back headphones for tracking and mixing." },
-    { id: "hd200", name: "Sennheiser HD 200 PRO", category: "HEADPHONES", price: 143750, marketPrice: 115000, stock: 5, badge: "VALUE PICK", image: monitorsImg, description: "Closed-back studio headphones for focused monitoring and recording." },
-    { id: "hd280", name: "Sennheiser HD 280 PRO", category: "HEADPHONES", price: 193750, marketPrice: 155000, stock: 4, badge: "CLASSIC", image: productImages.hd280, description: "Reliable closed-back headphones with strong isolation for tracking." },
-    { id: "umc204", name: "Behringer UMC204HD", category: "INTERFACES", price: 156875, marketPrice: 125500, stock: 5, badge: "STARTER", image: productImages.umc204, description: "Two-input USB audio interface for recording vocals, instruments and production." },
-    { id: "minifuse1", name: "Arturia MiniFuse 1", category: "INTERFACES", price: 190813, marketPrice: 152650, stock: 4, badge: "COMPACT", image: productImages.minifuse1, description: "Compact USB interface for creators who want a clean, portable setup." },
-    { id: "volt1", name: "Universal Audio Volt 1", category: "INTERFACES", price: 256250, marketPrice: 205000, stock: 3, badge: "CREATOR", image: interfaceImg, description: "USB audio interface with classic-style preamp processing for vocals and instruments." },
-    { id: "id4", name: "Audient iD4 MKII", category: "INTERFACES", price: 287500, marketPrice: 230000, stock: 3, badge: "VOCALS", image: interfaceImg, description: "High-quality compact interface with a strong mic preamp for vocal recording." },
-    { id: "volt2", name: "Universal Audio Volt 2", category: "INTERFACES", price: 343750, marketPrice: 275000, stock: 3, badge: "POPULAR", image: interfaceImg, description: "Two-channel USB interface for artists, producers and home studios." },
-    { id: "ssl2", name: "Solid State Logic SSL 2", category: "INTERFACES", price: 351875, marketPrice: 281500, stock: 3, badge: "PRO PICK", image: productImages.ssl2, description: "Professional two-input interface with SSL workflow and analogue character." },
-    { id: "id14", name: "Audient iD14 MKII", category: "INTERFACES", price: 431250, marketPrice: 345000, stock: 2, badge: "EXPANDABLE", image: interfaceImg, description: "Feature-rich interface for producers and engineers needing more I/O." },
-    { id: "ssl2plus", name: "Solid State Logic SSL 2+", category: "INTERFACES", price: 483125, marketPrice: 386500, stock: 2, badge: "PRO", image: interfaceImg, description: "Expanded SSL interface with extra outputs and MIDI connectivity." },
-    { id: "iloud", name: "IK Multimedia iLoud Micro Monitor Pair", category: "MONITORS", price: 562500, marketPrice: 450000, stock: 2, badge: "SMALL ROOM", image: productImages.iloud, description: "Compact reference monitor pair designed for accurate monitoring in small spaces." },
-    { id: "kali-lp6", name: "Kali Audio LP-6 V2 Pair", category: "MONITORS", price: 685781, marketPrice: 548625, stock: 2, badge: "MIXING", image: speakerImg, description: "Six-inch nearfield monitor pair for serious home and project studios." },
-    { id: "yamaha-hs5", name: "Yamaha HS5 Pair", category: "MONITORS", price: 981250, marketPrice: 785000, stock: 2, badge: "REFERENCE", image: productImages.yamaha_hs5, description: "Five-inch nearfield reference monitor pair for honest mixing decisions." },
-    { id: "krk-r5", name: "KRK Rokit 5 G4 Pair", category: "MONITORS", price: 1000000, marketPrice: 800000, stock: 2, badge: "PRODUCER", image: speakerImg, description: "Five-inch studio monitor pair with the familiar KRK low-end response." },
-    { id: "genelec8010", name: "Genelec 8010A Pair", category: "MONITORS", price: 1187500, marketPrice: 950000, stock: 1, badge: "ELITE", image: speakerImg, description: "Premium compact reference monitors for professional production environments." },
-    { id: "minilab3", name: "Arturia MiniLab 3", category: "MIDI & DRUMS", price: 275000, marketPrice: 220000, stock: 3, badge: "BEST SELLER", image: keyboardImg, description: "Compact MIDI controller for beat-making, melodies and production workflows." },
-    { id: "mpkmini", name: "Akai MPK Mini", category: "MIDI & DRUMS", price: 275000, marketPrice: 220000, stock: 3, badge: "PRODUCER", image: productImages.mpkmini, description: "Portable MIDI keyboard with pads for beat-making and mobile production." },
-    { id: "maschine", name: "Native Instruments Maschine Mikro MK3", category: "MIDI & DRUMS", price: 437500, marketPrice: 350000, stock: 2, badge: "BEATMAKER", image: mpcLitImg, description: "Pad controller for drums, samples and hands-on beat production." },
-    { id: "tr8s", name: "Roland TR-8S", category: "MIDI & DRUMS", price: 1250000, marketPrice: 1000000, stock: 1, badge: "DRUM MACHINE", image: mpcDemoImg, description: "Professional rhythm performer for electronic drums, patterns and live production." },
-    { id: "popfilter", name: "Professional Studio Pop Filter", category: "ACCESSORIES", price: 31250, marketPrice: 25000, stock: 10, badge: "ESSENTIAL", image: micCloseImg, description: "Reduces plosives and protects the microphone during vocal recording." },
-    { id: "reflexion", name: "sE Reflexion Filter X", category: "ACCESSORIES", price: 175000, marketPrice: 140000, stock: 3, badge: "VOCAL", image: micWideImg, description: "Reflection-control accessory for cleaner vocal recordings in untreated spaces." },
-    { id: "boomstand", name: "Heavy-Duty Boom Mic Stand", category: "ACCESSORIES", price: 62500, marketPrice: 50000, stock: 8, badge: "ESSENTIAL", image: micWideImg, description: "Stable boom stand for studio microphones and vocal setups." },
-    { id: "xlr3", name: "Premium XLR Cable 3m", category: "ACCESSORIES", price: 25000, marketPrice: 20000, stock: 15, badge: "CABLE", image: interfaceImg, description: "Balanced XLR cable for microphones, interfaces and professional connections." },
-    { id: "shockmount", name: "Universal Microphone Shock Mount", category: "ACCESSORIES", price: 37500, marketPrice: 30000, stock: 8, badge: "ESSENTIAL", image: micCloseImg, description: "Helps isolate the microphone from stand vibration and handling noise." },
-    { id: "isopads", name: "Studio Monitor Isolation Pads", category: "ACCESSORIES", price: 43750, marketPrice: 35000, stock: 8, badge: "MONITORING", image: speakerImg, description: "Decouples studio monitors from desks and stands for cleaner low-end response." },
-  ];
-
-  const storeCategories = ["ALL", "MICROPHONES", "HEADPHONES", "INTERFACES", "MONITORS", "MIDI & DRUMS", "ACCESSORIES"];
-  const visibleProducts = shopCategory === "ALL" ? storeProducts : storeProducts.filter((p) => p.category === shopCategory);
-  const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
-  const cartTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const addToCart = (product: (typeof storeProducts)[number]) => {
-    setCart((current) => {
-      const existing = current.find((item) => item.name === product.name);
-      if (existing) return current.map((item) => item.name === product.name ? { ...item, qty: item.qty + 1 } : item);
-      return [...current, { name: product.name, price: product.price, qty: 1 }];
-    });
-    setCartOpen(true);
-  };
-  const removeFromCart = (name: string) => setCart((current) => current.filter((item) => item.name !== name));
-  const shopCheckout = () => {
-    const order = cart.map((item) => `${item.qty}x ${item.name} — ${formatNaira(item.price * item.qty)}`).join("%0A");
-    const message = `Hi Galaxy Fire Studios, I want to order:%0A%0A${order}%0A%0AEstimated product total: ${formatNaira(cartTotal)}%0APlease confirm availability, shipping and handling for my location.`;
-    window.open(`https://wa.me/2348035345977?text=${message}`, "_blank", "noopener,noreferrer");
-  };
-
   const services = [
     { number: "01", title: "RECORDING", text: "Professional recording sessions engineered to capture your performance with clarity, character and impact." },
     { number: "02", title: "MUSIC PRODUCTION", text: "Build your record from the first idea. Beat production, arrangement, sound selection and creative development." },
@@ -304,6 +257,19 @@ export default function App() {
     { number: "05", title: "MASTERING", text: "Give your finished music the final polish it needs before it reaches the world." },
     { number: "06", title: "RELEASE SUPPORT", text: "Get help preparing your music for release, including metadata, distribution guidance and release planning." },
   ];
+
+  const visualImages = [
+    visual01, visual02, visual03, visual04, visual05, visual06, visual07, visual08, visual09,
+    visual10, visual11, visual12, visual13, visual14, visual15, visual16, visual17, visual18,
+    visual19, visual20, visual21, visual22, visual23, visual24, visual25, visual26, visual27,
+    visual28, visual29,
+  ];
+  // Keep the photography slider to three balanced slides while allowing new images to be added.
+  const visualSlides = [0, 1, 2].map((slide) => {
+    const start = slide * (visualImages.length === 29 ? 10 : 9);
+    const end = slide === 2 && visualImages.length === 29 ? visualImages.length : start + 10;
+    return visualImages.slice(start, end);
+  });
 
   return (
     <div className="site">
@@ -319,12 +285,18 @@ export default function App() {
         </div>
 
         <nav className={menuOpen ? "nav-links open" : "nav-links"}>
-          <a href="#studio">STUDIO</a>
-          <a href="#services">SERVICES</a>
-          <a href="#pricing">PRICING</a>
-          <a href="#gallery">GALLERY</a>
-          <a href="#shop">SHOP</a>
-          <a href="#contact">CONTACT</a>
+          <a href="#home" onClick={() => setMenuOpen(false)}>HOME</a>
+          <a href="#studio" onClick={() => setMenuOpen(false)}>STUDIO</a>
+          <a href="#services" onClick={() => setMenuOpen(false)}>SERVICES</a>
+          <a href="#visuals" onClick={() => setMenuOpen(false)}>VISUALS</a>
+          <a href="#booking" onClick={() => setMenuOpen(false)}>BOOK</a>
+          <a href="#culture" onClick={() => setMenuOpen(false)}>FOR THE CULTURE</a>
+          <a href="#radio" onClick={() => setMenuOpen(false)}>RADIO</a>
+          <a href="#blog" onClick={() => setMenuOpen(false)}>BLOG</a>
+          <a href="#beats" onClick={() => setMenuOpen(false)}>BEATS</a>
+          <a href="#shop" onClick={() => setMenuOpen(false)}>SHOP</a>
+          <a href="#about" onClick={() => setMenuOpen(false)}>ABOUT</a>
+          <a href="#contact" onClick={() => setMenuOpen(false)}>CONTACT</a>
         </nav>
 
         <a className="nav-button" href="#booking">BOOK A SESSION</a>
@@ -336,7 +308,7 @@ export default function App() {
 
 
       {/* HERO */}
-      <section className="hero">
+      <section className="hero" id="home">
         <img src={heroImg} alt="Galaxy Studios control room" className="hero-photo" />
         <div className="hero-overlay" />
         <div className="hero-content">
@@ -367,7 +339,7 @@ export default function App() {
           </div>
         </div>
         <div className="intro-image">
-          <img src={deskImg} alt="Galaxy Studios full desk setup with dual monitors and MPC" className="section-photo" />
+          <img src={deskImg} alt="Galaxy Studios full desk setup with dual monitors and MPC" className="section-photo" loading="lazy" decoding="async" />
         </div>
       </section>
 
@@ -375,7 +347,7 @@ export default function App() {
       {/* STUDIO EXPERIENCE */}
       <section className="experience">
         <div className="experience-image">
-          <img src={micWideImg} alt="Condenser microphone with acoustic shield in the recording room" className="section-photo" />
+          <img src={micWideImg} alt="Condenser microphone with acoustic shield in the recording room" className="section-photo" loading="lazy" decoding="async" />
         </div>
         <div className="experience-content">
           <div className="section-number">02 / THE EXPERIENCE</div>
@@ -415,7 +387,7 @@ export default function App() {
       {/* FEATURE BANNER */}
       <section className="feature">
         <div className="feature-image">
-          <img src={monitorsImg} alt="Studio monitor speakers and audio interface on the mixing desk" className="feature-photo" />
+          <img src={monitorsImg} alt="Studio monitor speakers and audio interface on the mixing desk" className="feature-photo" loading="lazy" decoding="async" />
           <div className="feature-overlay" />
           <div className="feature-content">
             <div className="eyebrow">THE GALAXY FIRE STANDARD</div>
@@ -426,10 +398,71 @@ export default function App() {
       </section>
 
 
+      {/* PHOTOGRAPHY & VISUALS */}
+      <section className="visual-production" id="visuals">
+        <div className="section-heading">
+          <div className="section-number">04 / PHOTOGRAPHY &amp; VISUALS</div>
+          <h2>BRING YOUR<br /><span>SOUND TO LIFE.</span></h2>
+          <p>Professional photography, music videos and creative visual production designed to give your music and brand the visual identity it deserves.</p>
+        </div>
+
+        <div className="visual-slider">
+          <div className="visual-grid">
+            {visualSlides[visualSlide].map((image, index) => (
+              <div className={`visual-grid-item visual-grid-item-${index + 1}`} key={`${visualSlide}-${index}`}>
+                <img src={image} alt={`Galaxy Fire Studios photography and visual production ${visualSlide * 10 + index + 1}`} loading="lazy" decoding="async" width="1600" height="1067" />
+              </div>
+            ))}
+          </div>
+          <div className="visual-slider-controls">
+            <button type="button" onClick={() => setVisualSlide((visualSlide + 2) % 3)} aria-label="Previous visual slide">←</button>
+            <div className="visual-slider-dots">
+              {visualSlides.map((_, index) => (
+                <button type="button" key={index} className={index === visualSlide ? "active" : ""} onClick={() => setVisualSlide(index)} aria-label={`Show visual slide ${index + 1}`} />
+              ))}
+            </div>
+            <button type="button" onClick={() => setVisualSlide((visualSlide + 1) % 3)} aria-label="Next visual slide">→</button>
+          </div>
+        </div>
+
+        <div className="visual-services-pricing">
+          <div className="visual-price-group">
+            <div className="visual-price-title">PHOTOGRAPHY</div>
+            <div className="visual-price-row"><span>Artist Photoshoot</span><strong>₦75,000</strong></div>
+            <div className="visual-price-row"><span>Cover Art Shoot</span><strong>₦50,000</strong></div>
+            <div className="visual-price-row"><span>Event Photography</span><strong>₦100,000</strong></div>
+          </div>
+          <div className="visual-price-group">
+            <div className="visual-price-title">VIDEOGRAPHY</div>
+            <div className="visual-price-row"><span>Music Video</span><strong>From ₦250,000</strong></div>
+            <div className="visual-price-row"><span>Performance Video</span><strong>From ₦150,000</strong></div>
+            <div className="visual-price-row"><span>Visualizer</span><strong>From ₦100,000</strong></div>
+            <div className="visual-price-row"><span>Lyric Video</span><strong>From ₦75,000</strong></div>
+            <div className="visual-price-row"><span>Social Content Package</span><strong>From ₦100,000</strong></div>
+          </div>
+          <div className="visual-price-group">
+            <div className="visual-price-title">CREATIVE DIRECTION</div>
+            <div className="visual-price-row"><span>Creative Direction</span><strong>Custom Quote</strong></div>
+          </div>
+        </div>
+
+        <div className="visual-cta">
+          <div>
+            <span className="eyebrow">YOUR IDEA. OUR VISUAL TEAM.</span>
+            <h3>READY TO<br /><span>SHOOT?</span></h3>
+          </div>
+          <div className="visual-cta-buttons">
+            <button type="button" className="button red" onClick={() => openBooking("Artist Photoshoot")}>BOOK A VISUAL SESSION</button>
+            <a href="https://wa.me/2348035345977?text=Hi%20Galaxy%20Fire%20Studios%2C%20I%27d%20like%20a%20quote%20for%20a%20visual%20production%20project." className="button outline" target="_blank" rel="noreferrer">GET A QUOTE</a>
+          </div>
+        </div>
+      </section>
+
+
       {/* PRICING */}
       <section className="pricing" id="pricing">
         <div className="section-heading center">
-          <div className="section-number">04 / PRICING</div>
+          <div className="section-number">05 / PRICING</div>
           <h2>STUDIO<br /><span>RATES.</span></h2>
           <p>Professional services. Straightforward pricing. No unnecessary complications.</p>
         </div>
@@ -515,25 +548,25 @@ export default function App() {
       {/* GALLERY */}
       <section className="gallery" id="gallery">
         <div className="section-heading">
-          <div className="section-number">05 / GALLERY</div>
+          <div className="section-number">06 / GALLERY</div>
           <h2>INSIDE<br /><span>THE FIRE.</span></h2>
         </div>
         <div className="gallery-grid">
           <div className="gallery-large">
-            <img src={heroImg} alt="Galaxy Studios control room with mixing desk and booth window" className="gallery-photo" />
+            <img src={heroImg} alt="Galaxy Studios control room with mixing desk and booth window" className="gallery-photo" loading="lazy" decoding="async" />
             <div className="gallery-caption">THE CONTROL ROOM</div>
           </div>
           <div className="gallery-col">
             <div className="gallery-small">
-              <img src={micCloseImg} alt="Condenser microphone in the red acoustic vocal booth" className="gallery-photo" />
+              <img src={micCloseImg} alt="Condenser microphone in the red acoustic vocal booth" className="gallery-photo" loading="lazy" decoding="async" />
               <div className="gallery-caption">THE VOCAL BOOTH</div>
             </div>
             <div className="gallery-small">
-              <img src={mpcLitImg} alt="AKAI MPC X with lit cyan performance pads" className="gallery-photo" />
+              <img src={mpcLitImg} alt="AKAI MPC X with lit cyan performance pads" className="gallery-photo" loading="lazy" decoding="async" />
               <div className="gallery-caption">PRODUCTION</div>
             </div>
             <div className="gallery-small">
-              <img src={speakerImg} alt="Studio monitor speaker cone close-up against red velvet wall" className="gallery-photo" />
+              <img src={speakerImg} alt="Studio monitor speaker cone close-up against red velvet wall" className="gallery-photo" loading="lazy" decoding="async" />
               <div className="gallery-caption">THE MONITORS</div>
             </div>
           </div>
@@ -542,15 +575,15 @@ export default function App() {
         {/* Second row */}
         <div className="gallery-row2">
           <div className="gallery-med">
-            <img src={deskImg} alt="Full studio desk with dual monitors, MPC and studio monitors" className="gallery-photo" />
+            <img src={deskImg} alt="Full studio desk with dual monitors, MPC and studio monitors" className="gallery-photo" loading="lazy" decoding="async" />
             <div className="gallery-caption">THE DESK</div>
           </div>
           <div className="gallery-med">
-            <img src={keyboardImg} alt="Studio keyboard with blue LED lighting" className="gallery-photo" />
+            <img src={keyboardImg} alt="Studio keyboard with blue LED lighting" className="gallery-photo" loading="lazy" decoding="async" />
             <div className="gallery-caption">THE KEYS</div>
           </div>
           <div className="gallery-med">
-            <img src={monitorsImg} alt="AKG headphones and studio monitor on mixing desk" className="gallery-photo" />
+            <img src={monitorsImg} alt="AKG headphones and studio monitor on mixing desk" className="gallery-photo" loading="lazy" decoding="async" />
             <div className="gallery-caption">MONITORING</div>
           </div>
         </div>
@@ -558,106 +591,179 @@ export default function App() {
         {/* Third row */}
         <div className="gallery-row2" style={{marginTop: '12px'}}>
           <div className="gallery-med">
-            <img src={micWideImg} alt="Microphone with acoustic shield in the recording room" className="gallery-photo" />
+            <img src={micWideImg} alt="Microphone with acoustic shield in the recording room" className="gallery-photo" loading="lazy" decoding="async" />
             <div className="gallery-caption">THE MIC SETUP</div>
           </div>
           <div className="gallery-med">
-            <img src={mpcDemoImg} alt="AKAI MPC X showing genre demo selection screen" className="gallery-photo" />
+            <img src={mpcDemoImg} alt="AKAI MPC X showing genre demo selection screen" className="gallery-photo" loading="lazy" decoding="async" />
             <div className="gallery-caption">THE MPC</div>
           </div>
           <div className="gallery-med">
-            <img src={interfaceImg} alt="Universal Audio interface close-up on the studio desk" className="gallery-photo" />
+            <img src={interfaceImg} alt="Universal Audio interface close-up on the studio desk" className="gallery-photo" loading="lazy" decoding="async" />
             <div className="gallery-caption">AUDIO INTERFACE</div>
           </div>
         </div>
       </section>
 
 
+      {/* FOR THE CULTURE */}
+      <section className="culture" id="culture">
+        <div className="section-heading">
+          <div className="section-number">08 / FOR THE CULTURE</div>
+          <h2>THE SOUND.<br /><span>THE PEOPLE. THE CULTURE.</span></h2>
+          <p>
+            Galaxy Fire Studios is more than a room to record in. FOR THE CULTURE is our
+            growing home for Abuja music, artists, stories, beats, radio and the creative
+            community around us.
+          </p>
+        </div>
 
-      {/* PRO AUDIO SHOP */}
-      <section className="shop" id="shop">
-        <div className="section-heading shop-heading">
-          <div className="section-number">06 / GALAXY FIRE SHOP</div>
-          <h2>BUILD<br /><span>YOUR SETUP.</span></h2>
-          <p>Studio microphones, interfaces, monitors, headphones, MIDI gear and the essentials you need to create.</p>
+        <div className="culture-grid">
+          <a href="#radio" className="culture-card culture-card-featured">
+            <div className="culture-card-number">01</div>
+            <div className="culture-card-content">
+              <span>LIVE MUSIC DESTINATION</span>
+              <h3>FOR THE CULTURE<br />RADIO</h3>
+              <p>Hear Abuja talent, guest mixes, premieres and future Galaxy Fire programming.</p>
+              <strong>EXPLORE RADIO →</strong>
+            </div>
+          </a>
+
+          <a href="#blog" className="culture-card">
+            <div className="culture-card-number">02</div>
+            <div className="culture-card-content">
+              <span>STORIES &amp; PEOPLE</span>
+              <h3>THE<br />BLOG</h3>
+              <p>Artist profiles, interviews, releases, events, studio stories and creative culture.</p>
+              <strong>READ THE BLOG →</strong>
+            </div>
+          </a>
+
+          <a href="#beats" className="culture-card">
+            <div className="culture-card-number">03</div>
+            <div className="culture-card-content">
+              <span>PRODUCERS &amp; ARTISTS</span>
+              <h3>BEATS<br />MARKETPLACE</h3>
+              <p>Discover beats by genre, mood, BPM and producer, then take the record to Galaxy Fire.</p>
+              <strong>EXPLORE BEATS →</strong>
+            </div>
+          </a>
+
+          <a href="#shop" className="culture-card">
+            <div className="culture-card-number">04</div>
+            <div className="culture-card-content">
+              <span>WEAR THE BRAND</span>
+              <h3>GALAXY FIRE<br />SHOP</h3>
+              <p>Studio merchandise, FOR THE CULTURE pieces, accessories and branded essentials.</p>
+              <strong>VISIT THE SHOP →</strong>
+            </div>
+          </a>
         </div>
-        <div className="shop-toolbar">
-          <div className="shop-categories">
-            {storeCategories.map((category) => (
-              <button key={category} className={shopCategory === category ? "shop-filter active" : "shop-filter"} onClick={() => setShopCategory(category)}>{category}</button>
-            ))}
+
+        <div className="culture-statement">
+          <div>
+            <span className="eyebrow">THE GALAXY FIRE ECOSYSTEM</span>
+            <h3>DISCOVER. CREATE. CONNECT.</h3>
           </div>
-          <button className="cart-button" onClick={() => setCartOpen(true)}>CART <span>{cartCount}</span></button>
-        </div>
-        <div className="shop-grid">
-          {visibleProducts.map((product) => (
-            <article className="product-card" key={product.id}>
-              <div className="product-image-wrap">
-                <img src={product.image} alt={`${product.name} studio equipment`} className="product-image" />
-                <span className="product-badge">{product.badge}</span>
-              </div>
-              <div className="product-info">
-                <div className="product-category">{product.category}</div>
-                <h3>{product.name}</h3>
-                <p>{product.description}</p>
-                <div className="product-price">{formatNaira(product.price)}</div>
-                <div className="product-meta">MARKET {formatNaira(product.marketPrice)} · 25% GALAXY FIRE MARKUP</div>
-                <div className="product-stock">{product.stock <= 2 ? "SPECIAL ORDER / LIMITED STOCK" : "IN STOCK"}</div>
-                <button className="product-button" onClick={() => addToCart(product)}>ADD TO CART →</button>
-              </div>
-            </article>
-          ))}
-        </div>
-        <div className="shop-note">
-          <strong>SHIPPING & HANDLING</strong>
-          <span>Calculated separately at checkout based on destination, product size and courier cost. Product prices already include the Galaxy Fire 25% retail markup.</span>
+          <p>
+            Discover music and stories. Find a beat. Hear the culture. Then bring your next
+            record back to Galaxy Fire Studios to record, produce, mix, master and release it.
+          </p>
         </div>
       </section>
 
-      {cartOpen && (
-        <div className="cart-drawer-backdrop" onClick={() => setCartOpen(false)}>
-          <aside className="cart-drawer" onClick={(event) => event.stopPropagation()}>
-            <button className="cart-close" onClick={() => setCartOpen(false)}>×</button>
-            <div className="section-number">YOUR CART</div>
-            <h2>READY TO<br /><span>ORDER?</span></h2>
-            {cart.length === 0 ? <p>Your cart is empty. Add some studio gear.</p> : (
-              <>
-                <div className="cart-items">
-                  {cart.map((item) => (
-                    <div className="cart-item" key={item.name}>
-                      <div><strong>{item.name}</strong><span>{item.qty} × {formatNaira(item.price)}</span></div>
-                      <button onClick={() => removeFromCart(item.name)}>REMOVE</button>
-                    </div>
-                  ))}
-                </div>
-                <div className="cart-total"><span>PRODUCT TOTAL</span><strong>{formatNaira(cartTotal)}</strong></div>
-                <p className="cart-shipping">Shipping & handling is calculated separately. We will confirm the exact delivery charge before payment.</p>
-                <button className="button red cart-checkout" onClick={shopCheckout}>ORDER VIA WHATSAPP →</button>
-              </>
-            )}
-          </aside>
+      {/* ECOSYSTEM COMING SOON */}
+      <section className="ecosystem-preview" id="radio">
+        <div className="ecosystem-preview-inner">
+          <div>
+            <div className="section-number">09 / RADIO</div>
+            <h2>FOR THE<br /><span>CULTURE RADIO.</span></h2>
+            <p>
+              The live station is coming. This space will become the home for the FOR THE CULTURE
+              stream, now-playing information, guest mixes, artist spotlights and original shows.
+            </p>
+          </div>
+          <div className="ecosystem-status">
+            <span>STATUS</span>
+            <strong>COMING SOON</strong>
+            <small>LIVE INTERNET RADIO WILL BE CONNECTED HERE.</small>
+          </div>
         </div>
-      )}
+      </section>
 
-      {/* PROMO / SOCIAL */
+      <section className="ecosystem-preview dark" id="blog">
+        <div className="ecosystem-preview-inner">
+          <div>
+            <div className="section-number">10 / BLOG</div>
+            <h2>THE<br /><span>STORIES.</span></h2>
+            <p>
+              Artist interviews, producer spotlights, new releases, Abuja creative culture,
+              events, tutorials and behind-the-scenes stories will live here.
+            </p>
+          </div>
+          <a href="#contact" className="button outline">GET FEATURED →</a>
+        </div>
+      </section>
+
+      <section className="ecosystem-preview" id="beats">
+        <div className="ecosystem-preview-inner">
+          <div>
+            <div className="section-number">11 / BEATS</div>
+            <h2>FIND YOUR<br /><span>SOUND.</span></h2>
+            <p>
+              The Beats Marketplace will let artists preview beats, explore producers and
+              purchase the right license for their next record.
+            </p>
+          </div>
+          <a href="#booking" className="button red">WORK WITH A PRODUCER →</a>
+        </div>
+      </section>
+
+      <section className="ecosystem-preview dark" id="shop">
+        <div className="ecosystem-preview-inner">
+          <div>
+            <div className="section-number">12 / SHOP</div>
+            <h2>WEAR<br /><span>THE FIRE.</span></h2>
+            <p>
+              Galaxy Fire and FOR THE CULTURE merchandise will be available here as the studio
+              ecosystem grows.
+            </p>
+          </div>
+          <a href="#contact" className="button outline">SHOP COMING SOON →</a>
+        </div>
+      </section>
+
+      <section className="about-preview" id="about">
+        <div className="about-preview-inner">
+          <div className="section-number">13 / ABOUT GALAXY FIRE</div>
+          <h2>BUILT FOR<br /><span>CREATORS.</span></h2>
+          <p>
+            Galaxy Fire Studios is a professional recording and production environment for
+            artists, producers and creators who want to take their music seriously.
+          </p>
+          <a href="#booking" className="button red">WORK WITH US →</a>
+        </div>
+      </section>
+
+      {/* PROMO / SOCIAL */}
       <section className="promo-section">
         <div className="section-heading">
-          <div className="section-number">07 / THE WORD</div>
+          <div className="section-number">14 / THE WORD</div>
           <h2>SPREAD<br /><span>THE FIRE.</span></h2>
           <p>Galaxy Fire Studios — where beats get built, voices get captured, and music gets finished.</p>
         </div>
         <div className="promo-grid">
           <div className="promo-card">
-            <img src={promoStudioTimeImg} alt="Need some studio time? Reach out today" className="promo-img" />
+            <img src={promoStudioTimeImg} alt="Need some studio time? Reach out today" className="promo-img" loading="lazy" decoding="async" />
           </div>
           <div className="promo-card">
-            <img src={promoBeatsImg} alt="Do you need beats or engineering? Contact us today" className="promo-img" />
+            <img src={promoBeatsImg} alt="Do you need beats or engineering? Contact us today" className="promo-img" loading="lazy" decoding="async" />
           </div>
           <div className="promo-card">
-            <img src={promoSuperstarsImg} alt="Bring out the superstar in you — contact us now" className="promo-img" />
+            <img src={promoSuperstarsImg} alt="Bring out the superstar in you — contact us now" className="promo-img" loading="lazy" decoding="async" />
           </div>
           <div className="promo-card">
-            <img src={promoMixMasterImg} alt="Need to mix and master your music? Reach out to us today" className="promo-img" />
+            <img src={promoMixMasterImg} alt="Need to mix and master your music? Reach out to us today" className="promo-img" loading="lazy" decoding="async" />
           </div>
         </div>
       </section>
@@ -666,7 +772,7 @@ export default function App() {
       {/* WHY GALAXY FIRE */}
       <section className="why">
         <div className="why-content">
-          <div className="section-number">06 / THE STANDARD</div>
+          <div className="section-number">15 / THE STANDARD</div>
           <h2>YOUR MUSIC.<br /><span>OUR CRAFT.</span></h2>
           <div className="why-grid">
             <div><strong>01</strong><h3>PROFESSIONAL</h3><p>A serious environment for serious music.</p></div>
@@ -680,7 +786,7 @@ export default function App() {
 
       {/* BOOKING */}
       <section className="booking" id="booking">
-        <img src={interfaceImg} alt="Studio audio interface" className="booking-photo" />
+        <img src={interfaceImg} alt="Studio audio interface" className="booking-photo" loading="lazy" decoding="async" />
         <div className="booking-overlay" />
         <div className="booking-content">
           <div className="eyebrow">GALAXY FIRE STUDIOS · EST. 2020</div>
@@ -771,10 +877,13 @@ export default function App() {
           <div className="footer-links">
             <div>
               <span>EXPLORE</span>
+              <a href="#home">Home</a>
               <a href="#studio">Studio</a>
               <a href="#services">Services</a>
-              <a href="#pricing">Pricing</a>
-              <a href="#gallery">Gallery</a>
+              <a href="#booking">Book a Session</a>
+              <a href="#culture">For the Culture</a>
+              <a href="#beats">Beats</a>
+              <a href="#shop">Shop</a>
             </div>
             <div>
               <span>CONTACT</span>
@@ -960,6 +1069,25 @@ export default function App() {
         .feature-content { position: relative; text-align: center; z-index: 1; }
         .feature-content h2 { font-size: clamp(55px, 8vw, 115px); }
 
+        /* PHOTOGRAPHY & VISUALS */
+        .visual-production { background: #0b0b0b; border-top: 1px solid #181818; }
+        .visual-slider { margin-top: 55px; }
+        .visual-grid { column-count: 3; column-gap: 12px; }
+        .visual-grid-item { position: relative; overflow: hidden; display: block; width: 100%; margin: 0 0 12px; break-inside: avoid; background: #111; border: 1px solid #222; }
+        .visual-grid-item img { width: 100%; height: auto; display: block; object-fit: contain; transition: transform .55s ease, filter .35s ease; }
+        .visual-grid-item:hover img { transform: scale(1.045); filter: brightness(1.08); }
+        .visual-slider-controls { display: flex; justify-content: center; align-items: center; gap: 28px; margin-top: 28px; }
+        .visual-slider-controls > button { width: 44px; height: 44px; border: 1px solid #333; background: #111; color: #fff; cursor: pointer; font-size: 20px; }
+        .visual-slider-controls > button:hover { border-color: #e50914; color: #e50914; }
+        .visual-slider-dots { display: flex; gap: 8px; }
+        .visual-slider-dots button { width: 7px; height: 7px; padding: 0; border: 0; border-radius: 50%; background: #555; cursor: pointer; }
+        .visual-slider-dots button.active { background: #e50914; transform: scale(1.25); }
+        .visual-services-pricing { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 65px; }
+        .visual-price-group { border: 1px solid #242424; background: #0e0e0e; padding: 28px; }
+        .visual-price-title { color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-weight: 900; letter-spacing: 2px; font-size: 13px; margin-bottom: 16px; }
+        .visual-price-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; padding: 14px 0; border-top: 1px solid #202020; color: #bbb; font-size: 13px; line-height: 1.45; }
+        .visual-price-row strong { color: #fff; font-family: 'Barlow Condensed', sans-serif; font-size: 16px; white-space: nowrap; }
+
         /* PRICING */
         .pricing { background: #0b0b0b; }
         .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; max-width: 1250px; margin: auto; }
@@ -1064,6 +1192,184 @@ export default function App() {
         .footer-links a:hover { color: white; }
         .footer-bottom { border-top: 1px solid #1a1a1a; padding-top: 25px; display: flex; justify-content: space-between; color: #444; font-family: 'Barlow Condensed', sans-serif; font-size: 9px; letter-spacing: 1px; }
 
+        /* FOR THE CULTURE */
+        .culture { background: #0a0a0a; }
+        .culture-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 12px;
+          margin-top: 55px;
+        }
+        .culture-card {
+          min-height: 420px;
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 32px;
+          background: #111;
+          border: 1px solid #252525;
+          overflow: hidden;
+          transition: transform .3s ease, border-color .3s ease, background .3s ease;
+        }
+        .culture-card::after {
+          content: "";
+          position: absolute;
+          width: 180px;
+          height: 180px;
+          right: -70px;
+          bottom: -70px;
+          border-radius: 50%;
+          background: rgba(229,9,20,.08);
+          transition: transform .4s ease;
+        }
+        .culture-card:hover {
+          transform: translateY(-5px);
+          border-color: #e50914;
+          background: #151515;
+        }
+        .culture-card:hover::after { transform: scale(1.5); }
+        .culture-card-featured {
+          background: linear-gradient(145deg, #171717, #0d0d0d);
+          border-color: #e50914;
+        }
+        .culture-card-number {
+          position: relative;
+          z-index: 1;
+          color: #e50914;
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 12px;
+          font-weight: 900;
+          letter-spacing: 1px;
+        }
+        .culture-card-content {
+          position: relative;
+          z-index: 1;
+        }
+        .culture-card-content > span {
+          color: #777;
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 9px;
+          font-weight: 900;
+          letter-spacing: 2px;
+        }
+        .culture-card h3 {
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 31px;
+          line-height: .95;
+          letter-spacing: -0.5px;
+          margin: 15px 0 18px;
+        }
+        .culture-card p {
+          color: #777;
+          font-size: 13px;
+          line-height: 1.7;
+          margin: 0 0 25px;
+        }
+        .culture-card strong {
+          color: #e50914;
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: 1.2px;
+        }
+        .culture-statement {
+          margin-top: 12px;
+          padding: 35px;
+          border: 1px solid #242424;
+          background: #111;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 50px;
+          align-items: center;
+        }
+        .culture-statement h3 {
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 32px;
+          margin: 12px 0 0;
+          letter-spacing: 1px;
+        }
+        .culture-statement p {
+          color: #777;
+          line-height: 1.8;
+          font-size: 14px;
+          margin: 0;
+        }
+
+        /* ECOSYSTEM PREVIEWS */
+        .ecosystem-preview {
+          padding: 120px 7%;
+          background: #0b0b0b;
+          border-top: 1px solid #181818;
+        }
+        .ecosystem-preview.dark { background: #080808; }
+        .ecosystem-preview-inner {
+          max-width: 1200px;
+          margin: auto;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 70px;
+        }
+        .ecosystem-preview-inner > div:first-child { max-width: 700px; }
+        .ecosystem-preview h2 {
+          font-size: clamp(50px, 7vw, 95px);
+          margin-bottom: 25px;
+        }
+        .ecosystem-preview p {
+          max-width: 600px;
+          color: #777;
+          line-height: 1.8;
+          font-size: 15px;
+          margin: 0;
+        }
+        .ecosystem-status {
+          min-width: 260px;
+          padding: 30px;
+          border: 1px solid #2b2b2b;
+          background: #101010;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .ecosystem-status span {
+          color: #e50914;
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 9px;
+          font-weight: 900;
+          letter-spacing: 2px;
+        }
+        .ecosystem-status strong {
+          font-family: 'Barlow Condensed', sans-serif;
+          font-size: 26px;
+          letter-spacing: 1px;
+        }
+        .ecosystem-status small {
+          color: #555;
+          font-size: 9px;
+          line-height: 1.6;
+          letter-spacing: 1px;
+        }
+
+        /* ABOUT PREVIEW */
+        .about-preview {
+          padding: 120px 7%;
+          background: #111;
+          border-top: 1px solid #1c1c1c;
+        }
+        .about-preview-inner {
+          max-width: 1000px;
+          margin: auto;
+        }
+        .about-preview h2 { font-size: clamp(55px, 8vw, 110px); }
+        .about-preview p {
+          max-width: 620px;
+          color: #888;
+          line-height: 1.8;
+          font-size: 16px;
+          margin-bottom: 35px;
+        }
+
         /* PROMO */
         .promo-section { background: #0a0a0a; }
 
@@ -1099,18 +1405,23 @@ export default function App() {
         @media (max-width: 900px) {
           .nav-links {
             display: none; position: absolute; top: 82px; left: 0; right: 0;
-            background: #0a0a0a; padding: 30px; flex-direction: column; border-bottom: 1px solid #222;
+            background: #0a0a0a; padding: 30px; flex-direction: column; border-bottom: 1px solid #222; max-height: calc(100vh - 82px); overflow-y: auto;
           }
           .nav-links.open { display: flex; }
           .nav-button { display: none; }
           .menu-button { display: block; }
           .intro, .experience { grid-template-columns: 1fr; }
           .experience-image { order: -1; }
-          .service-grid, .pricing-grid { grid-template-columns: 1fr 1fr; }
+          .service-grid, .pricing-grid, .visual-services-pricing { grid-template-columns: 1fr 1fr; }
+          .visual-cta { flex-direction: column; align-items: flex-start; }
+          .visual-cta-buttons { justify-content: flex-start; }
           .why-grid { grid-template-columns: 1fr 1fr; }
           .gallery-grid { grid-template-columns: 1fr; }
           .gallery-row2 { grid-template-columns: 1fr 1fr; }
           .promo-grid { grid-template-columns: 1fr 1fr; }
+          .culture-grid { grid-template-columns: 1fr 1fr; }
+          .culture-statement { grid-template-columns: 1fr; gap: 25px; }
+          .ecosystem-preview-inner { flex-direction: column; align-items: flex-start; gap: 40px; }
           .footer-top { flex-direction: column; gap: 50px; }
           .footer-links { gap: 50px; }
         }
@@ -1123,8 +1434,18 @@ export default function App() {
           .hero-buttons, .booking-buttons { flex-direction: column; }
           .button { text-align: center; }
           .service-grid, .pricing-grid, .why-grid { grid-template-columns: 1fr; }
+          .visual-grid { column-count: 1; }
+          .visual-services-pricing { grid-template-columns: 1fr; }
+          .visual-cta { padding: 30px 22px; }
+          .visual-cta-buttons { flex-direction: column; width: 100%; }
+          .visual-cta-buttons .button { width: 100%; }
           .gallery-row2 { grid-template-columns: 1fr; }
           .promo-grid { grid-template-columns: 1fr 1fr; }
+          .culture-grid { grid-template-columns: 1fr; }
+          .culture-card { min-height: 360px; }
+          .culture-statement { padding: 25px; }
+          .ecosystem-preview, .about-preview { padding: 90px 6%; }
+          .ecosystem-status { width: 100%; min-width: 0; }
           .stats { gap: 25px; }
           .contact-details { flex-direction: column; gap: 25px; align-items: center; }
           .booking-modal { padding: 10px; }
@@ -1137,47 +1458,3 @@ export default function App() {
     </div>
   );
 }
-        .shop { padding: 110px 5%; background: #0b0b0b; border-top: 1px solid rgba(255,255,255,.07); }
-        .shop-heading { margin-bottom: 35px; }
-        .shop-toolbar { display:flex; justify-content:space-between; gap:20px; align-items:center; margin-bottom:28px; flex-wrap:wrap; }
-        .shop-categories { display:flex; gap:8px; flex-wrap:wrap; }
-        .shop-filter,.cart-button { border:1px solid rgba(255,255,255,.16); background:#111; color:#fff; padding:10px 14px; font:inherit; font-weight:700; letter-spacing:.05em; cursor:pointer; }
-        .shop-filter.active { background:#d71920; border-color:#d71920; }
-        .cart-button { min-width:110px; display:flex; justify-content:center; gap:10px; }
-        .cart-button span { background:#d71920; padding:0 6px; }
-        .shop-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
-        .product-card { background:#111; border:1px solid rgba(255,255,255,.08); overflow:hidden; display:flex; flex-direction:column; min-width:0; }
-        .product-image-wrap { aspect-ratio:1/1; background:#161616; position:relative; overflow:hidden; }
-        .product-image { width:100%; height:100%; object-fit:cover; display:block; filter:saturate(.85); transition:transform .4s ease; }
-        .product-card:hover .product-image { transform:scale(1.04); }
-        .product-badge { position:absolute; left:12px; top:12px; background:#d71920; color:#fff; padding:6px 8px; font-size:10px; font-weight:800; letter-spacing:.08em; }
-        .product-info { padding:18px; display:flex; flex-direction:column; flex:1; }
-        .product-category,.product-meta,.product-stock { font-size:10px; letter-spacing:.09em; font-weight:800; color:#888; }
-        .product-info h3 { margin:8px 0 8px; font-size:20px; line-height:1.05; }
-        .product-info p { margin:0 0 14px; color:#aaa; font-size:13px; line-height:1.55; min-height:62px; }
-        .product-price { font-size:24px; font-weight:900; margin-bottom:7px; }
-        .product-meta { font-size:9px; line-height:1.5; }
-        .product-stock { margin-top:8px; color:#ddd; }
-        .product-button { margin-top:15px; width:100%; padding:12px; background:#fff; color:#080808; border:0; font:inherit; font-weight:900; cursor:pointer; }
-        .product-button:hover { background:#d71920; color:#fff; }
-        .shop-note { margin-top:25px; padding:18px; border-left:3px solid #d71920; background:#111; display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:#aaa; }
-        .shop-note strong { color:#fff; }
-        .cart-drawer-backdrop { position:fixed; inset:0; z-index:500; background:rgba(0,0,0,.72); display:flex; justify-content:flex-end; }
-        .cart-drawer { width:min(470px,92vw); height:100%; background:#0b0b0b; padding:35px; overflow:auto; position:relative; box-shadow:-20px 0 60px rgba(0,0,0,.5); }
-        .cart-close { position:absolute; top:18px; right:20px; background:none; border:0; color:#fff; font-size:32px; cursor:pointer; }
-        .cart-drawer h2 { font-size:46px; line-height:.9; margin:14px 0 30px; }
-        .cart-drawer h2 span { color:#d71920; }
-        .cart-items { border-top:1px solid rgba(255,255,255,.1); }
-        .cart-item { padding:16px 0; border-bottom:1px solid rgba(255,255,255,.1); display:flex; justify-content:space-between; gap:15px; }
-        .cart-item div { display:flex; flex-direction:column; gap:6px; }
-        .cart-item span { color:#999; font-size:12px; }
-        .cart-item button { background:none; border:0; color:#d71920; font-size:10px; font-weight:800; cursor:pointer; align-self:center; }
-        .cart-total { display:flex; justify-content:space-between; padding:22px 0; border-bottom:1px solid rgba(255,255,255,.1); }
-        .cart-total span { color:#888; font-size:11px; letter-spacing:.08em; }
-        .cart-total strong { font-size:22px; }
-        .cart-shipping { color:#888; font-size:12px; line-height:1.5; }
-        .cart-checkout { width:100%; margin-top:10px; }
-        @media (max-width:1100px) { .shop-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
-        @media (max-width:760px) { .shop { padding:80px 5%; } .shop-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; } .product-info { padding:13px; } .product-info h3 { font-size:16px; } .product-info p { font-size:12px; min-height:auto; } .product-price { font-size:20px; } }
-        @media (max-width:480px) { .shop-grid { grid-template-columns:1fr; } .shop-filter { font-size:10px; padding:8px 9px; } }
-
