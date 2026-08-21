@@ -5,6 +5,18 @@
     },
     "api/check-availability.js": {
       "maxDuration": 10
+    },
+    "api/verify-beat-payment.js": {
+      "maxDuration": 10
+    },
+    "api/beat-status.js": {
+      "maxDuration": 10
+    },
+    "api/paystack-webhook.js": {
+      "maxDuration": 10
+    },
+    "api/verify-store-payment.js": {
+      "maxDuration": 10
     }
   },
   "rewrites": [

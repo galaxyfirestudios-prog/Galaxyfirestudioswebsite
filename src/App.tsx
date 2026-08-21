@@ -324,6 +324,7 @@ export default function App() {
             { display_name: "Service", variable_name: "service", value: booking.service },
             { display_name: "Booking Date", variable_name: "booking_date", value: booking.date },
             { display_name: "Preferred Time", variable_name: "preferred_time", value: booking.time },
+            { display_name: "Order Type", variable_name: "order_type", value: "Galaxy Fire Studio Booking" },
             { display_name: "Payment Type", variable_name: "payment_type", value: booking.payment === "deposit" ? "50% deposit" : "Full payment" },
             { display_name: "Notes", variable_name: "notes", value: booking.notes || "None" },
           ],
@@ -421,6 +422,142 @@ export default function App() {
   const vinylFrameRef = useRef<number | null>(null);
   const vinylLastFrameRef = useRef<number | null>(null);
   const stopTimerRef = useRef<number | null>(null);
+  const [beatSoldMap, setBeatSoldMap] = useState<Record<string, boolean>>({});
+  const [beatCheckoutOpen, setBeatCheckoutOpen] = useState(false);
+  const [beatPurchaseProcessing, setBeatPurchaseProcessing] = useState(false);
+  const [beatPurchaseError, setBeatPurchaseError] = useState("");
+  const [beatPurchaseSuccess, setBeatPurchaseSuccess] = useState("");
+  const [selectedLicense, setSelectedLicense] = useState<"Basic" | "Premium" | "Unlimited" | "Exclusive">("Unlimited");
+  const [beatCustomer, setBeatCustomer] = useState({ name: "", email: "", phone: "" });
+
+  const licenseOptions = [
+    { name: "Basic" as const, price: 20000, detail: "MP3 Lease" },
+    { name: "Premium" as const, price: 40000, detail: "WAV Lease" },
+    { name: "Unlimited" as const, price: 80000, detail: "Unlimited Use" },
+    { name: "Exclusive" as const, price: 150000, detail: "Exclusive Rights" },
+  ];
+
+  const loadBeatAvailability = async () => {
+    try {
+      const response = await fetch("/api/beat-status");
+      if (!response.ok) return;
+      const result = await response.json();
+      setBeatSoldMap(result.sold || {});
+    } catch (error) {
+      console.error("Beat availability check failed:", error);
+    }
+  };
+
+  useEffect(() => {
+    loadBeatAvailability();
+  }, []);
+
+  const openBeatCheckout = (license: typeof licenseOptions[number]) => {
+    if (beatSoldMap[selectedBeat.id]) {
+      setBeatPurchaseError("This beat has already been sold exclusively. You can still preview it, but it is no longer available for purchase.");
+      return;
+    }
+    setSelectedLicense(license.name);
+    setBeatPurchaseError("");
+    setBeatPurchaseSuccess("");
+    setBeatCheckoutOpen(true);
+    document.body.style.overflow = "hidden";
+  };
+
+  const closeBeatCheckout = () => {
+    if (beatPurchaseProcessing) return;
+    setBeatCheckoutOpen(false);
+    document.body.style.overflow = "";
+  };
+
+  const checkoutBeat = () => {
+    setBeatPurchaseError("");
+    setBeatPurchaseSuccess("");
+    if (!beatCustomer.name || !beatCustomer.email || !beatCustomer.phone) {
+      setBeatPurchaseError("Please enter your name, email and phone number.");
+      return;
+    }
+    if (beatSoldMap[selectedBeat.id]) {
+      setBeatPurchaseError("This beat has already been sold exclusively and cannot be purchased.");
+      return;
+    }
+    const license = licenseOptions.find((item) => item.name === selectedLicense)!;
+    setBeatPurchaseProcessing(true);
+    const reference = `GFS-BEAT-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_f350611c4c768b941d8725e73b122d3d37c9e5d7";
+
+    const launch = () => {
+      const PaystackPop = (window as any).PaystackPop;
+      if (!PaystackPop) {
+        setBeatPurchaseProcessing(false);
+        setBeatPurchaseError("Paystack could not load. Please refresh and try again.");
+        return;
+      }
+      const paystack = new PaystackPop();
+      paystack.newTransaction({
+        key: publicKey,
+        email: beatCustomer.email,
+        amount: license.price * 100,
+        currency: "NGN",
+        reference,
+        firstName: beatCustomer.name.trim().split(/\s+/)[0],
+        phone: beatCustomer.phone,
+        metadata: {
+          custom_fields: [
+            { display_name: "Order Type", variable_name: "order_type", value: "Galaxy Fire Beats Marketplace" },
+            { display_name: "Beat", variable_name: "beat_id", value: selectedBeat.id },
+            { display_name: "Beat Title", variable_name: "beat_title", value: selectedBeat.title },
+            { display_name: "License", variable_name: "license", value: selectedLicense },
+          ],
+        },
+        onSuccess: async (transaction: { reference: string }) => {
+          try {
+            const response = await fetch("/api/verify-beat-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                reference: transaction.reference,
+                expectedAmount: license.price * 100,
+                beat: { id: selectedBeat.id, title: selectedBeat.title, bpm: selectedBeat.bpm, key: selectedBeat.key },
+                license: selectedLicense,
+                customer: beatCustomer,
+              }),
+            });
+            const result = await response.json();
+            if (!response.ok || !result.verified) throw new Error(result.message || "Payment verification failed.");
+            if (result.exclusiveSold) {
+              setBeatSoldMap((current) => ({ ...current, [selectedBeat.id]: true }));
+            }
+            setBeatPurchaseSuccess(`Payment confirmed. Your Galaxy Fire order reference is ${result.orderReference || transaction.reference}.`);
+            setBeatPurchaseError("");
+          } catch (error) {
+            console.error(error);
+            setBeatPurchaseError("Payment was completed, but verification is pending. Please keep your Paystack reference: " + transaction.reference);
+          } finally {
+            setBeatPurchaseProcessing(false);
+          }
+        },
+        onCancel: () => setBeatPurchaseProcessing(false),
+      });
+    };
+
+    if ((window as any).PaystackPop) launch();
+    else {
+      const timer = window.setInterval(() => {
+        if ((window as any).PaystackPop) {
+          window.clearInterval(timer);
+          launch();
+        }
+      }, 150);
+      window.setTimeout(() => {
+        window.clearInterval(timer);
+        if (!(window as any).PaystackPop) {
+          setBeatPurchaseProcessing(false);
+          setBeatPurchaseError("Paystack could not load. Please refresh and try again.");
+        }
+      }, 8000);
+    }
+  };
 
   const stopBeatPreview = (slow = true) => {
     const audio = beatAudioRef.current;
@@ -1012,12 +1149,22 @@ export default function App() {
               </div>
 
               <div className="beat-license-grid">
-                <div><small>BASIC</small><strong>₦20,000</strong><span>MP3 Lease</span><button>SELECT</button></div>
-                <div><small>PREMIUM</small><strong>₦40,000</strong><span>WAV Lease</span><button>SELECT</button></div>
-                <div className="featured"><small>UNLIMITED</small><strong>₦80,000</strong><span>Unlimited Use</span><button>SELECT</button></div>
-                <div><small>EXCLUSIVE</small><strong>₦150,000</strong><span>Exclusive Rights</span><button>SELECT</button></div>
+                {licenseOptions.map((license) => {
+                  const exclusiveUnavailable = !!beatSoldMap[selectedBeat.id];
+                  return (
+                    <div key={license.name} className={`${license.name === "Unlimited" ? "featured " : ""}${selectedLicense === license.name ? "chosen" : ""}${exclusiveUnavailable ? " sold" : ""}`}>
+                      <small>{license.name.toUpperCase()}</small>
+                      <strong>{formatNaira(license.price)}</strong>
+                      <span>{exclusiveUnavailable ? "SOLD — PREVIEW ONLY" : license.detail}</span>
+                      <button disabled={!!exclusiveUnavailable} onClick={() => openBeatCheckout(license)}>{exclusiveUnavailable ? "SOLD" : "BUY LICENSE"}</button>
+                    </div>
+                  );
+                })}
               </div>
-              <div className="beat-license-note">Secure purchase and delivery will be connected to the existing Paystack flow after the catalogue is finalized.</div>
+              {beatSoldMap[selectedBeat.id] && <div className="beat-sold-banner">EXCLUSIVE SOLD · THIS BEAT REMAINS AVAILABLE TO PREVIEW BUT CANNOT BE PURCHASED EXCLUSIVELY.</div>}
+              {beatPurchaseSuccess && <div className="beat-purchase-success">{beatPurchaseSuccess}</div>}
+              {beatPurchaseError && <div className="beat-purchase-error">{beatPurchaseError}</div>}
+              <div className="beat-license-note">Payments are verified server-side through Paystack. Exclusive purchases are recorded so the beat can remain visible and playable while being blocked from future purchase.</div>
             </div>
           </div>
 
@@ -1025,7 +1172,7 @@ export default function App() {
             <div className="beats-table-head"><span>ALL BEATS</span><span>BPM</span><span>KEY</span><span>MODE</span><span>MOOD</span><span>PREVIEW</span></div>
             {filteredBeats.map((beat) => (
               <div key={beat.id} className={`beat-row ${selectedBeat.id === beat.id ? "selected" : ""}`} onClick={() => { setSelectedBeat(beat); setBeatProgress(0); stopBeatPreview(false); }}>
-                <span className="beat-row-title"><i>{selectedBeat.id === beat.id && beatPlaying ? "Ⅱ" : "▶"}</i>{beat.title}</span>
+                <span className="beat-row-title"><i>{selectedBeat.id === beat.id && beatPlaying ? "Ⅱ" : "▶"}</i>{beat.title}{beatSoldMap[beat.id] && <em className="beat-sold-tag">SOLD</em>}</span>
                 <span>{beat.bpm}</span>
                 <span>{beat.key}</span>
                 <span>{beat.mode}</span>
@@ -1037,6 +1184,27 @@ export default function App() {
           <audio ref={beatAudioRef} preload="none" aria-hidden="true" />
         </div>
       </section>
+
+      {beatCheckoutOpen && (
+        <div className="beat-checkout-overlay" onClick={() => !beatPurchaseProcessing && closeBeatCheckout()}>
+          <div className="beat-checkout-modal" onClick={(event) => event.stopPropagation()}>
+            <button className="store-close" onClick={closeBeatCheckout} disabled={beatPurchaseProcessing}>×</button>
+            <div className="section-number">GALAXY FIRE BEATS · SECURE CHECKOUT</div>
+            <h3>{selectedBeat.title}</h3>
+            <p className="beat-checkout-license">{selectedLicense.toUpperCase()} LICENSE · {formatNaira(licenseOptions.find((item) => item.name === selectedLicense)?.price || 0)}</p>
+            <div className="beat-checkout-form">
+              <label>FULL NAME<input value={beatCustomer.name} onChange={(e) => setBeatCustomer({ ...beatCustomer, name: e.target.value })} /></label>
+              <label>EMAIL<input type="email" value={beatCustomer.email} onChange={(e) => setBeatCustomer({ ...beatCustomer, email: e.target.value })} /></label>
+              <label className="wide">PHONE<input value={beatCustomer.phone} onChange={(e) => setBeatCustomer({ ...beatCustomer, phone: e.target.value })} /></label>
+            </div>
+            <div className="beat-checkout-summary"><span>PAYMENT</span><strong>{formatNaira(licenseOptions.find((item) => item.name === selectedLicense)?.price || 0)}</strong></div>
+            {beatPurchaseError && <div className="store-error">{beatPurchaseError}</div>}
+            {beatPurchaseSuccess && <div className="store-success">{beatPurchaseSuccess}</div>}
+            <button className="button red full" disabled={beatPurchaseProcessing || !!beatPurchaseSuccess} onClick={checkoutBeat}>{beatPurchaseProcessing ? "OPENING SECURE PAYMENT..." : beatPurchaseSuccess ? "PAYMENT CONFIRMED" : "PAY WITH PAYSTACK →"}</button>
+            <p className="checkout-note">Your payment is verified on the server before the order is recorded. Do not close the payment window until Paystack confirms your transaction.</p>
+          </div>
+        </div>
+      )}
 
       <section className="store-section" id="shop">
         <div className="store-shell">
@@ -1858,7 +2026,25 @@ export default function App() {
           .store-grid { grid-template-columns:1fr; }
           .checkout-grid { grid-template-columns:1fr; }
           .checkout-grid .wide { grid-column:auto; }
-          .store-section { padding:80px 6%; }
+          .beat-license-grid > div.chosen { border-color:#e50914; background:#130606; }
+        .beat-license-grid > div.sold { opacity:.58; }
+        .beat-license-grid button:disabled { cursor:not-allowed; border-color:#333; background:#090909; color:#555; }
+        .beat-sold-banner { margin-top:14px; padding:12px 14px; border:1px solid #4b1a1a; background:#120606; color:#d66; font-size:9px; letter-spacing:.1em; line-height:1.6; }
+        .beat-purchase-success,.beat-purchase-error { margin-top:14px; padding:12px 14px; font-size:10px; line-height:1.6; }
+        .beat-purchase-success { border:1px solid #285f35; background:#07140a; color:#7ee69a; }
+        .beat-purchase-error { border:1px solid #6a2222; background:#170707; color:#ff8585; }
+        .beat-checkout-overlay { position:fixed; inset:0; z-index:10000; display:grid; place-items:center; padding:24px; background:rgba(0,0,0,.82); backdrop-filter:blur(12px); }
+        .beat-checkout-modal { position:relative; width:min(680px,100%); max-height:90vh; overflow:auto; padding:44px; border:1px solid #2a2a2a; background:#080808; box-shadow:0 40px 120px rgba(0,0,0,.65); }
+        .beat-checkout-modal h3 { font-size:clamp(34px,5vw,58px); line-height:1; margin:14px 0 8px; }
+        .beat-checkout-license { color:#e50914; font-size:11px; letter-spacing:.12em; font-weight:700; }
+        .beat-checkout-form { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:28px 0; }
+        .beat-checkout-form label { display:flex; flex-direction:column; gap:7px; color:#777; font-size:9px; letter-spacing:.12em; }
+        .beat-checkout-form label.wide { grid-column:1 / -1; }
+        .beat-checkout-form input { width:100%; box-sizing:border-box; background:#0d0d0d; border:1px solid #292929; color:#fff; padding:14px; outline:none; }
+        .beat-checkout-form input:focus { border-color:#e50914; }
+        .beat-checkout-summary { display:flex; justify-content:space-between; align-items:center; padding:18px 0; border-top:1px solid #242424; border-bottom:1px solid #242424; margin-bottom:18px; color:#777; font-size:9px; letter-spacing:.12em; }
+        .beat-checkout-summary strong { color:#fff; font-size:22px; letter-spacing:0; }
+        .store-section { padding:80px 6%; }
           .cart-drawer { padding:45px 22px 25px; }
           .culture-grid { grid-template-columns: 1fr; }
           .culture-card { min-height: 360px; }
@@ -1930,11 +2116,15 @@ export default function App() {
         .beat-row:last-child { border-bottom:0; }
         .beat-row:hover,.beat-row.selected { background:linear-gradient(90deg,#120606,#080808); color:#fff; }
         .beat-row-title { display:flex; align-items:center; gap:12px; color:#ddd; font-size:12px; }
+        .beat-sold-tag { color:#e50914; border:1px solid #5c1a1a; padding:4px 6px; font-style:normal; font-size:7px; letter-spacing:.1em; }
         .beat-row-title i { display:grid; place-items:center; width:30px; height:30px; border:1px solid #292929; border-radius:50%; background:#101010; color:#fff; font-style:normal; font-size:9px; }
         .beat-row.selected .beat-row-title i { border-color:#e50914; color:#e50914; }
         .beat-row > span:not(.beat-row-title) { font-size:10px; }
         .beat-row-action { justify-self:end; background:none; border:0; cursor:pointer; padding:8px 0; color:#e50914 !important; font-size:8px !important; letter-spacing:.12em; font-weight:700; }
         @media (max-width: 1000px) {
+          .beat-checkout-modal { padding:30px 22px; }
+          .beat-checkout-form { grid-template-columns:1fr; }
+          .beat-checkout-form label.wide { grid-column:auto; }
           .beats-heading { flex-direction:column; align-items:flex-start; }
           .beats-search-wrap { width:100%; }
           .beat-feature { grid-template-columns:1fr; }
@@ -1955,6 +2145,24 @@ export default function App() {
         }
 
         /* GALAXY FIRE PRO AUDIO STORE */
+        .beat-license-grid > div.chosen { border-color:#e50914; background:#130606; }
+        .beat-license-grid > div.sold { opacity:.58; }
+        .beat-license-grid button:disabled { cursor:not-allowed; border-color:#333; background:#090909; color:#555; }
+        .beat-sold-banner { margin-top:14px; padding:12px 14px; border:1px solid #4b1a1a; background:#120606; color:#d66; font-size:9px; letter-spacing:.1em; line-height:1.6; }
+        .beat-purchase-success,.beat-purchase-error { margin-top:14px; padding:12px 14px; font-size:10px; line-height:1.6; }
+        .beat-purchase-success { border:1px solid #285f35; background:#07140a; color:#7ee69a; }
+        .beat-purchase-error { border:1px solid #6a2222; background:#170707; color:#ff8585; }
+        .beat-checkout-overlay { position:fixed; inset:0; z-index:10000; display:grid; place-items:center; padding:24px; background:rgba(0,0,0,.82); backdrop-filter:blur(12px); }
+        .beat-checkout-modal { position:relative; width:min(680px,100%); max-height:90vh; overflow:auto; padding:44px; border:1px solid #2a2a2a; background:#080808; box-shadow:0 40px 120px rgba(0,0,0,.65); }
+        .beat-checkout-modal h3 { font-size:clamp(34px,5vw,58px); line-height:1; margin:14px 0 8px; }
+        .beat-checkout-license { color:#e50914; font-size:11px; letter-spacing:.12em; font-weight:700; }
+        .beat-checkout-form { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:28px 0; }
+        .beat-checkout-form label { display:flex; flex-direction:column; gap:7px; color:#777; font-size:9px; letter-spacing:.12em; }
+        .beat-checkout-form label.wide { grid-column:1 / -1; }
+        .beat-checkout-form input { width:100%; box-sizing:border-box; background:#0d0d0d; border:1px solid #292929; color:#fff; padding:14px; outline:none; }
+        .beat-checkout-form input:focus { border-color:#e50914; }
+        .beat-checkout-summary { display:flex; justify-content:space-between; align-items:center; padding:18px 0; border-top:1px solid #242424; border-bottom:1px solid #242424; margin-bottom:18px; color:#777; font-size:9px; letter-spacing:.12em; }
+        .beat-checkout-summary strong { color:#fff; font-size:22px; letter-spacing:0; }
         .store-section { background:#080808; padding:110px 6%; border-top:1px solid #1d1d1d; }
         .store-shell { max-width:1400px; margin:0 auto; }
         .store-heading { max-width:780px; margin-bottom:45px; }

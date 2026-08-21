@@ -1,4 +1,6 @@
 const { createClient } = require('@supabase/supabase-js')
+const { sendSaleEmail } = require('./_sale-email')
+const { claimSaleNotification, releaseSaleNotification } = require('./_notification-log')
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -70,6 +72,27 @@ module.exports = async (req, res) => {
       success: false,
       error: error.message,
     })
+  }
+
+  const notification = await claimSaleNotification(reference, 'Studio / Visual Booking')
+  if (notification.claimed) {
+    try {
+      await sendSaleEmail({
+        type: 'Studio / Visual Booking',
+        service: booking.service,
+        amount: result.data.amount / 100,
+        customerName: booking.name,
+        customerEmail: booking.email,
+        customerPhone: booking.phone,
+        bookingDate: booking.date,
+        bookingTime: booking.time,
+        paystackReference: reference,
+        orderReference: bookingReference,
+      })
+    } catch (emailError) {
+      console.error('Booking sale email error:', emailError)
+      await releaseSaleNotification(reference)
+    }
   }
 
   return res.json({
