@@ -1127,12 +1127,12 @@ export default function App() {
 
           <div className="beat-feature">
             <div className={`vinyl-player ${vinylState}`}>
-              <div className="vinyl-platter">
+              <div className="vinyl-platter" style={{ transform: `rotate(${vinylRotation}deg)` }}>
                 <div className="vinyl-grooves" />
-                <img src={beatArt} alt="Galaxy Records Limited artwork" className="vinyl-label" style={{ transform: `rotate(${vinylRotation}deg)` }} />
+                <img src={beatArt} alt="Galaxy Records Limited artwork" className="vinyl-label" />
                 <div className="vinyl-shine" />
               </div>
-              <div className="tonearm"><div className="tonearm-head" /></div>
+              <div className={`tonearm ${vinylState}`}><div className="tonearm-head" /></div>
 
               <div className="turntable-control">
                 <span>33⅓ RPM</span>
@@ -2183,9 +2183,9 @@ export default function App() {
         .beat-selector-empty { padding:20px 12px; color:#555; text-align:center; font-size:8px; letter-spacing:.13em; }
 
         /* GALAXY FIRE BEATS MARKETPLACE */
-        .beats-marketplace { background:#050505; padding:120px 5%; border-top:1px solid #1b1b1b; overflow:hidden; }
-        .beats-shell { max-width:1500px; margin:0 auto; }
-        .beats-heading { display:flex; justify-content:space-between; align-items:flex-end; gap:40px; margin-bottom:50px; }
+        .beats-marketplace { background:#050505; padding:90px 5%; border-top:1px solid #1b1b1b; overflow:hidden; }
+        .beats-shell { max-width:1320px; margin:0 auto; }
+        .beats-heading { display:flex; justify-content:space-between; align-items:flex-end; gap:40px; margin-bottom:38px; }
         .beats-heading h2 { margin:12px 0 0; }
         .beats-heading p { max-width:700px; color:#777; line-height:1.8; margin:20px 0 0; }
         .beats-search-wrap { width:min(430px,100%); }
@@ -2209,10 +2209,11 @@ export default function App() {
         .turntable-control span:last-child { color:#e50914; }
         .vinyl-play { position:absolute; left:50%; bottom:24px; transform:translateX(-50%); width:62px; height:62px; border-radius:50%; border:1px solid #e50914; background:#090909; color:#fff; font-size:18px; cursor:pointer; box-shadow:0 0 25px rgba(229,9,20,.2); }
         .vinyl-play:hover { background:#e50914; }
-        .vinyl-player.slowing .vinyl-platter { animation:vinylSlow .95s ease-out both; }
         .vinyl-player.playing .vinyl-platter { box-shadow:0 0 0 8px #111,0 0 0 11px #2a2a2a,0 0 90px rgba(229,9,20,.38); }
-        @keyframes vinylSlow { from { filter:brightness(1); } to { filter:brightness(.84); } }
-        .beat-feature-info { padding:52px 48px 44px; display:flex; flex-direction:column; justify-content:center; }
+        .tonearm { transition:transform .65s cubic-bezier(.22,.61,.36,1), filter .3s ease; }
+        .tonearm.playing, .tonearm.slowing { transform:rotate(58deg); filter:brightness(1.08); }
+        .tonearm.stopped { transform:rotate(43deg); }
+        .beat-feature-info { padding:44px 42px 38px; display:flex; flex-direction:column; justify-content:center; }
         .now-playing-label { color:#e50914; font-size:10px; letter-spacing:.18em; font-weight:700; }
         .beat-feature-info h3 { font-size:clamp(42px,4vw,72px); line-height:.95; margin:14px 0 22px; letter-spacing:-.04em; }
         .beat-meta { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
@@ -2257,8 +2258,8 @@ export default function App() {
         @media (max-width: 700px) {
           .beats-marketplace { padding:90px 6%; }
           .beats-heading-note { width:100%; align-items:flex-start; text-align:left; }
-          .vinyl-player { min-height:390px; }
-          .vinyl-platter { width:70%; }
+          .vinyl-player { min-height:520px; }
+          .vinyl-platter { width:74%; }
           .tonearm { width:130px; right:2%; top:13%; }
           .beat-selector { width:100%; margin-bottom:22px; }
           .beat-selector-meta { display:none; }
