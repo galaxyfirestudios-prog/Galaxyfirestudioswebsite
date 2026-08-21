@@ -85,6 +85,136 @@ export default function App() {
   const amountDue = booking.payment === "deposit" ? Math.round(selectedService.price * 0.5) : selectedService.price;
   const formatNaira = (amount: number) => `₦${amount.toLocaleString("en-NG")}`;
 
+  const storeProducts = [
+    { id: "at2020", name: "Audio-Technica AT2020", category: "Microphones", market: 150000, price: 187500, stock: 5, badge: "BEST SELLER", desc: "Cardioid condenser microphone for vocals, instruments and home studios.", query: "Audio-Technica AT2020 microphone" },
+    { id: "at2035", name: "Audio-Technica AT2035", category: "Microphones", market: 285000, price: 356250, stock: 3, badge: "PRO", desc: "Large-diaphragm condenser with detailed, low-noise vocal capture.", query: "Audio-Technica AT2035 microphone" },
+    { id: "at2050", name: "Audio-Technica AT2050", category: "Microphones", market: 385000, price: 481250, stock: 2, badge: "PRO", desc: "Multi-pattern condenser for flexible professional recording.", query: "Audio-Technica AT2050 microphone" },
+    { id: "at2020usb", name: "Audio-Technica AT2020USB+", category: "Microphones", market: 195000, price: 243750, stock: 3, badge: "CREATOR", desc: "USB condenser microphone with direct headphone monitoring.", query: "Audio-Technica AT2020USB+ microphone" },
+    { id: "se-x1a", name: "sE Electronics X1 A", category: "Microphones", market: 146000, price: 182500, stock: 3, badge: "VALUE", desc: "Versatile large-diaphragm condenser for vocals and instruments.", query: "sE Electronics X1 A microphone" },
+    { id: "uad-sd1", name: "UAD SD-1", category: "Microphones", market: 457500, price: 571875, stock: 1, badge: "ELITE", desc: "Dynamic microphone designed for vocals, broadcast and close miking.", query: "Universal Audio SD-1 microphone" },
+    { id: "behr-c1", name: "Behringer C-1", category: "Microphones", market: 78500, price: 98125, stock: 5, badge: "STARTER", desc: "Affordable large-diaphragm condenser for first studio setups.", query: "Behringer C-1 microphone" },
+    { id: "m20x", name: "Audio-Technica ATH-M20x", category: "Headphones", market: 85000, price: 106250, stock: 8, badge: "BEST SELLER", desc: "Closed-back monitoring headphones for recording and mixing.", query: "Audio-Technica ATH-M20x headphones" },
+    { id: "m30x", name: "Audio-Technica ATH-M30x", category: "Headphones", market: 125000, price: 156250, stock: 5, badge: "VALUE", desc: "Professional monitoring headphones with strong isolation.", query: "Audio-Technica ATH-M30x headphones" },
+    { id: "m40x", name: "Audio-Technica ATH-M40x", category: "Headphones", market: 180000, price: 225000, stock: 5, badge: "PRO", desc: "Accurate studio monitoring with rotating earcups.", query: "Audio-Technica ATH-M40x headphones" },
+    { id: "m50x", name: "Audio-Technica ATH-M50x", category: "Headphones", market: 230000, price: 287500, stock: 5, badge: "BEST SELLER", desc: "Industry-loved closed-back headphones for detailed monitoring.", query: "Audio-Technica ATH-M50x headphones" },
+    { id: "m70x", name: "Audio-Technica ATH-M70x", category: "Headphones", market: 450000, price: 562500, stock: 2, badge: "ELITE", desc: "High-resolution professional monitor headphones.", query: "Audio-Technica ATH-M70x headphones" },
+    { id: "hd200", name: "Sennheiser HD 200 PRO", category: "Headphones", market: 115000, price: 143750, stock: 5, badge: "VALUE", desc: "Closed-back studio headphones for tracking and editing.", query: "Sennheiser HD 200 PRO headphones" },
+    { id: "hd280", name: "Sennheiser HD 280 PRO", category: "Headphones", market: 155000, price: 193750, stock: 4, badge: "PRO", desc: "Reliable isolation and accurate monitoring for studio work.", query: "Sennheiser HD 280 PRO headphones" },
+    { id: "hd300", name: "Sennheiser HD 300 PRO", category: "Headphones", market: 285000, price: 356250, stock: 2, badge: "PRO", desc: "High-isolation professional headphones for demanding sessions.", query: "Sennheiser HD 300 PRO headphones" },
+    { id: "hc2000", name: "Behringer HC 2000", category: "Headphones", market: 35500, price: 44375, stock: 10, badge: "STARTER", desc: "Budget-friendly monitoring headphones for tracking.", query: "Behringer HC 2000 headphones" },
+    { id: "umc204", name: "Behringer UMC204HD", category: "Audio Interfaces", market: 125500, price: 156875, stock: 5, badge: "STARTER", desc: "2-in/4-out USB interface with MIDAS-designed preamps.", query: "Behringer UMC204HD audio interface" },
+    { id: "minifuse1", name: "Arturia MiniFuse 1", category: "Audio Interfaces", market: 152650, price: 190813, stock: 4, badge: "CREATOR", desc: "Compact one-channel USB interface for mobile and home studios.", query: "Arturia MiniFuse 1 audio interface" },
+    { id: "volt1", name: "Universal Audio Volt 1", category: "Audio Interfaces", market: 205000, price: 256250, stock: 3, badge: "CREATOR", desc: "USB recording interface with vintage mic preamp mode.", query: "Universal Audio Volt 1 audio interface" },
+    { id: "id4", name: "Audient iD4 MKII", category: "Audio Interfaces", market: 230000, price: 287500, stock: 3, badge: "PRO", desc: "Premium compact interface with Audient mic preamp.", query: "Audient iD4 MKII audio interface" },
+    { id: "volt2", name: "Universal Audio Volt 2", category: "Audio Interfaces", market: 275000, price: 343750, stock: 3, badge: "BEST SELLER", desc: "2-in/2-out USB interface with vintage preamp mode.", query: "Universal Audio Volt 2 audio interface" },
+    { id: "ssl2", name: "Solid State Logic SSL 2", category: "Audio Interfaces", market: 281500, price: 351875, stock: 3, badge: "PRO", desc: "Professional 2-in/2-out interface with SSL Legacy 4K mode.", query: "Solid State Logic SSL 2 audio interface" },
+    { id: "id14", name: "Audient iD14 MKII", category: "Audio Interfaces", market: 345000, price: 431250, stock: 2, badge: "PRO", desc: "Expanded I/O and premium Audient conversion for serious creators.", query: "Audient iD14 MKII audio interface" },
+    { id: "ssl2plus", name: "Solid State Logic SSL 2+", category: "Audio Interfaces", market: 386500, price: 483125, stock: 2, badge: "PRO", desc: "Expanded SSL interface with extra outputs and MIDI.", query: "Solid State Logic SSL 2 Plus audio interface" },
+    { id: "iloud", name: "IK Multimedia iLoud Micro Monitor Pair", category: "Studio Monitors", market: 450000, price: 562500, stock: 2, badge: "BEST SELLER", desc: "Ultra-compact stereo monitors for small production spaces.", query: "IK Multimedia iLoud Micro Monitor pair" },
+    { id: "kali-lp6", name: "Kali Audio LP-6 V2 Pair", category: "Studio Monitors", market: 548625, price: 685781, stock: 2, badge: "PRO", desc: "6.5-inch nearfield monitors designed for accurate mixing.", query: "Kali Audio LP-6 V2 studio monitors" },
+    { id: "jbl305", name: "JBL 305P MkII Pair", category: "Studio Monitors", market: 650000, price: 812500, stock: 2, badge: "PRO", desc: "5-inch powered monitors with wide sweet spot.", query: "JBL 305P MkII studio monitors" },
+    { id: "hs5", name: "Yamaha HS5 Pair", category: "Studio Monitors", market: 750000, price: 937500, stock: 2, badge: "PRO", desc: "Compact nearfields built for dependable mix translation.", query: "Yamaha HS5 studio monitors pair" },
+    { id: "krk5", name: "KRK Rokit 5 G4 Pair", category: "Studio Monitors", market: 800000, price: 1000000, stock: 2, badge: "PRO", desc: "5-inch powered monitors with DSP-driven voicing.", query: "KRK Rokit 5 G4 studio monitors pair" },
+    { id: "genelec8010", name: "Genelec 8010A Pair", category: "Studio Monitors", market: 950000, price: 1187500, stock: 1, badge: "ELITE", desc: "Compact professional monitors with exceptional imaging.", query: "Genelec 8010A studio monitors pair" },
+    { id: "minilab3", name: "Arturia MiniLab 3", category: "MIDI & Production", market: 220000, price: 275000, stock: 4, badge: "BEST SELLER", desc: "Compact MIDI controller with pads, knobs and creative controls.", query: "Arturia MiniLab 3 MIDI controller" },
+    { id: "mpkmini", name: "Akai MPK Mini MK3", category: "MIDI & Production", market: 220000, price: 275000, stock: 4, badge: "BEST SELLER", desc: "Portable keyboard and pad controller for producers.", query: "Akai MPK Mini MK3 MIDI controller" },
+    { id: "keylab49", name: "Arturia KeyLab Essential 49 MK3", category: "MIDI & Production", market: 350000, price: 437500, stock: 2, badge: "PRO", desc: "49-key controller for hands-on production and composition.", query: "Arturia KeyLab Essential 49 MK3" },
+    { id: "maschine", name: "Native Instruments Maschine Mikro MK3", category: "MIDI & Production", market: 350000, price: 437500, stock: 2, badge: "PRO", desc: "Pad-based production controller for beats and sampling.", query: "Native Instruments Maschine Mikro MK3" },
+    { id: "tr8s", name: "Roland TR-8S", category: "Drum Machines", market: 1000000, price: 1250000, stock: 1, badge: "ELITE", desc: "Performance rhythm machine for modern and classic drum sounds.", query: "Roland TR-8S drum machine" },
+    { id: "reflexion", name: "sE Reflexion Filter X", category: "Studio Accessories", market: 140000, price: 175000, stock: 3, badge: "VOCAL", desc: "Portable acoustic reflection filter for cleaner vocal recording.", query: "sE Reflexion Filter X" },
+    { id: "popfilter", name: "Professional Metal Pop Filter", category: "Studio Accessories", market: 25000, price: 31250, stock: 10, badge: "ESSENTIAL", desc: "Helps control plosives and protects your vocal microphone.", query: "studio metal pop filter microphone" },
+    { id: "micstand", name: "Heavy-Duty Boom Mic Stand", category: "Studio Accessories", market: 50000, price: 62500, stock: 8, badge: "ESSENTIAL", desc: "Stable boom stand for vocal and instrument microphones.", query: "heavy duty boom microphone stand" },
+    { id: "xlr3", name: "Premium XLR Cable 3m", category: "Studio Accessories", market: 20000, price: 25000, stock: 15, badge: "ESSENTIAL", desc: "Balanced XLR connection for microphones and studio gear.", query: "premium XLR microphone cable 3m" },
+    { id: "isopad", name: "Monitor Isolation Pads", category: "Studio Accessories", market: 35000, price: 43750, stock: 8, badge: "ESSENTIAL", desc: "Reduce vibration transfer between monitors and your desk.", query: "studio monitor isolation pads" },
+    { id: "dibox", name: "Whirlwind IMP 2 DI Box", category: "Studio Accessories", market: 126500, price: 158125, stock: 3, badge: "PRO", desc: "Professional direct box for clean instrument connections.", query: "Whirlwind IMP 2 DI box" },
+  ];
+  const storeCategories = ["All", ...Array.from(new Set(storeProducts.map((p) => p.category)))];
+  const [storeCategory, setStoreCategory] = useState("All");
+  const [cart, setCart] = useState<Array<{ product: typeof storeProducts[number]; quantity: number }>>([]);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [storeCheckoutOpen, setStoreCheckoutOpen] = useState(false);
+  const [storeProcessing, setStoreProcessing] = useState(false);
+  const [storeSuccess, setStoreSuccess] = useState("");
+  const [storeError, setStoreError] = useState("");
+  const [storeCustomer, setStoreCustomer] = useState({ name: "", email: "", phone: "", address: "", city: "Abuja" });
+
+  const filteredProducts = storeCategory === "All"
+    ? storeProducts
+    : storeProducts.filter((p) => p.category === storeCategory);
+  const cartSubtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const shippingHandling = cartSubtotal === 0 ? 0 : cartSubtotal >= 1000000 ? 45000 : cartSubtotal >= 500000 ? 30000 : cartSubtotal >= 200000 ? 18000 : 10000;
+  const cartTotal = cartSubtotal + shippingHandling;
+
+  const addToCart = (product: typeof storeProducts[number]) => {
+    setStoreSuccess("");
+    setCart((current) => {
+      const existing = current.find((item) => item.product.id === product.id);
+      if (existing) return current.map((item) => item.product.id === product.id ? { ...item, quantity: Math.min(item.quantity + 1, product.stock) } : item);
+      return [...current, { product, quantity: 1 }];
+    });
+    setCartOpen(true);
+  };
+  const updateCartQuantity = (id: string, delta: number) => {
+    setCart((current) => current.map((item) => item.product.id === id ? { ...item, quantity: Math.max(0, Math.min(item.quantity + delta, item.product.stock)) } : item).filter((item) => item.quantity > 0));
+  };
+  const productImage = (query: string) => `https://tse1.mm.bing.net/th?q=${encodeURIComponent(query + " product")}&w=700&h=700`;
+  const checkoutStore = () => {
+    setStoreError("");
+    if (!storeCustomer.name || !storeCustomer.email || !storeCustomer.phone || !storeCustomer.address) {
+      setStoreError("Please complete your name, email, phone and delivery address.");
+      return;
+    }
+    setStoreProcessing(true);
+    const reference = `GFS-SHOP-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+    const PaystackPop = (window as any).PaystackPop;
+    const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_f350611c4c768b941d8725e73b122d3d37c9e5d7";
+    const launch = () => {
+      const PS = (window as any).PaystackPop;
+      if (!PS) { setStoreProcessing(false); setStoreError("Paystack could not load. Please refresh and try again."); return; }
+      const paystack = new PS();
+      paystack.newTransaction({
+        key: publicKey,
+        email: storeCustomer.email,
+        amount: cartTotal * 100,
+        currency: "NGN",
+        reference,
+        firstName: storeCustomer.name.trim().split(/\s+/)[0],
+        phone: storeCustomer.phone,
+        metadata: {
+          custom_fields: [
+            { display_name: "Order Type", variable_name: "order_type", value: "Galaxy Fire Studio Equipment Store" },
+            { display_name: "Products", variable_name: "products", value: cart.map((i) => `${i.product.name} x${i.quantity}`).join(" | ") },
+            { display_name: "Delivery City", variable_name: "delivery_city", value: storeCustomer.city },
+            { display_name: "Delivery Address", variable_name: "delivery_address", value: storeCustomer.address },
+          ],
+        },
+        onSuccess: async (transaction: { reference: string }) => {
+          try {
+            const response = await fetch("/api/verify-store-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ reference: transaction.reference, expectedAmount: cartTotal * 100, customer: storeCustomer, items: cart.map((i) => ({ id: i.product.id, name: i.product.name, quantity: i.quantity, price: i.product.price })) }),
+            });
+            const result = await response.json();
+            if (!response.ok || !result.verified) throw new Error(result.message || "Payment verification failed.");
+            setStoreSuccess(`Payment confirmed. Your order reference is ${result.orderReference || transaction.reference}. We will contact you about delivery.`);
+            setCart([]);
+            setStoreCheckoutOpen(false);
+          } catch (error) {
+            console.error(error);
+            setStoreError("Payment was completed, but verification is pending. Please keep your Paystack reference: " + transaction.reference);
+          } finally { setStoreProcessing(false); }
+        },
+        onCancel: () => setStoreProcessing(false),
+      });
+    };
+    if (PaystackPop) launch();
+    else {
+      const timer = window.setInterval(() => { if ((window as any).PaystackPop) { window.clearInterval(timer); launch(); } }, 150);
+      window.setTimeout(() => { window.clearInterval(timer); if (!(window as any).PaystackPop) { setStoreProcessing(false); setStoreError("Paystack could not load. Please refresh and try again."); } }, 8000);
+    }
+  };
+
   const openBooking = (service?: string) => {
     setBookingSubmitted(false);
     if (service) setBooking((current) => ({ ...current, service }));
@@ -652,9 +782,9 @@ export default function App() {
           <a href="#shop" className="culture-card">
             <div className="culture-card-number">04</div>
             <div className="culture-card-content">
-              <span>WEAR THE BRAND</span>
-              <h3>GALAXY FIRE<br />SHOP</h3>
-              <p>Studio merchandise, FOR THE CULTURE pieces, accessories and branded essentials.</p>
+              <span>PRO AUDIO EQUIPMENT</span>
+              <h3>GALAXY FIRE<br />PRO SHOP</h3>
+              <p>Microphones, interfaces, monitors, headphones, MIDI gear, drum machines and studio essentials.</p>
               <strong>VISIT THE SHOP →</strong>
             </div>
           </a>
@@ -719,19 +849,110 @@ export default function App() {
         </div>
       </section>
 
-      <section className="ecosystem-preview dark" id="shop">
-        <div className="ecosystem-preview-inner">
-          <div>
-            <div className="section-number">12 / SHOP</div>
-            <h2>WEAR<br /><span>THE FIRE.</span></h2>
-            <p>
-              Galaxy Fire and FOR THE CULTURE merchandise will be available here as the studio
-              ecosystem grows.
-            </p>
+      <section className="store-section" id="shop">
+        <div className="store-shell">
+          <div className="section-heading store-heading">
+            <div className="section-number">12 / GALAXY FIRE PRO AUDIO</div>
+            <h2>BUILD<br /><span>YOUR STUDIO.</span></h2>
+            <p>Studio microphones, interfaces, monitors, headphones, production gear and essential accessories — selected for artists and creators.</p>
           </div>
-          <a href="#contact" className="button outline">SHOP COMING SOON →</a>
+          <div className="store-topbar">
+            <div className="store-categories">
+              {storeCategories.map((category) => (
+                <button key={category} className={storeCategory === category ? "store-filter active" : "store-filter"} onClick={() => setStoreCategory(category)}>
+                  {category}
+                </button>
+              ))}
+            </div>
+            <button className="cart-button" onClick={() => setCartOpen(true)}>CART <span>{cart.reduce((n, i) => n + i.quantity, 0)}</span> →</button>
+          </div>
+          {storeSuccess && <div className="store-success">{storeSuccess}</div>}
+          <div className="store-grid">
+            {filteredProducts.map((product) => (
+              <article className="product-card" key={product.id}>
+                <div className="product-image-wrap">
+                  <img
+                    src={productImage(product.query)}
+                    alt={product.name}
+                    className="product-image"
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                    onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = deskImg; }}
+                  />
+                  <span className="product-badge">{product.badge}</span>
+                </div>
+                <div className="product-info">
+                  <div className="product-category">{product.category}</div>
+                  <h3>{product.name}</h3>
+                  <p>{product.desc}</p>
+                  <div className="product-bottom">
+                    <strong>{formatNaira(product.price)}</strong>
+                    <button className="add-button" onClick={() => addToCart(product)}>ADD TO CART</button>
+                  </div>
+                  <small>{product.stock <= 2 ? "Limited stock" : "In stock"} · Ships across Nigeria</small>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
+
+      {cartOpen && (
+        <div className="store-overlay" onClick={() => setCartOpen(false)}>
+          <aside className="cart-drawer" onClick={(event) => event.stopPropagation()}>
+            <button className="store-close" onClick={() => setCartOpen(false)}>×</button>
+            <div className="section-number">YOUR CART</div>
+            <h2>READY<br /><span>TO ORDER.</span></h2>
+            {cart.length === 0 ? <p className="empty-cart">Your cart is empty. Add some studio gear.</p> : (
+              <>
+                <div className="cart-items">
+                  {cart.map((item) => (
+                    <div className="cart-item" key={item.product.id}>
+                      <img src={productImage(item.product.query)} alt="" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = deskImg; }} />
+                      <div>
+                        <strong>{item.product.name}</strong>
+                        <span>{formatNaira(item.product.price)}</span>
+                        <div className="quantity-controls">
+                          <button onClick={() => updateCartQuantity(item.product.id, -1)}>−</button>
+                          <b>{item.quantity}</b>
+                          <button onClick={() => updateCartQuantity(item.product.id, 1)}>+</button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="cart-summary">
+                  <div><span>Products</span><strong>{formatNaira(cartSubtotal)}</strong></div>
+                  <div><span>Shipping & handling</span><strong>{formatNaira(shippingHandling)}</strong></div>
+                  <div className="cart-total"><span>TOTAL</span><strong>{formatNaira(cartTotal)}</strong></div>
+                </div>
+                <button className="button red full" onClick={() => { setCartOpen(false); setStoreCheckoutOpen(true); }}>CHECKOUT WITH PAYSTACK →</button>
+              </>
+            )}
+          </aside>
+        </div>
+      )}
+
+      {storeCheckoutOpen && (
+        <div className="store-overlay" onClick={() => !storeProcessing && setStoreCheckoutOpen(false)}>
+          <div className="store-checkout" onClick={(event) => event.stopPropagation()}>
+            <button className="store-close" onClick={() => !storeProcessing && setStoreCheckoutOpen(false)}>×</button>
+            <div className="section-number">12 / CHECKOUT</div>
+            <h2>DELIVERY<br /><span>DETAILS.</span></h2>
+            <p className="checkout-note">Secure payment is processed through your existing Paystack integration. Shipping and handling are included in the final total shown below.</p>
+            <div className="checkout-grid">
+              <label>FULL NAME<input value={storeCustomer.name} onChange={(e) => setStoreCustomer({...storeCustomer, name: e.target.value})} /></label>
+              <label>EMAIL<input type="email" value={storeCustomer.email} onChange={(e) => setStoreCustomer({...storeCustomer, email: e.target.value})} /></label>
+              <label>PHONE<input value={storeCustomer.phone} onChange={(e) => setStoreCustomer({...storeCustomer, phone: e.target.value})} /></label>
+              <label>CITY<input value={storeCustomer.city} onChange={(e) => setStoreCustomer({...storeCustomer, city: e.target.value})} /></label>
+              <label className="wide">DELIVERY ADDRESS<textarea rows={3} value={storeCustomer.address} onChange={(e) => setStoreCustomer({...storeCustomer, address: e.target.value})} /></label>
+            </div>
+            <div className="checkout-total"><span>TOTAL TO PAY</span><strong>{formatNaira(cartTotal)}</strong></div>
+            {storeError && <div className="store-error">{storeError}</div>}
+            <button className="button red full" disabled={storeProcessing || cart.length === 0} onClick={checkoutStore}>{storeProcessing ? "OPENING SECURE PAYMENT..." : "PAY WITH PAYSTACK →"}</button>
+          </div>
+        </div>
+      )}
 
       <section className="about-preview" id="about">
         <div className="about-preview-inner">
@@ -1419,6 +1640,10 @@ export default function App() {
           .gallery-grid { grid-template-columns: 1fr; }
           .gallery-row2 { grid-template-columns: 1fr 1fr; }
           .promo-grid { grid-template-columns: 1fr 1fr; }
+          .store-grid { grid-template-columns:1fr 1fr; }
+          .store-topbar { flex-direction:column; }
+          .cart-button { align-self:stretch; }
+          .store-checkout { padding:35px 22px; }
           .culture-grid { grid-template-columns: 1fr 1fr; }
           .culture-statement { grid-template-columns: 1fr; gap: 25px; }
           .ecosystem-preview-inner { flex-direction: column; align-items: flex-start; gap: 40px; }
@@ -1441,6 +1666,11 @@ export default function App() {
           .visual-cta-buttons .button { width: 100%; }
           .gallery-row2 { grid-template-columns: 1fr; }
           .promo-grid { grid-template-columns: 1fr 1fr; }
+          .store-grid { grid-template-columns:1fr; }
+          .checkout-grid { grid-template-columns:1fr; }
+          .checkout-grid .wide { grid-column:auto; }
+          .store-section { padding:80px 6%; }
+          .cart-drawer { padding:45px 22px 25px; }
           .culture-grid { grid-template-columns: 1fr; }
           .culture-card { min-height: 360px; }
           .culture-statement { padding: 25px; }
@@ -1454,6 +1684,67 @@ export default function App() {
           .booking-total strong { font-size: 22px; }
           .footer-bottom { flex-direction: column; gap: 12px; }
         }
+
+        /* GALAXY FIRE PRO AUDIO STORE */
+        .store-section { background:#080808; padding:110px 6%; border-top:1px solid #1d1d1d; }
+        .store-shell { max-width:1400px; margin:0 auto; }
+        .store-heading { max-width:780px; margin-bottom:45px; }
+        .store-heading p { max-width:650px; color:#888; line-height:1.8; margin-top:20px; }
+        .store-topbar { display:flex; justify-content:space-between; gap:20px; align-items:flex-start; margin-bottom:30px; }
+        .store-categories { display:flex; gap:8px; flex-wrap:wrap; }
+        .store-filter,.cart-button { background:#111; color:#aaa; border:1px solid #292929; padding:11px 14px; text-transform:uppercase; font-size:10px; letter-spacing:.12em; cursor:pointer; }
+        .store-filter:hover,.store-filter.active { color:#fff; border-color:#e50914; }
+        .cart-button { color:#fff; min-width:120px; }
+        .cart-button span { display:inline-grid; place-items:center; width:22px; height:22px; margin-left:7px; border-radius:50%; background:#e50914; font-size:10px; }
+        .store-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+        .product-card { background:#0f0f0f; border:1px solid #222; overflow:hidden; transition:transform .25s,border-color .25s; }
+        .product-card:hover { transform:translateY(-4px); border-color:#444; }
+        .product-image-wrap { position:relative; aspect-ratio:1/1; background:#f4f4f4; overflow:hidden; }
+        .product-image { width:100%; height:100%; object-fit:contain; display:block; mix-blend-mode:multiply; transition:transform .35s; }
+        .product-card:hover .product-image { transform:scale(1.04); }
+        .product-badge { position:absolute; top:12px; left:12px; background:#e50914; color:#fff; padding:6px 8px; font-size:8px; font-weight:700; letter-spacing:.12em; }
+        .product-info { padding:18px; }
+        .product-category { color:#777; font-size:9px; text-transform:uppercase; letter-spacing:.15em; margin-bottom:8px; }
+        .product-info h3 { font-size:19px; line-height:1.15; margin:0 0 10px; }
+        .product-info p { color:#777; font-size:12px; line-height:1.55; min-height:58px; margin:0 0 16px; }
+        .product-bottom { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+        .product-bottom strong { font-size:18px; }
+        .add-button { background:#fff; color:#050505; border:0; padding:10px 12px; font-size:9px; font-weight:800; letter-spacing:.08em; cursor:pointer; }
+        .add-button:hover { background:#e50914; color:#fff; }
+        .product-info small { display:block; color:#555; margin-top:12px; font-size:9px; }
+        .store-success,.store-error { padding:14px 16px; margin:0 0 20px; border:1px solid #333; font-size:12px; line-height:1.5; }
+        .store-success { background:#0c1b0c; color:#9fdd9f; border-color:#285528; }
+        .store-error { background:#1b0c0c; color:#ffaaa8; border-color:#552828; }
+        .store-overlay { position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,.82); display:flex; justify-content:flex-end; align-items:stretch; }
+        .cart-drawer { width:min(520px,100%); height:100%; overflow:auto; background:#0b0b0b; padding:55px 35px 35px; border-left:1px solid #222; position:relative; }
+        .store-checkout { width:min(760px,94%); max-height:92vh; overflow:auto; margin:auto; background:#0b0b0b; padding:55px; border:1px solid #292929; position:relative; }
+        .store-close { position:absolute; right:20px; top:16px; background:none; border:0; color:#fff; font-size:30px; cursor:pointer; }
+        .cart-drawer h2,.store-checkout h2 { font-size:52px; line-height:.9; margin:15px 0 30px; }
+        .cart-drawer h2 span,.store-checkout h2 span { color:#e50914; }
+        .cart-items { border-top:1px solid #222; }
+        .cart-item { display:grid; grid-template-columns:72px 1fr; gap:14px; padding:15px 0; border-bottom:1px solid #222; }
+        .cart-item img { width:72px; height:72px; object-fit:contain; background:#f4f4f4; mix-blend-mode:multiply; }
+        .cart-item strong,.cart-item span { display:block; }
+        .cart-item strong { font-size:13px; margin-bottom:5px; }
+        .cart-item span { color:#999; font-size:12px; }
+        .quantity-controls { display:flex; align-items:center; gap:10px; margin-top:8px; }
+        .quantity-controls button { width:25px; height:25px; background:#171717; color:#fff; border:1px solid #333; cursor:pointer; }
+        .quantity-controls b { font-size:11px; }
+        .cart-summary { margin:25px 0; border-top:1px solid #333; }
+        .cart-summary > div { display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #222; font-size:12px; color:#888; }
+        .cart-summary .cart-total { color:#fff; font-size:14px; }
+        .cart-total strong { font-size:20px; }
+        .button.full { width:100%; border:0; cursor:pointer; }
+        .empty-cart { color:#777; line-height:1.7; }
+        .checkout-note { color:#777; line-height:1.7; font-size:13px; max-width:620px; margin-bottom:25px; }
+        .checkout-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+        .checkout-grid label { display:flex; flex-direction:column; gap:8px; color:#777; font-size:9px; letter-spacing:.12em; }
+        .checkout-grid .wide { grid-column:1/-1; }
+        .checkout-grid input,.checkout-grid textarea { background:#111; color:#fff; border:1px solid #292929; padding:13px; font:inherit; outline:none; resize:vertical; }
+        .checkout-grid input:focus,.checkout-grid textarea:focus { border-color:#e50914; }
+        .checkout-total { display:flex; justify-content:space-between; align-items:center; margin:25px 0; padding:18px 0; border-top:1px solid #333; border-bottom:1px solid #333; }
+        .checkout-total span { color:#777; font-size:10px; letter-spacing:.12em; }
+        .checkout-total strong { font-size:24px; }
       `}</style>
     </div>
   );
