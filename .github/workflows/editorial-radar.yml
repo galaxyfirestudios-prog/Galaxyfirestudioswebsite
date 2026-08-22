@@ -20,6 +20,7 @@ concurrency:
 jobs:
   scan-build-deploy:
     runs-on: ubuntu-latest
+    environment: github-pages
 
     steps:
       - name: Checkout
@@ -42,6 +43,17 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Verify OpenAI secret is available
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "OPENAI_API_KEY is empty or unavailable to this workflow."
+            echo "Add it under Settings > Secrets and variables > Actions > Repository secrets, or under the github-pages Environment secrets."
+            exit 2
+          fi
+          echo "OPENAI_API_KEY is available to the workflow (value hidden)."
 
       - name: Run FOR THE CULTURE editorial radar
         env:
