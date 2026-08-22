@@ -7,7 +7,7 @@ The live site is hosted on GitHub Pages, so `/api/*.js` files cannot execute the
 - The editorial radar runs on every push to `main`, every 15 minutes, and manually from Actions.
 - It fetches all configured sources in parallel.
 - It ranks stories by relevance and freshness and removes duplicates.
-- It uses OpenAI server-side inside GitHub Actions to create the FOR THE CULTURE write-up.
+- It uses Gemini server-side inside GitHub Actions to create the FOR THE CULTURE write-up.
 - Supabase is no longer a hard dependency for the public feed. This removes the failure point caused by expecting GitHub Pages to execute Supabase-backed API routes.
 - Existing Supabase support can be reconnected later as the newsroom database, but the static feed can now publish independently.
 - The website reads `public/editorial-feed.json` first.
@@ -18,7 +18,7 @@ In GitHub: **Settings → Secrets and variables → Actions → New repository s
 
 Add:
 
-- `OPENAI_API_KEY`
+- `GEMINI_API_KEY`
 
 Do not put this key in the website, `VITE_` variables, or committed files.
 

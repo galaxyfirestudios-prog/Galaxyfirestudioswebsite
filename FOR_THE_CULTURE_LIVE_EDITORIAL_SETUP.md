@@ -2,7 +2,7 @@
 
 This build uses GitHub Actions for the editorial backend because GitHub Pages is static hosting and cannot execute `/api/*.js` server functions.
 
-Required GitHub Actions secret: `OPENAI_API_KEY`.
+Required GitHub Actions secret: `GEMINI_API_KEY`.
 
 The existing Galaxy Fire Supabase backend is not required for the public editorial feed in this version. The feed is generated into `public/editorial-feed.json` and deployed with the site.
 

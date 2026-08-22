@@ -42,9 +42,9 @@ module.exports = async (req, res) => {
     checkedAt: new Date().toISOString(),
     configuration: {
       supabase: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY),
-      openai: Boolean(process.env.OPENAI_API_KEY),
+      gemini: Boolean(process.env.GEMINI_API_KEY),
       cronSecret: Boolean(process.env.CRON_SECRET || process.env.EDITORIAL_CRON_SECRET),
-      model: process.env.EDITORIAL_MODEL || 'gpt-5-mini'
+      model: process.env.EDITORIAL_MODEL || 'gemini-3.7-flash'
     },
     database: { connected: false, tableReady: false, publishedStories: 0 },
     sources: []
@@ -70,7 +70,7 @@ module.exports = async (req, res) => {
   }
 
   result.sources = await Promise.all(SOURCES.map(checkSource))
-  result.ok = result.configuration.supabase && result.configuration.openai && result.database.tableReady && result.sources.some(source => source.ok)
+  result.ok = result.configuration.supabase && result.configuration.gemini && result.database.tableReady && result.sources.some(source => source.ok)
   res.setHeader('Cache-Control', 'no-store')
   return res.status(200).json(result)
 }

@@ -1,4 +1,8 @@
 import fs from 'node:fs/promises'
+import { createRequire } from 'node:module'
+
+const require = createRequire(import.meta.url)
+const { draftStoryWithGemini, DEFAULT_MODEL } = require('../lib/gemini-editorial.cjs')
 
 const SOURCES = [
   { name: 'The NATIVE', url: process.env.EDITORIAL_NATIVE_FEED || 'https://thenativemag.com/feed/', weight: 12 },
@@ -26,7 +30,7 @@ const MAX_SOURCE_ITEMS = Number(process.env.EDITORIAL_SOURCE_ITEMS || 18)
 const MAX_STORIES = Number(process.env.EDITORIAL_MAX_STORIES_PER_SCAN || 3)
 const MAX_AGE_HOURS = Number(process.env.EDITORIAL_MAX_AGE_HOURS || 96)
 const FETCH_TIMEOUT_MS = Number(process.env.EDITORIAL_FETCH_TIMEOUT_MS || 6500)
-const OPENAI_TIMEOUT_MS = Number(process.env.EDITORIAL_OPENAI_TIMEOUT_MS || 15000)
+const GEMINI_TIMEOUT_MS = Number(process.env.EDITORIAL_GEMINI_TIMEOUT_MS || 15000)
 
 function decode(value = '') {
   return value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gi, '$1').replace(/<[^>]*>/g, ' ')
@@ -86,15 +90,14 @@ function titleTokens(title) { return new Set(normalizeTitle(title).split(/\s+/).
 function similarity(a, b) { const A = titleTokens(a), B = titleTokens(b); if (!A.size || !B.size) return 0; let intersection = 0; for (const token of A) if (B.has(token)) intersection++; return intersection / (A.size + B.size - intersection) }
 
 async function draftStory(item) {
-  if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not configured in GitHub Actions.')
-  const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS)
-  try {
-    const prompt = `You are the editorial desk for FOR THE CULTURE, an African music, culture and entertainment platform by Galaxy Fire Studios. Create an ORIGINAL short news brief from the supplied source metadata. Do not copy phrases or sentence structures. Do not invent facts. Return only JSON with headline, dek, body and category. The body must be 2-4 short paragraphs suitable for mobile reading and must clearly attribute the reporting to the named source where appropriate. Category must be MUSIC, CULTURE, STYLE, FILM, ART or EVENTS. Source: ${item.source_name}\nOriginal headline: ${item.title}\nOriginal URL: ${item.source_url}\nSource excerpt: ${item.excerpt}\nSuggested category: ${category(item)}`
-    const response = await fetch('https://api.openai.com/v1/responses', { method: 'POST', headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ model: process.env.EDITORIAL_MODEL || 'gpt-5-mini', input: prompt, text: { format: { type: 'json_schema', name: 'for_the_culture_editorial_story', strict: true, schema: { type: 'object', additionalProperties: false, properties: { headline: { type: 'string' }, dek: { type: 'string' }, body: { type: 'string' }, category: { type: 'string', enum: ['MUSIC','CULTURE','STYLE','FILM','ART','EVENTS'] } }, required: ['headline','dek','body','category'] } } }, max_output_tokens: 900 }), signal: controller.signal })
-    if (!response.ok) throw new Error(`OpenAI returned ${response.status}: ${await response.text()}`)
-    const data = await response.json(); if (!data.output_text) throw new Error('OpenAI returned no output_text')
-    return JSON.parse(data.output_text)
-  } finally { clearTimeout(timer) }
+  const prompt = `You are the editorial desk for FOR THE CULTURE, an African music, culture and entertainment platform by Galaxy Fire Studios. Create an ORIGINAL short news brief from the supplied source metadata. Do not copy phrases or sentence structures. Do not invent facts. Return only JSON with headline, dek, body and category. The body must be 2-4 short paragraphs suitable for mobile reading and must clearly attribute the reporting to the named source where appropriate. Category must be MUSIC, CULTURE, STYLE, FILM, ART or EVENTS. Source: ${item.source_name}\nOriginal headline: ${item.title}\nOriginal URL: ${item.source_url}\nSource excerpt: ${item.excerpt}\nSuggested category: ${category(item)}`
+
+  return draftStoryWithGemini({
+    apiKey: process.env.GEMINI_API_KEY,
+    model: process.env.EDITORIAL_MODEL || DEFAULT_MODEL,
+    prompt,
+    timeoutMs: GEMINI_TIMEOUT_MS,
+  })
 }
 
 async function main() {
@@ -123,9 +126,9 @@ async function main() {
   const stories = [...newStories, ...prior].sort((a,b) => new Date(b.published_at || 0) - new Date(a.published_at || 0)).slice(0, 60)
   await fs.mkdir('public', { recursive: true })
   await fs.writeFile('public/editorial-feed.json', JSON.stringify({ stories, count: stories.length, source: 'FOR THE CULTURE Editorial Engine', generated_at: new Date().toISOString() }, null, 2) + '\n')
-  await fs.writeFile('editorial-run-status.json', JSON.stringify({ generated_at: new Date().toISOString(), published_this_run: newStories.length, sources: sourceReport, candidates: candidates.length, new_candidates: newCandidates.length, failures, openai_configured: Boolean(process.env.OPENAI_API_KEY), supabase_optional: true }, null, 2) + '\n')
+  await fs.writeFile('editorial-run-status.json', JSON.stringify({ generated_at: new Date().toISOString(), published_this_run: newStories.length, sources: sourceReport, candidates: candidates.length, new_candidates: newCandidates.length, failures, gemini_configured: Boolean(process.env.GEMINI_API_KEY), supabase_optional: true }, null, 2) + '\n')
 
   console.log(JSON.stringify({ published: newStories.length, feedStories: stories.length, candidates: candidates.length, newCandidates: newCandidates.length, sources: sourceReport, failures }, null, 2))
-  if (!process.env.OPENAI_API_KEY) process.exitCode = 2
+  if (!process.env.GEMINI_API_KEY) process.exitCode = 2
 }
 main().catch(error => { console.error(error); process.exit(1) })

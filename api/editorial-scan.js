@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js')
+const { draftStoryWithGemini, DEFAULT_MODEL } = require('../lib/gemini-editorial.cjs')
 
 const SOURCES = [
   { name: 'The NATIVE', url: process.env.EDITORIAL_NATIVE_FEED || 'https://thenativemag.com/feed/', weight: 12 },
@@ -32,7 +33,7 @@ const MAX_SOURCE_ITEMS = Number(process.env.EDITORIAL_SOURCE_ITEMS || 18)
 const MAX_STORIES = Number(process.env.EDITORIAL_MAX_STORIES_PER_SCAN || 3)
 const MAX_AGE_HOURS = Number(process.env.EDITORIAL_MAX_AGE_HOURS || 96)
 const FETCH_TIMEOUT_MS = Number(process.env.EDITORIAL_FETCH_TIMEOUT_MS || 6500)
-const OPENAI_TIMEOUT_MS = Number(process.env.EDITORIAL_OPENAI_TIMEOUT_MS || 8000)
+const GEMINI_TIMEOUT_MS = Number(process.env.EDITORIAL_GEMINI_TIMEOUT_MS || 8000)
 
 function decode(value='') {
   return value
@@ -123,11 +124,7 @@ async function fetchWithTimeout(url) {
 }
 
 async function draftStory(item) {
-  if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not configured')
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS)
-  try {
-    const prompt = `You are the editorial desk for FOR THE CULTURE, an African music, culture and entertainment platform by Galaxy Fire Studios.
+  const prompt = `You are the editorial desk for FOR THE CULTURE, an African music, culture and entertainment platform by Galaxy Fire Studios.
 Create a concise ORIGINAL news brief from the supplied source metadata. Do not copy phrases or reproduce the source article. Do not invent facts. If the source excerpt is too thin to support a claim, keep the wording cautious.
 Return strict JSON with: headline, dek, body, category.
 The headline should be punchy but factual. The dek should be one sentence. The body should be 2-4 short paragraphs. Clearly attribute reporting to the named source where appropriate. Keep the story useful, culturally aware and readable on mobile.
@@ -137,24 +134,12 @@ Original URL: ${item.source_url}
 Source excerpt: ${item.excerpt}
 Suggested category: ${category(item)}`
 
-    const response = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: process.env.EDITORIAL_MODEL || 'gpt-5-mini',
-        input: prompt,
-        text: { format: { type: 'json_object' } },
-        max_output_tokens: 900
-      }),
-      signal: controller.signal
-    })
-    if (!response.ok) throw new Error(`OpenAI returned ${response.status}`)
-    const data = await response.json()
-    const text = data.output_text || data.output?.flatMap(x => x.content || []).map(x => x.text || '').join('') || ''
-    return JSON.parse(text)
-  } finally {
-    clearTimeout(timer)
-  }
+  return draftStoryWithGemini({
+    apiKey: process.env.GEMINI_API_KEY,
+    model: process.env.EDITORIAL_MODEL || DEFAULT_MODEL,
+    prompt,
+    timeoutMs: GEMINI_TIMEOUT_MS,
+  })
 }
 
 async function processCandidate(supabase, item) {

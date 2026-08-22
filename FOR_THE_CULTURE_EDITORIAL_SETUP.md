@@ -13,7 +13,7 @@ This build starts from the working Phase 1 Galaxy Fire site and fixes the FOR TH
 - Multi-source editorial scanning and automatic publication are included.
 - Vercel cron runs the scan daily at 09:00 UTC.
 - Up to 5 new stories are published per scan.
-- The scan requires the existing Supabase server credentials plus OpenAI and a cron secret.
+- The scan requires the existing Supabase server credentials plus Gemini and a cron secret.
 
 ## Existing Supabase
 
@@ -25,9 +25,9 @@ Do not create a second Supabase project.
 
 ## New environment variables
 
-- OPENAI_API_KEY
+- GEMINI_API_KEY
 - EDITORIAL_CRON_SECRET (or CRON_SECRET)
-- EDITORIAL_MODEL (defaults to gpt-5-mini)
+- EDITORIAL_MODEL (defaults to gemini-3.7-flash)
 - Optional: EDITORIAL_NATIVE_FEED
 - Optional: EDITORIAL_GUARDIAN_FEED
 
@@ -56,7 +56,7 @@ The scanner:
 1. Reads source RSS metadata.
 2. Scores relevance.
 3. Skips already-seen source URLs.
-4. Generates an original FOR THE CULTURE brief with OpenAI.
+4. Generates an original FOR THE CULTURE brief with Gemini.
 5. Stores the source URL and attribution.
 6. Publishes the new story.
 7. Stops after 5 successful publications per scan.
@@ -73,7 +73,7 @@ A missing backend must never silently fall back to Galaxy Fire photography as if
 
 ## Deployment diagnostics
 
-Visit `/api/editorial-status` on the production site to see whether Supabase, OpenAI, the editorial table, and the configured RSS sources are reachable. This endpoint never returns secret values.
+Visit `/api/editorial-status` on the production site to see whether Supabase, Gemini, the editorial table, and the configured RSS sources are reachable. This endpoint never returns secret values.
 
 ### Important Vercel Cron detail
 Vercel sends the configured `CRON_SECRET` as `Authorization: Bearer <secret>` for cron invocations. The scanner accepts that standard Vercel secret and also accepts `EDITORIAL_CRON_SECRET` for manual calls.
