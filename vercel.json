@@ -17,6 +17,12 @@
     },
     "api/verify-store-payment.js": {
       "maxDuration": 10
+    },
+    "api/editorial-ingest.js": {
+      "maxDuration": 30
+    },
+    "api/editorial-draft.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
@@ -27,6 +33,12 @@
     {
       "source": "/(.*)",
       "destination": "/index.html"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/editorial-ingest",
+      "schedule": "0 * * * *"
     }
   ]
 }
