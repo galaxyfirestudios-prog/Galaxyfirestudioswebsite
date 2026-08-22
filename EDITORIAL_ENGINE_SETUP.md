@@ -1,36 +1,39 @@
-# FOR THE CULTURE — Editorial Engine
+# FOR THE CULTURE — Automated Editorial Engine
 
-This phase reuses the existing Galaxy Fire Supabase project. It adds OpenAI only for server-side editorial drafting.
+This update is built on the supplied Phase 1 site. It reuses the existing Galaxy Fire Supabase backend and adds an OpenAI server-side editorial layer.
 
-## Environment variables
+## 1. Existing Supabase
+Run `supabase-editorial.sql` once in the existing Galaxy Fire Supabase project's SQL Editor. Do not create a second Supabase project.
 
-Keep the existing:
-- SUPABASE_URL
-- SUPABASE_SERVICE_ROLE_KEY
+## 2. Vercel environment variables
+Keep the existing Galaxy Fire variables. Add:
 
-Add:
-- OPENAI_API_KEY
-- EDITORIAL_MODEL (default: gpt-5-mini)
-- EDITORIAL_CRON_SECRET
+- `OPENAI_API_KEY` — server-side OpenAI API key; never prefix with `VITE_`.
+- `EDITORIAL_CRON_SECRET` — a long random secret used to protect the scan.
+- `CRON_SECRET` — use the same value; Vercel Cron supplies it automatically in the Authorization header.
+- `EDITORIAL_MODEL` — defaults to `gpt-5-mini` if omitted.
+- `EDITORIAL_MIN_SCORE` — defaults to `16`.
+- `EDITORIAL_MAX_PER_RUN` — defaults to `5`.
 
-Never put any of these in a `VITE_` variable.
+The existing `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are reused.
 
-## Supabase
+## 3. Automatic publication
+Automatic publication is intentionally enabled in the scanner. Every qualifying story is generated from RSS/feed metadata and published as a short original FOR THE CULTURE brief with source attribution and a link to the original publication. The system does not copy full article text or source images.
 
-Run `supabase-editorial.sql` once in the existing Galaxy Fire Supabase SQL editor.
+The Vercel cron runs daily at 09:00 UTC in the supplied configuration. The scanner is capped at 5 publications per run by default so the launch period can be observed without flooding the site.
 
-## Endpoints
+## 4. Test the scanner manually
+After deployment and after the SQL migration has been run, call:
 
-- `GET /api/editorial-feed` — returns approved/published stories.
-- `POST /api/editorial-ingest` — checks the configured source feeds and stores relevant story metadata.
-- `POST /api/editorial-draft` with `{ "id": "..." }` — sends one discovered story's metadata to OpenAI and stores a draft.
+`GET /api/editorial-scan`
 
-For POST requests, send `x-editorial-secret` matching `EDITORIAL_CRON_SECRET` when the secret is configured.
+with header:
 
-## Editorial rule
+`Authorization: Bearer YOUR_EDITORIAL_CRON_SECRET`
 
-This system stores source metadata and links, then drafts original FOR THE CULTURE copy from that metadata. It is intentionally not a page scraper or automatic republication system.
+The response reports sources checked, stories fetched, relevant stories, publications and errors.
 
-## Current sources
+## 5. Editorial philosophy
+The engine is designed to discover African music, culture, art, fashion, film, creative-industry and event stories. It uses source metadata only, creates an original brief, retains attribution and the original URL, and avoids known blocked categories.
 
-The source registry is in `lib/editorial-sources.js`. Sources can be enabled/disabled or replaced without changing the rest of the application.
+Automatic publishing is enabled for this launch experiment as requested. Monitor the feed for several days and adjust the source list, relevance threshold, model or publication cap as needed.

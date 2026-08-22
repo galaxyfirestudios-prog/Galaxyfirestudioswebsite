@@ -18,11 +18,8 @@
     "api/verify-store-payment.js": {
       "maxDuration": 10
     },
-    "api/editorial-ingest.js": {
-      "maxDuration": 30
-    },
-    "api/editorial-draft.js": {
-      "maxDuration": 30
+    "api/editorial-scan.js": {
+      "maxDuration": 60
     }
   },
   "rewrites": [
@@ -37,8 +34,8 @@
   ],
   "crons": [
     {
-      "path": "/api/editorial-ingest",
-      "schedule": "0 * * * *"
+      "path": "/api/editorial-scan",
+      "schedule": "0 9 * * *"
     }
   ]
 }

@@ -48,6 +48,11 @@ import cultureArt from "@/imports/for-the-culture.webp";
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [editorialStories, setEditorialStories] = useState<Array<{
+    id: number; headline: string; dek?: string; body: string; category: string;
+    source_name: string; original_url: string; published_at?: string; auto_published?: boolean;
+  }>>([]);
+  const [editorialLoaded, setEditorialLoaded] = useState(false);
   const [visualSlide, setVisualSlide] = useState(0);
   const [visualPaused, setVisualPaused] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -232,6 +237,20 @@ export default function App() {
   const updateBooking = (field: string, value: string) => {
     setBooking((current) => ({ ...current, [field]: value }));
   };
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/editorial-feed?limit=6')
+      .then((response) => response.ok ? response.json() : { stories: [] })
+      .then((data) => {
+        if (!cancelled) {
+          setEditorialStories(Array.isArray(data.stories) ? data.stories : []);
+          setEditorialLoaded(true);
+        }
+      })
+      .catch(() => { if (!cancelled) setEditorialLoaded(true); });
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     const existing = document.querySelector('script[src="https://js.paystack.co/v2/inline.js"]');
@@ -1043,69 +1062,129 @@ export default function App() {
 
 
       {/* FOR THE CULTURE */}
-      <section className="culture" id="culture">
-        <div className="culture-artwork" aria-hidden="true" style={{ backgroundImage: `url(${cultureArt})` }} />
-        <div className="section-heading">
-          <div className="section-number">08 / FOR THE CULTURE</div>
-          <h2>THE SOUND.<br /><span>THE PEOPLE. THE CULTURE.</span></h2>
-          <p>
-            Galaxy Fire Studios is more than a room to record in. FOR THE CULTURE is our
-            growing home for Abuja music, artists, stories, beats, radio and the creative
-            community around us.
-          </p>
+      <section className="culture-platform" id="culture">
+        <div className="culture-platform-topline">
+          <span>MUSIC. CULTURE. ENTERTAINMENT. COMMUNITY.</span>
+          <span className="culture-platform-live">● LISTEN LIVE &nbsp; / &nbsp; FOR THE CULTURE RADIO</span>
         </div>
 
-        <div className="culture-grid">
-          <a href="#radio" className="culture-card culture-card-featured">
-            <div className="culture-card-number">01</div>
-            <div className="culture-card-content">
-              <span>LIVE MUSIC DESTINATION</span>
-              <h3>FOR THE CULTURE<br />RADIO</h3>
-              <p>Hear Abuja talent, guest mixes, premieres and future Galaxy Fire programming.</p>
-              <strong>EXPLORE RADIO →</strong>
-            </div>
-          </a>
-
-          <a href="#blog" className="culture-card">
-            <div className="culture-card-number">02</div>
-            <div className="culture-card-content">
-              <span>STORIES &amp; PEOPLE</span>
-              <h3>THE<br />BLOG</h3>
-              <p>Artist profiles, interviews, releases, events, studio stories and creative culture.</p>
-              <strong>READ THE BLOG →</strong>
-            </div>
-          </a>
-
-          <a href="#beats" className="culture-card">
-            <div className="culture-card-number">03</div>
-            <div className="culture-card-content">
-              <span>PRODUCERS &amp; ARTISTS</span>
-              <h3>BEATS<br />MARKETPLACE</h3>
-              <p>Discover original Galaxy Fire beats by BPM, key and mood, then choose the license that fits your record.</p>
-              <strong>EXPLORE BEATS →</strong>
-            </div>
-          </a>
-
-          <a href="#shop" className="culture-card">
-            <div className="culture-card-number">04</div>
-            <div className="culture-card-content">
-              <span>PRO AUDIO EQUIPMENT</span>
-              <h3>GALAXY FIRE<br />PRO SHOP</h3>
-              <p>Microphones, interfaces, monitors, headphones, MIDI gear, drum machines and studio essentials.</p>
-              <strong>VISIT THE SHOP →</strong>
-            </div>
-          </a>
-        </div>
-
-        <div className="culture-statement">
-          <div>
-            <span className="eyebrow">THE GALAXY FIRE ECOSYSTEM</span>
-            <h3>DISCOVER. CREATE. CONNECT.</h3>
+        <div className="culture-platform-shell">
+          <div className="culture-brand-rail">
+            <img src={cultureArt} alt="FOR THE CULTURE" className="culture-brand-art" />
+            <div className="culture-brand-kicker">BY GALAXY FIRE STUDIOS</div>
+            <p>Music, stories, artists and the people shaping the culture around us.</p>
           </div>
-          <p>
-            Discover music and stories. Find a beat. Hear the culture. Then bring your next
-            record back to Galaxy Fire Studios to record, produce, mix, master and release it.
-          </p>
+
+          <div className="culture-platform-main">
+            <div className="culture-platform-nav">
+              <a className="active" href="#culture">HOME</a>
+              <a href="#beats">MUSIC</a>
+              <a href="#blog">CULTURE</a>
+              <a href="#radio">RADIO</a>
+              <a href="#culture-video">VIDEO</a>
+              <a href="#culture-events">EVENTS</a>
+              <a href="#culture-artists">ARTISTS</a>
+              <a href="#culture-community">COMMUNITY</a>
+            </div>
+
+            <article className="culture-hero-story">
+              <div className="culture-hero-copy">
+                <span className="culture-label">FEATURED STORY</span>
+                <h2>THE NEW WAVE<br />IS BUILDING<br /><em>ITS OWN SOUND.</em></h2>
+                <p>A new generation of African creators is breaking boundaries, building communities and making culture impossible to ignore.</p>
+                <a href="#blog" className="culture-action">READ THE STORY <span>→</span></a>
+              </div>
+              <div className="culture-hero-image-wrap">
+                <img src={visual17} alt="Featured cultural portrait" className="culture-hero-image" />
+                <div className="culture-hero-stamp">CULTURE<br />OVER<br />EVERYTHING.</div>
+              </div>
+              <div className="culture-hero-controls"><span className="active"></span><span></span><span></span></div>
+            </article>
+
+            <div className="culture-content-grid">
+              <section className="culture-stories-block">
+                <div className="culture-section-head"><h3>LATEST STORIES</h3><a href="#blog">VIEW ALL STORIES →</a></div>
+                <div className="culture-story-grid">
+                  {(editorialStories.length ? editorialStories : [
+                    { id: 1, category: 'MUSIC', headline: 'THE VOICES DEFINING THE NEXT WAVE', source_name: 'FOR THE CULTURE', original_url: '#blog', published_at: '2026-08-22' },
+                    { id: 2, category: 'STYLE', headline: 'WHY AFRICAN VISUAL CULTURE KEEPS MOVING FORWARD', source_name: 'FOR THE CULTURE', original_url: '#blog', published_at: '2026-08-22' },
+                    { id: 3, category: 'ARTISTS', headline: 'MEET THE CREATORS MAKING THEIR OWN RULES', source_name: 'FOR THE CULTURE', original_url: '#blog', published_at: '2026-08-22' },
+                  ]).slice(0, 3).map((story, index) => {
+                    const storyImage = [visual02, visual06, visual12][index] || visual02;
+                    const date = story.published_at ? new Date(story.published_at).toLocaleDateString('en-NG', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+                    return (
+                      <a href={story.original_url || '#blog'} target={story.original_url?.startsWith('http') ? '_blank' : undefined} rel={story.original_url?.startsWith('http') ? 'noreferrer' : undefined} className="culture-story-card" key={story.id}>
+                        <img src={storyImage} alt="FOR THE CULTURE editorial story" loading="lazy" />
+                        <div><span>{story.category || 'CULTURE'}</span><h4>{story.headline}</h4><small>{story.source_name || 'FOR THE CULTURE'} · {date}</small></div>
+                      </a>
+                    );
+                  })}
+                </div>
+                {editorialLoaded && editorialStories.length > 0 && <div className="culture-editorial-status">● AUTO-PUBLISHED EDITORIAL RADAR IS LIVE · SOURCES ARE ATTRIBUTED BELOW EACH STORY</div>}
+              </section>
+
+              <aside className="culture-radio-card" id="radio">
+                <div className="culture-section-head"><h3>LIVE RADIO</h3><a href="#radio">SCHEDULE →</a></div>
+                <div className="culture-on-air"><span>● ON AIR</span><small>FOR THE CULTURE RADIO</small></div>
+                <h4>THE CULTURE<br />NEVER STOPS.</h4>
+                <p>24/7 music, conversations, premieres, guest mixes and the sounds moving the culture forward.</p>
+                <div className="culture-waveform"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                <a href="#radio" className="culture-radio-button">LISTEN LIVE <span>▶</span></a>
+                <div className="culture-next"><span>UP NEXT</span><strong>THE AFROBEATS TAKEOVER</strong><small>Guest mix · 1:00 PM</small></div>
+              </aside>
+            </div>
+
+            <div className="culture-platform-columns">
+              <section className="culture-panel music-panel">
+                <div className="culture-section-head"><h3>NEW MUSIC</h3><a href="#beats">EXPLORE →</a></div>
+                {[['visual04','New Wave — The First Signal'],['visual15','After Dark — Culture Sessions'],['visual20','Made In Africa — The Movement']].map(([img,title], index) => (
+                  <a className="culture-music-row" href="#beats" key={title}>
+                    <img src={( {visual04, visual15, visual20} as Record<string, string>)[img]} alt="" loading="lazy" />
+                    <div><strong>{title}</strong><small>{index === 0 ? 'Afrobeats' : index === 1 ? 'Alté' : 'Hip-Hop'} · Galaxy Fire</small></div>
+                    <span className="culture-play">▶</span>
+                  </a>
+                ))}
+                <a className="culture-panel-link" href="#beats">BROWSE ALL MUSIC →</a>
+              </section>
+
+              <section className="culture-panel culture-feature-panel">
+                <div className="culture-section-head"><h3>CULTURE</h3><a href="#blog">VIEW ALL →</a></div>
+                <div className="culture-feature-image"><img src={visual28} alt="Editorial portrait" loading="lazy" /><span>OPINION</span></div>
+                <h4>THE REALITY OF BUILDING A CREATIVE LIFE IN AFRICA</h4>
+                <p>Stories about ambition, community, identity and the people creating their own lanes.</p>
+              </section>
+
+              <section className="culture-panel culture-radio-promo">
+                <div className="culture-radio-promo-art"><img src={cultureArt} alt="FOR THE CULTURE Radio" /></div>
+                <div className="culture-radio-promo-copy"><span>24/7 MUSIC · CULTURE · CONVERSATION</span><h3>FOR THE<br />CULTURE<br /><em>RADIO.</em></h3><a href="#radio" className="culture-action">LISTEN NOW →</a></div>
+              </section>
+            </div>
+
+            <div className="culture-platform-columns lower" id="culture-video">
+              <section className="culture-panel culture-video-panel">
+                <div className="culture-section-head"><h3>LATEST VIDEO</h3><a href="#culture-video">VIEW ALL →</a></div>
+                <div className="culture-video-feature"><img src={visual03} alt="Artist performance" loading="lazy" /><button aria-label="Play video">▶</button><span>LIVE PERFORMANCE</span></div>
+              </section>
+              <section className="culture-panel" id="culture-events">
+                <div className="culture-section-head"><h3>UPCOMING EVENTS</h3><a href="#culture-events">VIEW ALL →</a></div>
+                <div className="culture-event-row"><b>MAY<br /><strong>25</strong></b><div><strong>CULTURE LIVE</strong><small>Lagos, Nigeria</small></div><a href="#booking">TICKETS →</a></div>
+                <div className="culture-event-row"><b>JUN<br /><strong>08</strong></b><div><strong>AFROBEATS DAY PARTY</strong><small>Abuja, Nigeria</small></div><a href="#booking">DETAILS →</a></div>
+                <div className="culture-event-row"><b>JUN<br /><strong>22</strong></b><div><strong>GALAXY FIRE SHOWCASE</strong><small>Galaxy Fire Studios</small></div><a href="#booking">DETAILS →</a></div>
+              </section>
+              <section className="culture-panel" id="culture-artists">
+                <div className="culture-section-head"><h3>FEATURED ARTISTS</h3><a href="#culture-artists">DISCOVER →</a></div>
+                <div className="culture-artist-grid">
+                  {[visual11, visual14, visual21, visual24].map((image, index) => <a href="#culture-artists" key={image}><img src={image} alt={`Featured artist ${index + 1}`} loading="lazy" /><span>{['THE NEXT WAVE','NEW VOICES','AFRO FUTURES','CITY SOUNDS'][index]}</span></a>)}
+                </div>
+              </section>
+            </div>
+
+            <section className="culture-manifesto" id="culture-community">
+              <div><span>FOR THE CULTURE</span><h3>WE ARE<br /><em>THE CULTURE.</em></h3></div>
+              <p>FOR THE CULTURE is the media and community layer of the Galaxy Fire ecosystem — a place to discover, listen, watch, connect and eventually build your own profile inside the culture.</p>
+              <a href="#contact" className="culture-action">JOIN THE CULTURE →</a>
+            </section>
+          </div>
         </div>
       </section>
 
@@ -2474,6 +2553,80 @@ export default function App() {
         @media (min-width: 1400px) {
           .store-grid { grid-template-columns: repeat(5,1fr); }
         }
+        /* FOR THE CULTURE — editorial platform homepage */
+        .culture-platform { background:#050505; color:#fff; overflow:hidden; border-top:1px solid #171717; }
+        .culture-platform-topline { min-height:38px; padding:0 4.5%; display:flex; align-items:center; justify-content:space-between; gap:20px; border-bottom:1px solid #1d1d1d; color:#9f9f9f; font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:900; letter-spacing:1.5px; }
+        .culture-platform-live { color:#fff; }
+        .culture-platform-live::first-letter { color:#e50914; }
+        .culture-platform-shell { display:grid; grid-template-columns:250px minmax(0,1fr); max-width:1500px; margin:0 auto; }
+        .culture-brand-rail { padding:38px 26px 45px 4.5%; border-right:1px solid #222; background:linear-gradient(180deg,#090909,#050505); position:relative; }
+        .culture-brand-art { width:100%; aspect-ratio:1; object-fit:cover; object-position:center; display:block; filter:contrast(1.05) saturate(1.05); mix-blend-mode:screen; opacity:.92; }
+        .culture-brand-kicker { margin-top:14px; color:#b66cff; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:11px; letter-spacing:1.8px; }
+        .culture-brand-rail p { color:#6d6d6d; font-size:12px; line-height:1.7; margin:15px 0 0; max-width:190px; }
+        .culture-platform-main { min-width:0; padding:0 4.5% 55px; }
+        .culture-platform-nav { height:70px; display:flex; align-items:center; gap:24px; overflow:auto; white-space:nowrap; border-bottom:1px solid #1c1c1c; scrollbar-width:none; }
+        .culture-platform-nav::-webkit-scrollbar { display:none; }
+        .culture-platform-nav a { color:#a2a2a2; font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:900; letter-spacing:1.2px; padding:27px 0 24px; border-bottom:2px solid transparent; transition:color .2s,border-color .2s; }
+        .culture-platform-nav a:hover,.culture-platform-nav a.active { color:#fff; border-color:#b66cff; }
+        .culture-hero-story { position:relative; display:grid; grid-template-columns:.88fr 1.5fr; min-height:570px; border-bottom:1px solid #242424; overflow:hidden; background:#090909; }
+        .culture-hero-copy { align-self:center; padding:65px 35px 65px 0; position:relative; z-index:2; }
+        .culture-label,.culture-story-card span,.culture-feature-image span,.culture-radio-promo-copy>span,.culture-manifesto>div>span { color:#b66cff; font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:900; letter-spacing:2px; }
+        .culture-hero-copy h2 { margin:16px 0 22px; font-family:'Barlow Condensed',sans-serif; font-size:clamp(58px,6.4vw,102px); line-height:.82; letter-spacing:-2px; font-weight:900; }
+        .culture-hero-copy h2 em { color:#b66cff; font-style:normal; }
+        .culture-hero-copy p { max-width:430px; color:#999; font-size:14px; line-height:1.7; margin:0 0 27px; }
+        .culture-action { display:inline-flex; align-items:center; gap:14px; padding:12px 17px; background:#8f35dc; color:#fff; font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:900; letter-spacing:1.1px; transition:transform .2s,background .2s; }
+        .culture-action:hover { background:#b66cff; transform:translateY(-2px); }
+        .culture-hero-image-wrap { position:relative; min-width:0; overflow:hidden; }
+        .culture-hero-image { width:100%; height:100%; min-height:570px; object-fit:cover; object-position:center; display:block; filter:saturate(.78) contrast(1.12); }
+        .culture-hero-image-wrap::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg,#090909 0%,rgba(9,9,9,.12) 38%,rgba(10,4,16,.08) 100%),linear-gradient(0deg,rgba(0,0,0,.45),transparent 45%); }
+        .culture-hero-stamp { position:absolute; z-index:2; right:25px; bottom:27px; color:#b66cff; font-family:'Barlow Condensed',sans-serif; font-size:27px; line-height:.83; font-weight:900; font-style:italic; letter-spacing:-1px; transform:rotate(-7deg); text-align:right; text-shadow:0 4px 20px #000; }
+        .culture-hero-controls { position:absolute; z-index:3; bottom:22px; left:0; display:flex; gap:7px; }
+        .culture-hero-controls span { width:24px; height:2px; background:#555; }
+        .culture-hero-controls span.active { background:#b66cff; width:44px; }
+        .culture-content-grid { display:grid; grid-template-columns:minmax(0,2fr) minmax(280px,1fr); gap:18px; padding-top:20px; }
+        .culture-stories-block,.culture-radio-card,.culture-panel { border:1px solid #242424; background:#090909; }
+        .culture-stories-block { padding:18px; }
+        .culture-section-head { display:flex; align-items:center; justify-content:space-between; gap:15px; margin-bottom:16px; }
+        .culture-section-head h3 { margin:0; font-family:'Barlow Condensed',sans-serif; font-size:17px; letter-spacing:1px; font-weight:900; }
+        .culture-section-head a { color:#b66cff; font-family:'Barlow Condensed',sans-serif; font-size:8px; font-weight:900; letter-spacing:1.4px; }
+        .culture-story-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+        .culture-story-card { background:#101010; border:1px solid #1e1e1e; min-width:0; transition:transform .2s,border-color .2s; }
+        .culture-story-card:hover { transform:translateY(-3px); border-color:#6e3c90; }
+        .culture-story-card img { width:100%; aspect-ratio:1.25/1; object-fit:cover; display:block; filter:saturate(.75) contrast(1.05); }
+        .culture-story-card div { padding:12px; }
+        .culture-story-card h4 { margin:7px 0 12px; font-family:'Barlow Condensed',sans-serif; font-size:18px; line-height:.95; letter-spacing:.2px; }
+        .culture-story-card small { color:#555; font-size:9px; }
+        .culture-radio-card { padding:18px; background:radial-gradient(circle at 85% 10%,rgba(143,53,220,.18),transparent 35%),#090909; }
+        .culture-on-air { display:flex; align-items:center; justify-content:space-between; padding:9px 10px; margin:4px 0 25px; background:#151515; border-left:2px solid #e50914; }
+        .culture-on-air span { color:#ff4a52; font-family:'Barlow Condensed',sans-serif; font-size:8px; font-weight:900; letter-spacing:1.4px; }
+        .culture-on-air small { color:#555; font-size:8px; }
+        .culture-radio-card h4 { margin:0 0 12px; font-family:'Barlow Condensed',sans-serif; font-size:40px; line-height:.82; }
+        .culture-radio-card p { color:#777; font-size:12px; line-height:1.6; }
+        .culture-waveform { height:48px; display:flex; align-items:center; justify-content:center; gap:4px; margin:20px 0; }
+        .culture-waveform i { display:block; width:3px; height:20px; background:#9d4edd; opacity:.8; animation:culturePulse 1.1s ease-in-out infinite alternate; }
+        .culture-waveform i:nth-child(2n){height:34px;animation-delay:.12s}.culture-waveform i:nth-child(3n){height:12px;animation-delay:.22s}.culture-waveform i:nth-child(5n){height:43px;animation-delay:.3s}
+        @keyframes culturePulse { from{transform:scaleY(.55);opacity:.35} to{transform:scaleY(1);opacity:1} }
+        .culture-radio-button { display:flex; align-items:center; justify-content:space-between; padding:13px 15px; background:#8f35dc; color:#fff; font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:900; letter-spacing:1.2px; }
+        .culture-next { margin-top:18px; border-top:1px solid #202020; padding-top:15px; display:grid; gap:4px; }
+        .culture-next span { color:#555; font-family:'Barlow Condensed',sans-serif; font-size:8px; letter-spacing:1.5px; }
+        .culture-next strong { font-size:11px; }.culture-next small{color:#555;font-size:9px}
+        .culture-platform-columns { display:grid; grid-template-columns:1fr 1.35fr 1fr; gap:18px; margin-top:18px; }
+        .culture-platform-columns.lower { grid-template-columns:1.15fr 1fr 1.1fr; }
+        .culture-panel { padding:18px; min-width:0; }
+        .culture-music-row { display:grid; grid-template-columns:52px 1fr 28px; align-items:center; gap:11px; padding:10px 0; border-bottom:1px solid #1b1b1b; }
+        .culture-music-row img { width:52px; height:52px; object-fit:cover; }.culture-music-row strong{display:block;font-size:11px;line-height:1.15}.culture-music-row small{display:block;color:#555;font-size:8px;margin-top:5px}.culture-play{width:27px;height:27px;border:1px solid #393939;border-radius:50%;display:grid;place-items:center;font-size:8px;color:#b66cff}
+        .culture-panel-link { display:block; margin-top:16px; color:#b66cff; font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:900; letter-spacing:1.4px; }
+        .culture-feature-image { position:relative; margin-bottom:13px; }.culture-feature-image img{width:100%;height:190px;object-fit:cover;display:block;filter:saturate(.72)}.culture-feature-image span{position:absolute;left:10px;bottom:9px;background:#8f35dc;color:#fff;padding:5px 7px}
+        .culture-feature-panel h4 { font-family:'Barlow Condensed',sans-serif; font-size:25px; line-height:.9; margin:0 0 10px; }.culture-feature-panel p{color:#777;font-size:11px;line-height:1.55;margin:0}
+        .culture-radio-promo { padding:0; min-height:330px; position:relative; overflow:hidden; background:#0b0b0b; }.culture-radio-promo-art{position:absolute;inset:0}.culture-radio-promo-art img{width:100%;height:100%;object-fit:cover;opacity:.25;filter:contrast(1.2) saturate(1.2)}.culture-radio-promo-art::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#0a0710 5%,rgba(10,7,16,.55),rgba(10,7,16,.2))}.culture-radio-promo-copy{position:relative;z-index:1;padding:22px;display:flex;flex-direction:column;justify-content:flex-end;height:100%;box-sizing:border-box}.culture-radio-promo-copy h3{font-family:'Barlow Condensed',sans-serif;font-size:49px;line-height:.78;margin:15px 0 22px}.culture-radio-promo-copy em{color:#b66cff;font-style:normal}.culture-radio-promo-copy .culture-action{align-self:flex-start}
+        .culture-video-feature { position:relative; overflow:hidden; }.culture-video-feature img{width:100%;height:260px;object-fit:cover;filter:saturate(.75)}.culture-video-feature button{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:54px;height:54px;border-radius:50%;border:1px solid #fff;background:rgba(0,0,0,.45);color:#fff;cursor:pointer}.culture-video-feature span{position:absolute;left:12px;bottom:12px;color:#b66cff;font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:900;letter-spacing:1.5px}
+        .culture-event-row { display:grid; grid-template-columns:48px 1fr auto; gap:10px; align-items:center; padding:15px 0; border-bottom:1px solid #1d1d1d; }.culture-event-row>b{color:#b66cff;font-family:'Barlow Condensed',sans-serif;font-size:9px;line-height:1}.culture-event-row>b strong{font-size:23px}.culture-event-row div strong,.culture-event-row div small{display:block}.culture-event-row div strong{font-size:11px}.culture-event-row div small{color:#555;font-size:8px;margin-top:4px}.culture-event-row>a{color:#b66cff;font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:900}
+        .culture-artist-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }.culture-artist-grid a{position:relative;overflow:hidden;aspect-ratio:1/1}.culture-artist-grid img{width:100%;height:100%;object-fit:cover;filter:saturate(.65);transition:transform .3s}.culture-artist-grid a:hover img{transform:scale(1.06)}.culture-artist-grid span{position:absolute;left:6px;bottom:6px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:7px;font-weight:900;letter-spacing:.8px;text-shadow:0 2px 8px #000}
+        .culture-editorial-status { margin-top:12px; color:#555; font-family:'Barlow Condensed',sans-serif; font-size:8px; font-weight:900; letter-spacing:1.1px; }
+        .culture-manifesto { margin-top:18px; padding:35px; display:grid; grid-template-columns:1fr 1.2fr auto; gap:35px; align-items:center; background:linear-gradient(105deg,#140d1a,#080808); border:1px solid #30243a; position:relative; overflow:hidden; }.culture-manifesto::before{content:"";position:absolute;right:-100px;top:-100px;width:300px;height:300px;border-radius:50%;background:rgba(143,53,220,.13);filter:blur(10px)}.culture-manifesto>div,.culture-manifesto>p,.culture-manifesto>a{position:relative;z-index:1}.culture-manifesto h3{font-family:'Barlow Condensed',sans-serif;font-size:52px;line-height:.8;margin:12px 0 0}.culture-manifesto h3 em{color:#b66cff;font-style:normal}.culture-manifesto p{color:#777;font-size:12px;line-height:1.7;margin:0}
+        @media (max-width:1100px){.culture-platform-shell{grid-template-columns:190px minmax(0,1fr)}.culture-brand-rail{padding-left:25px}.culture-platform-columns{grid-template-columns:1fr 1fr}.culture-radio-promo{grid-column:1/-1;min-height:260px}.culture-platform-columns.lower{grid-template-columns:1fr 1fr}.culture-artist-grid{grid-template-columns:repeat(4,1fr)}.culture-manifesto{grid-template-columns:1fr 1fr}.culture-manifesto .culture-action{justify-self:start}}
+        @media (max-width:800px){.culture-platform-topline{padding:0 5%;font-size:8px}.culture-platform-live{display:none}.culture-platform-shell{display:block}.culture-brand-rail{padding:20px 5%;border-right:0;border-bottom:1px solid #222;display:grid;grid-template-columns:85px 1fr;column-gap:16px;align-items:center}.culture-brand-art{width:85px;height:85px}.culture-brand-kicker{margin:0}.culture-brand-rail p{grid-column:2;margin:7px 0 0}.culture-platform-main{padding:0 5% 45px}.culture-platform-nav{height:56px;gap:20px}.culture-platform-nav a{padding:20px 0 17px}.culture-hero-story{grid-template-columns:1fr;min-height:0}.culture-hero-copy{padding:40px 0 20px;order:2}.culture-hero-image-wrap{order:1}.culture-hero-image{height:390px;min-height:390px}.culture-hero-copy h2{font-size:clamp(52px,15vw,82px)}.culture-hero-controls{left:0;bottom:auto;top:365px}.culture-content-grid,.culture-platform-columns,.culture-platform-columns.lower{grid-template-columns:1fr}.culture-story-grid{grid-template-columns:1fr 1fr}.culture-radio-promo{grid-column:auto}.culture-manifesto{grid-template-columns:1fr;gap:20px;padding:25px}.culture-manifesto h3{font-size:45px}}
+        @media (max-width:520px){.culture-story-grid{grid-template-columns:1fr}.culture-story-card{display:grid;grid-template-columns:105px 1fr}.culture-story-card img{height:100%;min-height:130px}.culture-story-card h4{font-size:16px}.culture-story-card div{padding:10px}.culture-platform-nav{gap:17px}.culture-platform-nav a{font-size:10px}.culture-hero-image{height:320px;min-height:320px}.culture-hero-controls{top:295px}.culture-hero-stamp{font-size:20px}.culture-event-row{grid-template-columns:42px 1fr}.culture-event-row>a{display:none}.culture-artist-grid{grid-template-columns:repeat(2,1fr)}.culture-radio-promo-copy h3{font-size:43px}}
       `}</style>
     </div>
   );
