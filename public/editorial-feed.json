@@ -1,6 +1,26 @@
 {
-  "stories": [],
-  "count": 0,
+  "stories": [
+    {
+      "id": "ftc-1787432067661-0",
+      "source_name": "The NATIVE Music",
+      "source_url": "https://thenativemag.com/interview-makhanj-is-going-all-the-way-to-the-beginning-with-transkei/",
+      "source_title": "Interview: Makhanj Is Going All The Way To The Beginning With ‘Transkei’",
+      "source_excerpt": "For all the thorny history of Transkei, Makhanj is running towards ease and resolution in several parts of her intriguing debut album. The post Interview: Makhanj Is Going All The Way To The Beginning With ‘Transkei’ appeared first on The NATIVE .",
+      "image_url": null,
+      "image_source": null,
+      "image_credit": null,
+      "image_source_url": "https://thenativemag.com/interview-makhanj-is-going-all-the-way-to-the-beginning-with-transkei/",
+      "source_published_at": "2026-08-22T09:18:01.000Z",
+      "relevance_score": 28,
+      "headline": "Makhanj Explores Heritage and Healing on Debut Album ‘Transkei’",
+      "dek": "In a new interview, the rising songstress reflects on returning to her origins to find peace on her first full-length project.",
+      "body": "South African singer-songwriter Makhanj has stepped into the spotlight with her debut offering, ‘Transkei,’ a body of work that turns back to her roots while navigating themes of clarity and comfort. The record serves as an intimate introduction to her musical perspective and heritage. In a conversation with The NATIVE, the artist discussed the complex narrative surrounding Transkei, sharing how her creative process leaned into seeking resolution and comfort amidst challenging historical layers. The debut cements Makhanj's emerging voice as she balances poignant reflections with smooth, emotive soundscapes.",
+      "category": "MUSIC",
+      "status": "published",
+      "published_at": "2026-08-22T20:54:27.661Z"
+    }
+  ],
+  "count": 1,
   "source": "FOR THE CULTURE Editorial Engine",
-  "generated_at": null
+  "generated_at": "2026-08-22T20:54:27.927Z"
 }
