@@ -58,6 +58,7 @@ export default function App() {
   const [cultureStories, setCultureStories] = useState([]);
   const [cultureFeedStatus, setCultureFeedStatus] = useState("loading");
   const [cultureActiveTab, setCultureActiveTab] = useState("home");
+  const [cultureReaderStory, setCultureReaderStory] = useState<any | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -124,6 +125,15 @@ export default function App() {
     return () => observer.disconnect();
   }, [cultureStories]);
 
+  useEffect(() => {
+    if (!cultureReaderStory) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeCultureStory();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [cultureReaderStory]);
+
   const [booking, setBooking] = useState({
     service: "The Fire Session",
     date: "",
@@ -173,7 +183,23 @@ export default function App() {
   const storyTitle = (story: any) => story?.headline || story?.title || "Latest from the culture";
   const storyDek = (story: any) => story?.dek || story?.source_excerpt || "The FOR THE CULTURE editorial desk is following the story.";
   const storyDate = (story: any) => story?.published_at ? new Date(story.published_at).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" }) : "Latest";
-  const storyLinkProps = (story: any) => ({ href: storyUrl(story), target: "_blank", rel: "noreferrer" });
+  const openCultureStory = (story: any) => {
+    setCultureReaderStory(story || null);
+    if (story) {
+      document.body.style.overflow = "hidden";
+    }
+  };
+  const closeCultureStory = () => {
+    setCultureReaderStory(null);
+    document.body.style.overflow = "";
+  };
+  const storyLinkProps = (story: any) => ({
+    href: "#culture-story-reader",
+    onClick: (event: React.MouseEvent<HTMLAnchorElement>) => {
+      event.preventDefault();
+      openCultureStory(story);
+    },
+  });
   const cultureTabs = [
     ["home", "HOME", "#culture-home"], ["music", "MUSIC", "#culture-music"], ["culture", "CULTURE", "#culture-culture"],
     ["radio", "RADIO", "#culture-radio"], ["video", "VIDEO", "#culture-video"], ["events", "EVENTS", "#culture-events"],
@@ -1661,6 +1687,42 @@ export default function App() {
         </div>
       </section>
 
+      {cultureReaderStory && (
+        <div className="culture-story-reader" id="culture-story-reader" role="dialog" aria-modal="true" aria-labelledby="culture-story-reader-title">
+          <div className="culture-story-reader-backdrop" onClick={closeCultureStory} />
+          <article className="culture-story-reader-card">
+            <button type="button" className="culture-story-reader-close" onClick={closeCultureStory} aria-label="Close story reader">×</button>
+            {storyImage(cultureReaderStory) && (
+              <img
+                className="culture-story-reader-image"
+                src={storyImage(cultureReaderStory)}
+                alt={storyTitle(cultureReaderStory)}
+                loading="eager"
+                decoding="async"
+                referrerPolicy="no-referrer"
+              />
+            )}
+            <div className="culture-story-reader-content">
+              <div className="culture-story-reader-meta">
+                <span>{cultureReaderStory.category || "CULTURE"}</span>
+                <span>{cultureReaderStory.source_name || "FOR THE CULTURE"}</span>
+                <span>{storyDate(cultureReaderStory)}</span>
+              </div>
+              <h2 id="culture-story-reader-title">{storyTitle(cultureReaderStory)}</h2>
+              <p className="culture-story-reader-dek">{storyDek(cultureReaderStory)}</p>
+              <div className="culture-story-reader-body">
+                {(cultureReaderStory.body || cultureReaderStory.source_excerpt || "The FOR THE CULTURE editorial desk is following this story.")
+                  .split(/\n\s*\n|(?<=\.)\s{2,}/)
+                  .map((paragraph: string, index: number) => paragraph.trim() ? <p key={index}>{paragraph.trim()}</p> : null)}
+              </div>
+              {storyUrl(cultureReaderStory) !== "#" && (
+                <a className="culture-story-reader-source" href={storyUrl(cultureReaderStory)} target="_blank" rel="noreferrer">READ THE ORIGINAL SOURCE ↗</a>
+              )}
+            </div>
+          </article>
+        </div>
+      )}
+
       {bookingOpen && (
         <div className="booking-modal" role="dialog" aria-modal="true" aria-labelledby="booking-title">
           <div className="booking-modal-backdrop" onClick={closeBooking} />
@@ -1998,6 +2060,19 @@ export default function App() {
         /* BOOKING */
         .booking { min-height: 750px; position: relative; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
         .booking-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+        .culture-story-reader { position: fixed; inset: 0; z-index: 12000; display: grid; place-items: center; padding: 24px; }
+        .culture-story-reader-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.9); backdrop-filter: blur(12px); }
+        .culture-story-reader-card { position: relative; z-index: 1; width: min(980px, 100%); max-height: 94vh; overflow-y: auto; background: #080808; border: 1px solid #2a2a2a; box-shadow: 0 40px 140px rgba(0,0,0,.75); }
+        .culture-story-reader-close { position: absolute; z-index: 3; top: 16px; right: 16px; width: 44px; height: 44px; border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.72); color: #fff; font-size: 32px; line-height: 1; cursor: pointer; }
+        .culture-story-reader-image { display: block; width: 100%; max-height: 430px; object-fit: cover; border-bottom: 1px solid #242424; }
+        .culture-story-reader-content { padding: clamp(28px, 5vw, 58px); }
+        .culture-story-reader-meta { display: flex; flex-wrap: wrap; gap: 12px 22px; color: #a86cff; font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+        .culture-story-reader-content h2 { margin: 18px 0 16px; max-width: 850px; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(46px, 7vw, 88px); line-height: .9; text-transform: uppercase; }
+        .culture-story-reader-dek { max-width: 760px; margin: 0 0 30px; color: #aaa; font-size: 18px; line-height: 1.6; }
+        .culture-story-reader-body { max-width: 760px; color: #e1e1e1; font-size: 17px; line-height: 1.8; }
+        .culture-story-reader-body p { margin: 0 0 22px; }
+        .culture-story-reader-source { display: inline-flex; margin-top: 12px; padding: 14px 18px; background: #9d43f5; color: #fff; text-decoration: none; font-size: 11px; font-weight: 900; letter-spacing: .12em; }
+
         .booking-overlay { position: absolute; inset: 0; background: linear-gradient(rgba(0,0,0,.72), rgba(0,0,0,.92)); }
         .booking-content { position: relative; z-index: 1; max-width: 900px; padding: 0 5%; }
         .booking-content h2 { font-size: clamp(55px, 8vw, 110px); }
@@ -2333,6 +2408,14 @@ export default function App() {
           .ecosystem-status { width: 100%; min-width: 0; }
           .stats { gap: 25px; }
           .contact-details { flex-direction: column; gap: 25px; align-items: center; }
+          .culture-story-reader { padding: 10px; }
+          .culture-story-reader-card { max-height: 96vh; }
+          .culture-story-reader-image { max-height: 260px; }
+          .culture-story-reader-content { padding: 28px 20px 34px; }
+          .culture-story-reader-content h2 { font-size: clamp(40px, 14vw, 68px); }
+          .culture-story-reader-dek { font-size: 16px; }
+          .culture-story-reader-body { font-size: 16px; line-height: 1.7; }
+
           .booking-modal { padding: 10px; }
           .booking-modal-card { padding: 35px 20px 25px; max-height: 96vh; }
           .booking-form-grid, .payment-options { grid-template-columns: 1fr; }

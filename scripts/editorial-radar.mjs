@@ -92,12 +92,24 @@ function similarity(a, b) { const A = titleTokens(a), B = titleTokens(b); if (!A
 async function draftStory(item) {
   const prompt = `You are the editorial desk for FOR THE CULTURE, an African music, culture and entertainment platform by Galaxy Fire Studios. Create an ORIGINAL short news brief from the supplied source metadata. Do not copy phrases or sentence structures. Do not invent facts. Return only JSON with headline, dek, body and category. The body must be 2-4 short paragraphs suitable for mobile reading and must clearly attribute the reporting to the named source where appropriate. Category must be MUSIC, CULTURE, STYLE, FILM, ART or EVENTS. Source: ${item.source_name}\nOriginal headline: ${item.title}\nOriginal URL: ${item.source_url}\nSource excerpt: ${item.excerpt}\nSuggested category: ${category(item)}`
 
-  return draftStoryWithGemini({
-    apiKey: process.env.GEMINI_API_KEY,
-    model: process.env.EDITORIAL_MODEL || DEFAULT_MODEL,
-    prompt,
-    timeoutMs: GEMINI_TIMEOUT_MS,
-  })
+  let lastError
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      return await draftStoryWithGemini({
+        apiKey: process.env.GEMINI_API_KEY,
+        model: process.env.EDITORIAL_MODEL || DEFAULT_MODEL,
+        prompt,
+        timeoutMs: GEMINI_TIMEOUT_MS,
+      })
+    } catch (error) {
+      lastError = error
+      const message = String(error?.message || error)
+      const retryable = /Gemini returned (429|500|502|503|504)|timed out|aborted|fetch failed/i.test(message)
+      if (!retryable || attempt === 2) break
+      await new Promise(resolve => setTimeout(resolve, 1200 * attempt))
+    }
+  }
+  throw lastError
 }
 
 async function main() {
@@ -115,7 +127,7 @@ async function main() {
 
   const newStories = []
   const failures = []
-  for (const item of newCandidates.slice(0, MAX_STORIES * 2)) {
+  for (const item of newCandidates.slice(0, Math.max(MAX_STORIES * 4, 12))) {
     if (newStories.length >= MAX_STORIES) break
     try {
       const draft = await draftStory(item)
