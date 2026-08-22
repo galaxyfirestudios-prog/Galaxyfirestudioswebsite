@@ -21,7 +21,7 @@ module.exports = async (req, res) => {
 
     const { data, error } = await supabase
       .from('editorial_stories')
-      .select('id,headline,dek,category,source_name,source_url,image_url,published_at')
+      .select('id,headline,dek,body,category,source_name,source_url,image_url,published_at')
       .eq('status', 'published')
       .order('published_at', { ascending: false })
       .limit(limit)

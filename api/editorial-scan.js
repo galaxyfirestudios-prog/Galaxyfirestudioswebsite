@@ -1,12 +1,13 @@
 const { createClient } = require('@supabase/supabase-js')
 
 const SOURCES = [
-  { name: 'The NATIVE', url: process.env.EDITORIAL_NATIVE_FEED || 'https://thenativemag.com/feed/' },
-  { name: 'PUNCH Entertainment', url: 'https://rss.punchng.com/v1/category/entertainment' },
-  { name: 'PUNCH Interviews', url: 'https://rss.punchng.com/v1/category/interview' },
-  { name: 'PUNCH Special Features', url: 'https://rss.punchng.com/v1/category/special_feature' },
-  { name: 'PUNCH Videos', url: 'https://rss.punchng.com/v1/category/videos' },
-  { name: 'The Guardian Nigeria', url: process.env.EDITORIAL_GUARDIAN_FEED || 'https://guardian.ng/feed/' },
+  { name: 'The NATIVE', url: process.env.EDITORIAL_NATIVE_FEED || 'https://thenativemag.com/feed/', weight: 12 },
+  { name: 'The NATIVE Music', url: process.env.EDITORIAL_NATIVE_MUSIC_FEED || 'https://thenativemag.com/category/music/feed/', weight: 14 },
+  { name: 'PUNCH Entertainment', url: 'https://rss.punchng.com/v1/category/entertainment', weight: 8 },
+  { name: 'PUNCH Interviews', url: 'https://rss.punchng.com/v1/category/interview', weight: 8 },
+  { name: 'PUNCH Special Features', url: 'https://rss.punchng.com/v1/category/special_feature', weight: 7 },
+  { name: 'PUNCH Videos', url: 'https://rss.punchng.com/v1/category/videos', weight: 5 },
+  { name: 'The Guardian Nigeria', url: process.env.EDITORIAL_GUARDIAN_FEED || 'https://guardian.ng/feed/', weight: 8 },
 ]
 
 const RELEVANCE_TERMS = [
@@ -15,8 +16,23 @@ const RELEVANCE_TERMS = [
   'nigeria','nigerian','africa','african','lagos','abuja','accra','ghana','culture',
   'fashion','film','nollywood','photography','art','creative','creator','festival',
   'concert','showcase','event','nightlife','radio','podcast','community','dance',
-  'entertainment','visual','design','media','label','recording','streaming'
+  'entertainment','visual','design','media','label','recording','streaming','streetwear',
+  'gallery','documentary','fashion week','premiere','tour','release','record label'
 ]
+
+const CATEGORY_RULES = [
+  ['MUSIC', /(album|single|ep|singer|rapper|producer|dj|music|afrobeats|afrobeat|alte|amapiano|fuji|highlife|record label|release|tour)/i],
+  ['STYLE', /(fashion|style|streetwear|designer|design|fashion week)/i],
+  ['FILM', /(film|nollywood|cinema|movie|documentary|premiere|actor|actress)/i],
+  ['ART', /(art|photograph|visual|gallery|creative|creator)/i],
+  ['EVENTS', /(concert|festival|showcase|event|nightlife|tour)/i],
+]
+
+const MAX_SOURCE_ITEMS = Number(process.env.EDITORIAL_SOURCE_ITEMS || 18)
+const MAX_STORIES = Number(process.env.EDITORIAL_MAX_STORIES_PER_SCAN || 3)
+const MAX_AGE_HOURS = Number(process.env.EDITORIAL_MAX_AGE_HOURS || 96)
+const FETCH_TIMEOUT_MS = Number(process.env.EDITORIAL_FETCH_TIMEOUT_MS || 6500)
+const OPENAI_TIMEOUT_MS = Number(process.env.EDITORIAL_OPENAI_TIMEOUT_MS || 8000)
 
 function decode(value='') {
   return value
@@ -24,6 +40,7 @@ function decode(value='') {
     .replace(/<[^>]*>/g, ' ')
     .replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
     .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
     .replace(/\s+/g, ' ').trim()
 }
 
@@ -33,27 +50,33 @@ function tag(block, name) {
 }
 
 function imageFrom(block) {
-  const media = block.match(/<media:content[^>]+url=["']([^"']+)["']/i)
-    || block.match(/<media:thumbnail[^>]+url=["']([^"']+)["']/i)
+  const media = block.match(/<media:(?:content|thumbnail)[^>]+url=["']([^"']+)["']/i)
     || block.match(/<enclosure[^>]+url=["']([^"']+)["']/i)
     || block.match(/<img[^>]+src=["']([^"']+)["']/i)
   return media?.[1] || ''
 }
 
-function parseFeed(xml, sourceName) {
+function parseDate(value) {
+  if (!value) return null
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date.toISOString()
+}
+
+function parseFeed(xml, sourceName, sourceWeight) {
   const blocks = xml.match(/<item\b[\s\S]*?<\/item>/gi) || xml.match(/<entry\b[\s\S]*?<\/entry>/gi) || []
-  return blocks.slice(0, 12).map(block => {
+  return blocks.slice(0, MAX_SOURCE_ITEMS).map(block => {
     const rawTitle = tag(block, 'title')
     const linkMatch = block.match(/<link[^>]+href=["']([^"']+)["']/i)
     const rawLink = tag(block, 'link') || linkMatch?.[1] || ''
-    const rawDate = tag(block, 'pubDate') || tag(block, 'published') || tag(block, 'updated')
+    const rawDate = tag(block, 'pubDate') || tag(block, 'published') || tag(block, 'updated') || tag(block, 'dc:date')
     const description = tag(block, 'description') || tag(block, 'summary') || tag(block, 'content')
     return {
       source_name: sourceName,
+      source_weight: sourceWeight,
       title: decode(rawTitle),
       source_url: decode(rawLink),
-      excerpt: decode(description).slice(0, 1000),
-      published_at: rawDate ? new Date(rawDate).toISOString() : new Date().toISOString(),
+      excerpt: decode(description).slice(0, 1400),
+      published_at: parseDate(rawDate),
       image_url: imageFrom(block),
     }
   }).filter(item => item.title && item.source_url)
@@ -61,49 +84,116 @@ function parseFeed(xml, sourceName) {
 
 function relevance(item) {
   const text = `${item.title} ${item.excerpt}`.toLowerCase()
-  let score = 0
-  for (const term of RELEVANCE_TERMS) if (text.includes(term)) score += term.includes(' ') ? 2 : 1
-  if (/(nigeria|nigerian|africa|african|lagos|abuja|accra|ghana)/i.test(text)) score += 4
-  return Math.min(100, score * 7)
+  let score = item.source_weight || 0
+  for (const term of RELEVANCE_TERMS) if (text.includes(term)) score += term.includes(' ') ? 3 : 1
+  if (/(nigeria|nigerian|africa|african|lagos|abuja|accra|ghana)/i.test(text)) score += 8
+  const ageHours = item.published_at ? Math.max(0, (Date.now() - Date.parse(item.published_at)) / 36e5) : 999
+  if (ageHours <= 6) score += 16
+  else if (ageHours <= 24) score += 12
+  else if (ageHours <= 48) score += 8
+  else if (ageHours <= 96) score += 4
+  return Math.min(100, score)
 }
 
 function category(item) {
-  const text = `${item.title} ${item.excerpt}`.toLowerCase()
-  if (/(album|single|ep|singer|rapper|producer|dj|music|afrobeats|afrobeat|alte|amapiano)/.test(text)) return 'MUSIC'
-  if (/(fashion|style|design)/.test(text)) return 'STYLE'
-  if (/(film|nollywood|cinema|movie)/.test(text)) return 'FILM'
-  if (/(art|photograph|visual|creative)/.test(text)) return 'ART'
-  if (/(concert|festival|showcase|event|nightlife)/.test(text)) return 'EVENTS'
+  const text = `${item.title} ${item.excerpt}`
+  for (const [name, rule] of CATEGORY_RULES) if (rule.test(text)) return name
   return 'CULTURE'
+}
+
+function fingerprint(item) {
+  return `${item.title}`.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+}
+
+async function fetchWithTimeout(url) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+  try {
+    return await fetch(url, {
+      headers: {
+        'User-Agent': 'FOR-THE-CULTURE-Editorial-Radar/2.0',
+        'Accept': 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*'
+      },
+      signal: controller.signal,
+      redirect: 'follow'
+    })
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 async function draftStory(item) {
   if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not configured')
-
-  const prompt = `You are the editorial desk for FOR THE CULTURE, an African music, culture and entertainment platform by Galaxy Fire Studios.
-Create a concise ORIGINAL news brief from the supplied source metadata. Do not copy phrases or reproduce the source article. Do not invent facts.
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS)
+  try {
+    const prompt = `You are the editorial desk for FOR THE CULTURE, an African music, culture and entertainment platform by Galaxy Fire Studios.
+Create a concise ORIGINAL news brief from the supplied source metadata. Do not copy phrases or reproduce the source article. Do not invent facts. If the source excerpt is too thin to support a claim, keep the wording cautious.
 Return strict JSON with: headline, dek, body, category.
-The body should be 2-4 short paragraphs and clearly attribute factual reporting to the named source where appropriate.
+The headline should be punchy but factual. The dek should be one sentence. The body should be 2-4 short paragraphs. Clearly attribute reporting to the named source where appropriate. Keep the story useful, culturally aware and readable on mobile.
 Source: ${item.source_name}
 Original headline: ${item.title}
 Original URL: ${item.source_url}
 Source excerpt: ${item.excerpt}
 Suggested category: ${category(item)}`
 
-  const response = await fetch('https://api.openai.com/v1/responses', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: process.env.EDITORIAL_MODEL || 'gpt-5-mini',
-      input: prompt,
-      text: { format: { type: 'json_object' } },
-      max_output_tokens: 900
+    const response = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: process.env.EDITORIAL_MODEL || 'gpt-5-mini',
+        input: prompt,
+        text: { format: { type: 'json_object' } },
+        max_output_tokens: 900
+      }),
+      signal: controller.signal
     })
-  })
-  if (!response.ok) throw new Error(`OpenAI returned ${response.status}: ${await response.text()}`)
-  const data = await response.json()
-  const text = data.output_text || data.output?.flatMap(x => x.content || []).map(x => x.text || '').join('') || ''
-  return JSON.parse(text)
+    if (!response.ok) throw new Error(`OpenAI returned ${response.status}`)
+    const data = await response.json()
+    const text = data.output_text || data.output?.flatMap(x => x.content || []).map(x => x.text || '').join('') || ''
+    return JSON.parse(text)
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+async function processCandidate(supabase, item) {
+  const { data: existingUrl } = await supabase
+    .from('editorial_stories')
+    .select('id')
+    .eq('source_url', item.source_url)
+    .limit(1)
+  if (existingUrl?.length) return { skipped: true, reason: 'duplicate' }
+
+  const { data: existingTitle } = await supabase
+    .from('editorial_stories')
+    .select('id')
+    .eq('source_title', item.title)
+    .limit(1)
+  if (existingTitle?.length) return { skipped: true, reason: 'duplicate' }
+
+  const draft = await draftStory(item)
+  const row = {
+    source_name: item.source_name,
+    source_url: item.source_url,
+    source_title: item.title,
+    source_excerpt: item.excerpt,
+    image_url: item.image_url || null,
+    source_published_at: item.published_at,
+    relevance_score: relevance(item),
+    headline: draft.headline,
+    dek: draft.dek,
+    body: draft.body,
+    category: draft.category || category(item),
+    status: 'published',
+    published_at: new Date().toISOString()
+  }
+  const { error } = await supabase.from('editorial_stories').insert(row)
+  if (error) {
+    if (String(error.message || '').toLowerCase().includes('duplicate')) return { skipped: true, reason: 'duplicate' }
+    throw error
+  }
+  return { published: true, title: row.headline, source: item.source_name }
 }
 
 module.exports = async (req, res) => {
@@ -114,54 +204,58 @@ module.exports = async (req, res) => {
   if (!expected || supplied !== expected) return res.status(401).json({ error: 'Unauthorized' })
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return res.status(503).json({ error: 'Supabase editorial connection is not configured' })
+  }
+
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
   const results = []
+  const errors = []
 
   try {
-    for (const source of SOURCES) {
+    const fetched = await Promise.all(SOURCES.map(async source => {
       try {
-        const response = await fetch(source.url, { headers: { 'User-Agent': 'FOR-THE-CULTURE-Editorial-Radar/1.0' } })
+        const response = await fetchWithTimeout(source.url)
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
         const xml = await response.text()
-        const items = parseFeed(xml, source.name)
-        for (const item of items) {
-          const score = relevance(item)
-          if (score < 28) continue
-
-          const { data: existing } = await supabase.from('editorial_stories').select('id').eq('source_url', item.source_url).maybeSingle()
-          if (existing) continue
-
-          const draft = await draftStory(item)
-          const row = {
-            source_name: item.source_name,
-            source_url: item.source_url,
-            source_title: item.title,
-            source_excerpt: item.excerpt,
-            image_url: item.image_url || null,
-            source_published_at: item.published_at,
-            relevance_score: score,
-            headline: draft.headline,
-            dek: draft.dek,
-            body: draft.body,
-            category: draft.category || category(item),
-            status: 'published',
-            published_at: new Date().toISOString()
-          }
-
-          const { error } = await supabase.from('editorial_stories').insert(row)
-          if (error) throw error
-          results.push({ source: source.name, title: row.headline })
-          if (results.length >= 5) break
-        }
-      } catch (sourceError) {
-        results.push({ source: source.name, error: sourceError.message })
+        return { source, items: parseFeed(xml, source.name, source.weight) }
+      } catch (error) {
+        errors.push({ source: source.name, error: error.name === 'AbortError' ? 'Source timed out' : error.message })
+        return { source, items: [] }
       }
-      if (results.filter(x => !x.error).length >= 5) break
+    }))
+
+    const now = Date.now()
+    const seen = new Set()
+    const candidates = fetched.flatMap(({ items }) => items).filter(item => {
+      const ageHours = item.published_at ? (now - Date.parse(item.published_at)) / 36e5 : 0
+      if (ageHours > MAX_AGE_HOURS || ageHours < -2) return false
+      const key = fingerprint(item)
+      if (!key || seen.has(key)) return false
+      seen.add(key)
+      return relevance(item) >= 28
+    }).sort((a, b) => relevance(b) - relevance(a))
+
+    for (const item of candidates) {
+      if (results.filter(x => x.published).length >= MAX_STORIES) break
+      try {
+        const result = await processCandidate(supabase, item)
+        if (result.published) results.push(result)
+      } catch (error) {
+        errors.push({ source: item.source_name, title: item.title, error: error.message })
+      }
     }
 
-    return res.status(200).json({ ok: true, published: results.filter(x => !x.error).length, results })
+    return res.status(200).json({
+      ok: true,
+      published: results.filter(x => x.published).length,
+      candidates: candidates.length,
+      results,
+      errors,
+      checkedAt: new Date().toISOString()
+    })
   } catch (error) {
     console.error('editorial-scan:', error)
-    return res.status(500).json({ error: error.message })
+    return res.status(500).json({ error: error.message, results, errors })
   }
 }

@@ -57,15 +57,18 @@ export default function App() {
   const [paymentReference, setPaymentReference] = useState("");
   const [cultureStories, setCultureStories] = useState([]);
   const [cultureFeedStatus, setCultureFeedStatus] = useState("loading");
+  const [cultureActiveTab, setCultureActiveTab] = useState("home");
 
   useEffect(() => {
     let cancelled = false;
+    let timer: ReturnType<typeof setInterval> | undefined;
 
-    async function loadCultureStories() {
+    async function loadCultureStories(showLoading = false) {
       try {
-        setCultureFeedStatus("loading");
-        const response = await fetch("/api/editorial-feed?limit=6", {
+        if (showLoading) setCultureFeedStatus("loading");
+        const response = await fetch("/api/editorial-feed?limit=12", {
           headers: { Accept: "application/json" },
+          cache: "no-store",
         });
         if (!response.ok) throw new Error(`Editorial feed returned ${response.status}`);
         const data = await response.json();
@@ -77,15 +80,38 @@ export default function App() {
       } catch (error) {
         console.error("FOR THE CULTURE editorial feed:", error);
         if (!cancelled) {
-          setCultureStories([]);
-          setCultureFeedStatus("error");
+          setCultureFeedStatus((current) => current === "ready" ? current : "error");
         }
       }
     }
 
-    loadCultureStories();
-    return () => { cancelled = true; };
+    const refresh = () => {
+      if (document.visibilityState === "visible") loadCultureStories(false);
+    };
+
+    loadCultureStories(true);
+    timer = setInterval(refresh, 5 * 60 * 1000);
+    document.addEventListener("visibilitychange", refresh);
+
+    return () => {
+      cancelled = true;
+      if (timer) clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
+    };
   }, []);
+
+  useEffect(() => {
+    const sections = cultureTabs.map(([, , href]) => document.querySelector(href)).filter(Boolean) as Element[];
+    if (!sections.length) return;
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (!visible) return;
+      const match = cultureTabs.find(([, , href]) => document.querySelector(href) === visible.target);
+      if (match) setCultureActiveTab(match[0]);
+    }, { rootMargin: "-25% 0px -55% 0px", threshold: [0.1, 0.35, 0.6] });
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, [cultureStories]);
 
   const [booking, setBooking] = useState({
     service: "The Fire Session",
@@ -118,6 +144,30 @@ export default function App() {
   const selectedService = bookingServices.find((service) => service.title === booking.service) || bookingServices[0];
   const amountDue = booking.payment === "deposit" ? Math.round(selectedService.price * 0.5) : selectedService.price;
   const formatNaira = (amount: number) => `₦${amount.toLocaleString("en-NG")}`;
+  const editorialStories = Array.isArray(cultureStories) ? cultureStories : [];
+  const storyAt = (index: number) => editorialStories[index];
+  const storiesBy = (term: RegExp) => editorialStories.filter((story: any) => term.test(`${story.category || ""} ${story.headline || ""} ${story.dek || ""}`));
+  const musicStories = storiesBy(/music|artist|album|single|afrobeats|hip-hop/i);
+  const eventStories = storiesBy(/event|festival|concert|showcase|nightlife/i);
+  const visualStories = storiesBy(/art|style|film|visual|culture|creative/i);
+  const heroStory = storyAt(0);
+  const featureStory = visualStories[0] || storyAt(1) || heroStory;
+  const videoStory = storyAt(3) || storyAt(2) || heroStory;
+  const radioStory = storyAt(4) || storyAt(2) || heroStory;
+  const artistStories = musicStories.length ? musicStories.slice(0, 4) : editorialStories.slice(0, 4);
+  const newMusicStories = musicStories.length ? musicStories.slice(0, 3) : editorialStories.slice(0, 3);
+  const featuredEventStories = eventStories.length ? eventStories.slice(0, 3) : editorialStories.slice(0, 3);
+  const storyUrl = (story: any) => story?.source_url || "#";
+  const storyImage = (story: any) => story?.image_url || "";
+  const storyTitle = (story: any) => story?.headline || story?.title || "Latest from the culture";
+  const storyDek = (story: any) => story?.dek || story?.source_excerpt || "The FOR THE CULTURE editorial desk is following the story.";
+  const storyDate = (story: any) => story?.published_at ? new Date(story.published_at).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" }) : "Latest";
+  const storyLinkProps = (story: any) => ({ href: storyUrl(story), target: "_blank", rel: "noreferrer" });
+  const cultureTabs = [
+    ["home", "HOME", "#culture-home"], ["music", "MUSIC", "#culture-music"], ["culture", "CULTURE", "#culture-culture"],
+    ["radio", "RADIO", "#culture-radio"], ["video", "VIDEO", "#culture-video"], ["events", "EVENTS", "#culture-events"],
+    ["artists", "ARTISTS", "#culture-artists"], ["community", "COMMUNITY", "#culture-community"]
+  ] as const;
 
   const storeProducts = [
     { id: "at2020", name: "Audio-Technica AT2020", category: "Microphones", market: 150000, price: 187500, stock: 5, badge: "BEST SELLER", desc: "Cardioid condenser microphone for vocals, instruments and home studios.", query: "Audio-Technica AT2020 microphone" },
@@ -1078,71 +1128,77 @@ export default function App() {
       <section className="culture-platform" id="culture">
         <div className="culture-platform-topline">
           <span>MUSIC. CULTURE. ENTERTAINMENT. COMMUNITY.</span>
-          <span className="culture-platform-live">● LISTEN LIVE &nbsp; / &nbsp; FOR THE CULTURE RADIO</span>
+          <span className="culture-platform-live">● LIVE EDITORIAL RADAR &nbsp; / &nbsp; FOR THE CULTURE</span>
         </div>
 
         <div className="culture-platform-shell">
           <div className="culture-brand-rail">
             <img src={cultureArt} alt="FOR THE CULTURE" className="culture-brand-art" />
             <div className="culture-brand-kicker">BY GALAXY FIRE STUDIOS</div>
-            <p>Music, stories, artists and the people shaping the culture around us.</p>
+            <p>Original editorial coverage powered by the FOR THE CULTURE newsroom.</p>
           </div>
 
           <div className="culture-platform-main">
-            <div className="culture-platform-nav">
-              <a className="active" href="#culture">HOME</a>
-              <a href="#beats">MUSIC</a>
-              <a href="#blog">CULTURE</a>
-              <a href="#radio">RADIO</a>
-              <a href="#culture-video">VIDEO</a>
-              <a href="#culture-events">EVENTS</a>
-              <a href="#culture-artists">ARTISTS</a>
-              <a href="#culture-community">COMMUNITY</a>
-            </div>
+            <nav className="culture-platform-nav" aria-label="FOR THE CULTURE sections">
+              {cultureTabs.map(([key, label, href]) => (
+                <a
+                  key={key}
+                  className={cultureActiveTab === key ? "active" : ""}
+                  href={href}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    setCultureActiveTab(key);
+                    document.querySelector(href)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                >
+                  {label}
+                </a>
+              ))}
+            </nav>
 
-            <article className="culture-hero-story">
-              <div className="culture-hero-copy">
-                <span className="culture-label">FEATURED STORY</span>
-                <h2>THE NEW WAVE<br />IS BUILDING<br /><em>ITS OWN SOUND.</em></h2>
-                <p>A new generation of African creators is breaking boundaries, building communities and making culture impossible to ignore.</p>
-                <a href="#blog" className="culture-action">READ THE STORY <span>→</span></a>
-              </div>
-              <div className="culture-hero-image-wrap">
-                <img src={visual17} alt="Featured cultural portrait" className="culture-hero-image" />
-                <div className="culture-hero-stamp">CULTURE<br />OVER<br />EVERYTHING.</div>
-              </div>
-              <div className="culture-hero-controls"><span className="active"></span><span></span><span></span></div>
-            </article>
+            {cultureFeedStatus === "ready" && heroStory ? (
+              <article className="culture-hero-story" id="culture-home">
+                <div className="culture-hero-copy">
+                  <span className="culture-label">{heroStory.category || "FEATURED STORY"}</span>
+                  <h2>{storyTitle(heroStory)}</h2>
+                  <p>{storyDek(heroStory)}</p>
+                  <a {...storyLinkProps(heroStory)} className="culture-action">READ THE STORY <span>→</span></a>
+                  <small className="culture-story-byline">{heroStory.source_name || "FOR THE CULTURE"} · {storyDate(heroStory)}</small>
+                </div>
+                <div className="culture-hero-image-wrap">
+                  {storyImage(heroStory) ? (
+                    <img src={storyImage(heroStory)} alt={storyTitle(heroStory)} className="culture-hero-image" loading="eager" decoding="async" referrerPolicy="no-referrer" />
+                  ) : (
+                    <div className="culture-editorial-visual-fallback"><span>FOR THE<br />CULTURE</span></div>
+                  )}
+                  <div className="culture-hero-stamp">CULTURE<br />OVER<br />EVERYTHING.</div>
+                </div>
+                <div className="culture-hero-controls"><span className="active"></span><span></span><span></span></div>
+              </article>
+            ) : (
+              <article className="culture-hero-story culture-editorial-empty" id="culture-home">
+                <div className="culture-hero-copy">
+                  <span className="culture-label">FOR THE CULTURE EDITORIAL DESK</span>
+                  <h2>THE CULTURE<br /><em>IS MOVING.</em></h2>
+                  <p>The newsroom is waiting for its first published stories. Once the editorial engine connects, every image, headline and write-up on this platform will be driven by the live culture radar.</p>
+                </div>
+                <div className="culture-hero-image-wrap"><div className="culture-editorial-visual-fallback"><span>EDITORIAL<br />RADAR</span></div></div>
+              </article>
+            )}
 
             <div className="culture-content-grid">
-              <section className="culture-stories-block">
-                <div className="culture-section-head"><h3>LATEST STORIES</h3><a href="#blog">VIEW ALL STORIES →</a></div>
-                {cultureFeedStatus === "ready" ? (
+              <section className="culture-stories-block" id="culture-stories">
+                <div className="culture-section-head"><h3>LATEST STORIES</h3><a href="#culture-stories">VIEW ALL STORIES →</a></div>
+                {cultureFeedStatus === "ready" && editorialStories.length ? (
                   <div className="culture-story-grid">
-                    {cultureStories.slice(0, 6).map((story) => (
-                      <a
-                        href={story.source_url || "#"}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="culture-story-card culture-live-story-card"
-                        key={story.id || story.source_url}
-                      >
-                        {story.image_url ? (
-                          <img
-                            src={story.image_url}
-                            alt=""
-                            loading="lazy"
-                            decoding="async"
-                            referrerPolicy="no-referrer"
-                            onError={(event) => { event.currentTarget.style.display = "none"; }}
-                          />
-                        ) : (
-                          <div className="culture-story-no-image" aria-hidden="true">FOR THE CULTURE</div>
-                        )}
+                    {editorialStories.slice(0, 6).map((story: any) => (
+                      <a {...storyLinkProps(story)} className="culture-story-card culture-live-story-card" key={story.id || story.source_url}>
+                        {storyImage(story) ? <img src={storyImage(story)} alt={storyTitle(story)} loading="lazy" decoding="async" referrerPolicy="no-referrer" /> : <div className="culture-story-no-image">FOR THE CULTURE</div>}
                         <div>
                           <span>{story.category || "CULTURE"}</span>
-                          <h4>{story.headline || story.title}</h4>
-                          <small>{story.source_name || "FOR THE CULTURE"} · {story.published_at ? new Date(story.published_at).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" }) : "Latest"}</small>
+                          <h4>{storyTitle(story)}</h4>
+                          <p>{storyDek(story)}</p>
+                          <small>{story.source_name || "FOR THE CULTURE"} · {storyDate(story)}</small>
                         </div>
                       </a>
                     ))}
@@ -1152,83 +1208,85 @@ export default function App() {
                     <div className="culture-editorial-state-mark">●</div>
                     <div>
                       <strong>{cultureFeedStatus === "loading" ? "LOADING THE CULTURE RADAR" : "EDITORIAL RADAR INITIALIZING"}</strong>
-                      <p>
-                        {cultureFeedStatus === "loading"
-                          ? "Checking the latest stories from our editorial sources."
-                          : "No published stories are available yet. The newsroom is checking the culture radar."}
-                      </p>
+                      <p>{cultureFeedStatus === "loading" ? "Checking the latest stories from the editorial sources." : "No published stories are available yet. The newsroom is waiting for the first AI-written stories."}</p>
                     </div>
                   </div>
                 )}
               </section>
 
-              <aside className="culture-radio-card" id="radio">
-                <div className="culture-section-head"><h3>LIVE RADIO</h3><a href="#radio">SCHEDULE →</a></div>
-                <div className="culture-on-air"><span>● ON AIR</span><small>FOR THE CULTURE RADIO</small></div>
-                <h4>THE CULTURE<br />NEVER STOPS.</h4>
-                <p>24/7 music, conversations, premieres, guest mixes and the sounds moving the culture forward.</p>
-                <div className="culture-waveform"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-                <a href="#radio" className="culture-radio-button">LISTEN LIVE <span>▶</span></a>
-                <div className="culture-next"><span>UP NEXT</span><strong>THE AFROBEATS TAKEOVER</strong><small>Guest mix · 1:00 PM</small></div>
+              <aside className="culture-radio-card" id="culture-radio">
+                <div className="culture-section-head"><h3>RADIO</h3><a href="#culture-radio">OPEN RADIO →</a></div>
+                {radioStory ? (
+                  <>
+                    {storyImage(radioStory) && <img className="culture-radio-story-image" src={storyImage(radioStory)} alt={storyTitle(radioStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" />}
+                    <div className="culture-on-air"><span>EDITORIAL UPDATE</span><small>{radioStory.source_name || "FOR THE CULTURE"}</small></div>
+                    <h4>{storyTitle(radioStory)}</h4>
+                    <p>{storyDek(radioStory)}</p>
+                    <a {...storyLinkProps(radioStory)} className="culture-radio-button">READ THE STORY <span>→</span></a>
+                  </>
+                ) : (
+                  <><div className="culture-on-air"><span>RADIO</span><small>FOR THE CULTURE</small></div><h4>THE CULTURE<br />NEVER STOPS.</h4><p>The radio experience will connect here as the station infrastructure comes online.</p><a href="#radio" className="culture-radio-button">OPEN RADIO <span>→</span></a></>
+                )}
               </aside>
             </div>
 
             <div className="culture-platform-columns">
-              <section className="culture-panel music-panel">
-                <div className="culture-section-head"><h3>NEW MUSIC</h3><a href="#beats">EXPLORE →</a></div>
-                {[['visual04','New Wave — The First Signal'],['visual15','After Dark — Culture Sessions'],['visual20','Made In Africa — The Movement']].map(([img,title], index) => (
-                  <a className="culture-music-row" href="#beats" key={title}>
-                    <img src={( {visual04, visual15, visual20} as Record<string, string>)[img]} alt="" loading="lazy" />
-                    <div><strong>{title}</strong><small>{index === 0 ? 'Afrobeats' : index === 1 ? 'Alté' : 'Hip-Hop'} · Galaxy Fire</small></div>
-                    <span className="culture-play">▶</span>
+              <section className="culture-panel music-panel" id="culture-music">
+                <div className="culture-section-head"><h3>NEW MUSIC</h3><a href="#culture-music">VIEW ALL →</a></div>
+                {newMusicStories.length ? newMusicStories.map((story: any) => (
+                  <a {...storyLinkProps(story)} className="culture-music-row" key={story.id || story.source_url}>
+                    {storyImage(story) ? <img src={storyImage(story)} alt={storyTitle(story)} loading="lazy" decoding="async" referrerPolicy="no-referrer" /> : <div className="culture-music-no-image">FTC</div>}
+                    <div><strong>{storyTitle(story)}</strong><small>{storyDek(story)}</small></div><span className="culture-play">→</span>
                   </a>
-                ))}
-                <a className="culture-panel-link" href="#beats">BROWSE ALL MUSIC →</a>
+                )) : <div className="culture-panel-empty">NEW MUSIC STORIES WILL APPEAR HERE AUTOMATICALLY.</div>}
               </section>
 
-              <section className="culture-panel culture-feature-panel">
-                <div className="culture-section-head"><h3>CULTURE</h3><a href="#blog">VIEW ALL →</a></div>
-                <div className="culture-feature-image"><img src={visual28} alt="Editorial portrait" loading="lazy" /><span>OPINION</span></div>
-                <h4>THE REALITY OF BUILDING A CREATIVE LIFE IN AFRICA</h4>
-                <p>Stories about ambition, community, identity and the people creating their own lanes.</p>
+              <section className="culture-panel culture-feature-panel" id="culture-culture">
+                <div className="culture-section-head"><h3>CULTURE</h3><a href="#culture-stories">VIEW ALL →</a></div>
+                {featureStory ? (
+                  <a {...storyLinkProps(featureStory)} className="culture-feature-link">
+                    <div className="culture-feature-image">{storyImage(featureStory) ? <img src={storyImage(featureStory)} alt={storyTitle(featureStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" /> : <div className="culture-editorial-visual-fallback"><span>CULTURE</span></div>}<span>{featureStory.category || "CULTURE"}</span></div>
+                    <h4>{storyTitle(featureStory)}</h4><p>{storyDek(featureStory)}</p>
+                  </a>
+                ) : <div className="culture-panel-empty">THE CULTURE DESK IS WAITING FOR LIVE STORIES.</div>}
               </section>
 
               <section className="culture-panel culture-radio-promo">
-                <div className="culture-radio-promo-art"><img src={cultureArt} alt="FOR THE CULTURE Radio" /></div>
-                <div className="culture-radio-promo-copy"><span>24/7 MUSIC · CULTURE · CONVERSATION</span><h3>FOR THE<br />CULTURE<br /><em>RADIO.</em></h3><a href="#radio" className="culture-action">LISTEN NOW →</a></div>
+                {storyImage(radioStory) ? <img className="culture-radio-promo-image" src={storyImage(radioStory)} alt={storyTitle(radioStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" /> : <div className="culture-editorial-visual-fallback"><span>FOR THE<br />CULTURE</span></div>}
+                <div className="culture-radio-promo-copy"><span>EDITORIAL RADAR</span><h3>WHAT'S<br />MOVING<br /><em>NOW.</em></h3><p>{radioStory ? storyDek(radioStory) : "Live culture stories, written and curated by the FOR THE CULTURE editorial engine."}</p><a href={radioStory ? storyUrl(radioStory) : "#culture-stories"} className="culture-action">READ THE LATEST →</a></div>
               </section>
             </div>
 
-            <div className="culture-platform-columns lower" id="culture-video">
-              <section className="culture-panel culture-video-panel">
-                <div className="culture-section-head"><h3>LATEST VIDEO</h3><a href="#culture-video">VIEW ALL →</a></div>
-                <div className="culture-video-feature"><img src={visual03} alt="Artist performance" loading="lazy" /><button aria-label="Play video">▶</button><span>LIVE PERFORMANCE</span></div>
+            <div className="culture-platform-columns lower">
+              <section className="culture-panel culture-video-panel" id="culture-video">
+                <div className="culture-section-head"><h3>LATEST STORY / VIDEO</h3><a href="#culture-stories">VIEW ALL →</a></div>
+                {videoStory ? <a {...storyLinkProps(videoStory)} className="culture-video-feature">{storyImage(videoStory) ? <img src={storyImage(videoStory)} alt={storyTitle(videoStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" /> : <div className="culture-editorial-visual-fallback"><span>VIDEO<br />CULTURE</span></div>}<span>{videoStory.category || "CULTURE"}</span><div className="culture-video-copy"><strong>{storyTitle(videoStory)}</strong><small>{storyDek(videoStory)}</small></div></a> : <div className="culture-panel-empty">LATEST VIDEO COVERAGE WILL APPEAR HERE.</div>}
               </section>
+
               <section className="culture-panel" id="culture-events">
-                <div className="culture-section-head"><h3>UPCOMING EVENTS</h3><a href="#culture-events">VIEW ALL →</a></div>
-                <div className="culture-event-row"><b>MAY<br /><strong>25</strong></b><div><strong>CULTURE LIVE</strong><small>Lagos, Nigeria</small></div><a href="#booking">TICKETS →</a></div>
-                <div className="culture-event-row"><b>JUN<br /><strong>08</strong></b><div><strong>AFROBEATS DAY PARTY</strong><small>Abuja, Nigeria</small></div><a href="#booking">DETAILS →</a></div>
-                <div className="culture-event-row"><b>JUN<br /><strong>22</strong></b><div><strong>GALAXY FIRE SHOWCASE</strong><small>Galaxy Fire Studios</small></div><a href="#booking">DETAILS →</a></div>
+                <div className="culture-section-head"><h3>EVENTS & MOMENTS</h3><a href="#culture-events">VIEW ALL →</a></div>
+                {featuredEventStories.length ? featuredEventStories.map((story: any) => <a {...storyLinkProps(story)} className="culture-event-row culture-editorial-row" key={story.id || story.source_url}><b>FTC</b><div><strong>{storyTitle(story)}</strong><small>{storyDek(story)}</small></div><span>READ →</span></a>) : <div className="culture-panel-empty">EVENT STORIES WILL APPEAR HERE AUTOMATICALLY.</div>}
               </section>
+
               <section className="culture-panel" id="culture-artists">
-                <div className="culture-section-head"><h3>FEATURED ARTISTS</h3><a href="#culture-artists">DISCOVER →</a></div>
+                <div className="culture-section-head"><h3>ARTISTS / CREATORS</h3><a href="#culture-artists">DISCOVER →</a></div>
                 <div className="culture-artist-grid">
-                  {[visual11, visual14, visual21, visual24].map((image, index) => <a href="#culture-artists" key={image}><img src={image} alt={`Featured artist ${index + 1}`} loading="lazy" /><span>{['THE NEXT WAVE','NEW VOICES','AFRO FUTURES','CITY SOUNDS'][index]}</span></a>)}
+                  {artistStories.length ? artistStories.map((story: any) => <a {...storyLinkProps(story)} key={story.id || story.source_url}>{storyImage(story) ? <img src={storyImage(story)} alt={storyTitle(story)} loading="lazy" decoding="async" referrerPolicy="no-referrer" /> : <div className="culture-editorial-visual-fallback"><span>FTC</span></div>}<span>{storyTitle(story)}</span></a>) : <div className="culture-panel-empty">ARTIST AND CREATOR STORIES WILL APPEAR HERE.</div>}
                 </div>
               </section>
             </div>
 
             <section className="culture-manifesto" id="culture-community">
               <div><span>FOR THE CULTURE</span><h3>WE ARE<br /><em>THE CULTURE.</em></h3></div>
-              <p>FOR THE CULTURE is the media and community layer of the Galaxy Fire ecosystem — a place to discover, listen, watch, connect and eventually build your own profile inside the culture.</p>
-              <a href="#contact" className="culture-action">JOIN THE CULTURE →</a>
+              <p>Every section above is now designed to consume the same live editorial feed, so the platform can evolve from a static showcase into a continuously updated cultural publication.</p>
+              <a href="#culture-stories" className="culture-action">EXPLORE THE LATEST →</a>
             </section>
           </div>
         </div>
       </section>
 
       {/* ECOSYSTEM COMING SOON */}
-      <section className="ecosystem-preview" id="radio">
+      <section className="ecosystem-preview" id="studio-radio-preview">
         <div className="ecosystem-preview-inner">
           <div>
             <div className="section-number">09 / RADIO</div>
@@ -1246,7 +1304,7 @@ export default function App() {
         </div>
       </section>
 
-      <section className="ecosystem-preview dark" id="blog">
+      <section className="ecosystem-preview dark" id="culture-blog-preview">
         <div className="ecosystem-preview-inner">
           <div>
             <div className="section-number">10 / BLOG</div>
@@ -2595,6 +2653,26 @@ export default function App() {
         .culture-live-story-card { min-height: 100%; }
         .culture-live-story-card img { width:100%; aspect-ratio: 16 / 10; object-fit:cover; display:block; background:#111; }
         .culture-story-no-image { width:100%; aspect-ratio:16 / 10; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#130d1b,#050505); color:#a96cff; font-size:12px; font-weight:800; letter-spacing:.16em; }
+        .culture-story-card p,.culture-feature-panel p,.culture-radio-card p,.culture-video-copy small,.culture-event-row small,.culture-music-row small { color:#777; font-size:10px; line-height:1.5; margin:6px 0 0; display:block; }
+        .culture-story-byline { display:block; color:#555; margin-top:10px; font-size:9px; letter-spacing:.4px; }
+        .culture-radio-story-image { width:100%; height:150px; object-fit:cover; display:block; margin-bottom:14px; filter:saturate(.75) contrast(1.05); }
+        .culture-radio-promo { position:relative; overflow:hidden; min-height:300px; }
+        .culture-radio-promo-image { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:saturate(.55) contrast(1.15); opacity:.5; }
+        .culture-radio-promo::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg,rgba(0,0,0,.96),rgba(0,0,0,.45),rgba(30,0,45,.25)); }
+        .culture-radio-promo-copy { position:relative; z-index:2; padding:28px; max-width:420px; }
+        .culture-feature-link { display:block; }
+        .culture-video-feature { display:block; min-height:260px; background:#090909; }
+        .culture-video-feature .culture-editorial-visual-fallback { position:absolute; inset:0; }
+        .culture-video-copy { position:absolute; z-index:2; left:14px; right:14px; bottom:13px; padding:14px; background:linear-gradient(transparent,rgba(0,0,0,.94)); padding-top:50px; }
+        .culture-video-copy strong { display:block; font-family:'Barlow Condensed',sans-serif; font-size:22px; line-height:.95; }
+        .culture-video-copy small { color:#bbb; }
+        .culture-editorial-visual-fallback { width:100%; height:100%; min-height:150px; display:grid; place-items:center; background:radial-gradient(circle at 65% 35%,rgba(155,92,255,.35),transparent 32%),linear-gradient(135deg,#080808,#160d20 55%,#050505); color:#b66cff; font-family:'Barlow Condensed',sans-serif; font-size:30px; line-height:.82; font-weight:900; letter-spacing:1px; text-align:center; }
+        .culture-editorial-empty .culture-editorial-visual-fallback { min-height:570px; }
+        .culture-panel-empty { min-height:130px; display:grid; place-items:center; padding:24px; border:1px dashed #29212f; color:#666; text-align:center; font-size:10px; letter-spacing:1px; line-height:1.5; }
+        .culture-music-no-image { width:52px; height:52px; display:grid; place-items:center; background:#140d1b; color:#b66cff; font-size:11px; font-weight:900; }
+        .culture-editorial-row { min-height:76px; }
+        .culture-editorial-row b { width:42px; height:42px; display:grid; place-items:center; border:1px solid #3a214c; color:#b66cff; font-size:9px; }
+        .culture-editorial-row span { color:#b66cff; font-size:9px; font-weight:900; }
         .culture-editorial-state { grid-column:1 / -1; min-height:190px; display:flex; align-items:center; gap:18px; padding:28px; border:1px solid #25202b; background:#090909; }
         .culture-editorial-state-mark { width:34px; height:34px; border-radius:50%; display:grid; place-items:center; color:#9b5cff; background:#1a1026; box-shadow:0 0 24px rgba(155,92,255,.2); }
         .culture-editorial-state.loading .culture-editorial-state-mark { animation:culturePulse 1.2s ease-in-out infinite; }
@@ -2672,6 +2750,9 @@ export default function App() {
         .culture-event-row { display:grid; grid-template-columns:48px 1fr auto; gap:10px; align-items:center; padding:15px 0; border-bottom:1px solid #1d1d1d; }.culture-event-row>b{color:#b66cff;font-family:'Barlow Condensed',sans-serif;font-size:9px;line-height:1}.culture-event-row>b strong{font-size:23px}.culture-event-row div strong,.culture-event-row div small{display:block}.culture-event-row div strong{font-size:11px}.culture-event-row div small{color:#555;font-size:8px;margin-top:4px}.culture-event-row>a{color:#b66cff;font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:900}
         .culture-artist-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }.culture-artist-grid a{position:relative;overflow:hidden;aspect-ratio:1/1}.culture-artist-grid img{width:100%;height:100%;object-fit:cover;filter:saturate(.65);transition:transform .3s}.culture-artist-grid a:hover img{transform:scale(1.06)}.culture-artist-grid span{position:absolute;left:6px;bottom:6px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:7px;font-weight:900;letter-spacing:.8px;text-shadow:0 2px 8px #000}
         .culture-manifesto { margin-top:18px; padding:35px; display:grid; grid-template-columns:1fr 1.2fr auto; gap:35px; align-items:center; background:linear-gradient(105deg,#140d1a,#080808); border:1px solid #30243a; position:relative; overflow:hidden; }.culture-manifesto::before{content:"";position:absolute;right:-100px;top:-100px;width:300px;height:300px;border-radius:50%;background:rgba(143,53,220,.13);filter:blur(10px)}.culture-manifesto>div,.culture-manifesto>p,.culture-manifesto>a{position:relative;z-index:1}.culture-manifesto h3{font-family:'Barlow Condensed',sans-serif;font-size:52px;line-height:.8;margin:12px 0 0}.culture-manifesto h3 em{color:#b66cff;font-style:normal}.culture-manifesto p{color:#777;font-size:12px;line-height:1.7;margin:0}
+        /* Performance: keep below-the-fold editorial work out of the initial paint. */
+        .culture-platform-columns,.culture-platform-columns.lower,.culture-manifesto { content-visibility:auto; contain-intrinsic-size:420px; }
+        .culture-story-card img,.culture-music-row img,.culture-feature-image img,.culture-video-feature img,.culture-artist-grid img { content-visibility:auto; }
         @media (max-width:1100px){.culture-platform-shell{grid-template-columns:190px minmax(0,1fr)}.culture-brand-rail{padding-left:25px}.culture-platform-columns{grid-template-columns:1fr 1fr}.culture-radio-promo{grid-column:1/-1;min-height:260px}.culture-platform-columns.lower{grid-template-columns:1fr 1fr}.culture-artist-grid{grid-template-columns:repeat(4,1fr)}.culture-manifesto{grid-template-columns:1fr 1fr}.culture-manifesto .culture-action{justify-self:start}}
         @media (max-width:800px){.culture-platform-topline{padding:0 5%;font-size:8px}.culture-platform-live{display:none}.culture-platform-shell{display:block}.culture-brand-rail{padding:20px 5%;border-right:0;border-bottom:1px solid #222;display:grid;grid-template-columns:85px 1fr;column-gap:16px;align-items:center}.culture-brand-art{width:85px;height:85px}.culture-brand-kicker{margin:0}.culture-brand-rail p{grid-column:2;margin:7px 0 0}.culture-platform-main{padding:0 5% 45px}.culture-platform-nav{height:56px;gap:20px}.culture-platform-nav a{padding:20px 0 17px}.culture-hero-story{grid-template-columns:1fr;min-height:0}.culture-hero-copy{padding:40px 0 20px;order:2}.culture-hero-image-wrap{order:1}.culture-hero-image{height:390px;min-height:390px}.culture-hero-copy h2{font-size:clamp(52px,15vw,82px)}.culture-hero-controls{left:0;bottom:auto;top:365px}.culture-content-grid,.culture-platform-columns,.culture-platform-columns.lower{grid-template-columns:1fr}.culture-story-grid{grid-template-columns:1fr 1fr}.culture-radio-promo{grid-column:auto}.culture-manifesto{grid-template-columns:1fr;gap:20px;padding:25px}.culture-manifesto h3{font-size:45px}}
         @media (max-width:520px){.culture-story-grid{grid-template-columns:1fr}.culture-story-card{display:grid;grid-template-columns:105px 1fr}.culture-story-card img{height:100%;min-height:130px}.culture-story-card h4{font-size:16px}.culture-story-card div{padding:10px}.culture-platform-nav{gap:17px}.culture-platform-nav a{font-size:10px}.culture-hero-image{height:320px;min-height:320px}.culture-hero-controls{top:295px}.culture-hero-stamp{font-size:20px}.culture-event-row{grid-template-columns:42px 1fr}.culture-event-row>a{display:none}.culture-artist-grid{grid-template-columns:repeat(2,1fr)}.culture-radio-promo-copy h3{font-size:43px}}

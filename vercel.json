@@ -1,38 +1,18 @@
 {
   "functions": {
-    "api/verify-payment.js": {
-      "maxDuration": 10
-    },
-    "api/check-availability.js": {
-      "maxDuration": 10
-    },
-    "api/verify-beat-payment.js": {
-      "maxDuration": 10
-    },
-    "api/beat-status.js": {
-      "maxDuration": 10
-    },
-    "api/paystack-webhook.js": {
-      "maxDuration": 10
-    },
-    "api/verify-store-payment.js": {
-      "maxDuration": 10
-    }
+    "api/verify-payment.js": { "maxDuration": 10 },
+    "api/check-availability.js": { "maxDuration": 10 },
+    "api/verify-beat-payment.js": { "maxDuration": 10 },
+    "api/beat-status.js": { "maxDuration": 10 },
+    "api/paystack-webhook.js": { "maxDuration": 10 },
+    "api/verify-store-payment.js": { "maxDuration": 10 },
+    "api/editorial-scan.js": { "maxDuration": 30 }
   },
   "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "crons": [
-    {
-      "path": "/api/editorial-scan",
-      "schedule": "0 9 * * *"
-    }
+    { "path": "/api/editorial-scan", "schedule": "*/15 * * * *" }
   ]
 }
