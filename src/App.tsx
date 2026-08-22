@@ -1354,7 +1354,7 @@ export default function App() {
               <h2>{storyTitle(selectedCultureStory)}</h2>
               <p className="culture-reader-dek">{storyDek(selectedCultureStory)}</p>
               <div className="culture-reader-copy">{String(selectedCultureStory.body || selectedCultureStory.source_excerpt || "").split(/\n{2,}/).filter(Boolean).map((paragraph: string, index: number) => <p key={index}>{paragraph}</p>)}</div>
-              <div className="culture-reader-meta">Published {storyDate(selectedCultureStory)}{selectedCultureStory.image_credit ? ` · IMAGE: ${selectedCultureStory.image_credit}` : ""}</div>
+              <div className="culture-reader-meta">Published {storyDate(selectedCultureStory)}</div>
               {selectedCultureStory.source_url && <a href={selectedCultureStory.source_url} target="_blank" rel="noreferrer" className="culture-reader-source">READ THE ORIGINAL SOURCE ↗</a>}
             </div>
           </article>

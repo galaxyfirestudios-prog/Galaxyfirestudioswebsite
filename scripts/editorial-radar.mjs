@@ -72,73 +72,6 @@ async function fetchFeed(source) {
     return { source, items: parseFeed(await response.text(), source.name, source.weight) }
   } finally { clearTimeout(timer) }
 }
-
-const IMAGE_FETCH_TIMEOUT_MS = Number(process.env.EDITORIAL_IMAGE_FETCH_TIMEOUT_MS || 5000)
-
-function extractMetaImage(html = '') {
-  const patterns = [
-    /<meta[^>]+property=["']og:image(?::secure_url)?["'][^>]+content=["']([^"']+)["'][^>]*>/i,
-    /<meta[^>]+name=["']twitter:image(?::src)?["'][^>]+content=["']([^"']+)["'][^>]*>/i,
-    /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image(?::secure_url)?["'][^>]*>/i,
-    /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image(?::src)?["'][^>]*>/i,
-  ]
-  for (const pattern of patterns) {
-    const match = html.match(pattern)
-    if (match?.[1]) return match[1]
-  }
-  return ''
-}
-
-function absoluteUrl(value, base) {
-  try { return new URL(value, base).toString() } catch { return value || '' }
-}
-
-async function fetchArticleImage(url) {
-  if (!url) return null
-  const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), IMAGE_FETCH_TIMEOUT_MS)
-  try {
-    const response = await fetch(url, {
-      headers: { 'User-Agent': 'FOR-THE-CULTURE-Editorial-Radar/4.0 (+https://galaxyfirestudios.com)', Accept: 'text/html,application/xhtml+xml' },
-      signal: controller.signal,
-      redirect: 'follow',
-    })
-    if (!response.ok) return null
-    const html = await response.text()
-    const image = extractMetaImage(html)
-    return image ? absoluteUrl(image, url) : null
-  } catch { return null } finally { clearTimeout(timer) }
-}
-
-async function findWikimediaImage(title) {
-  if (!title) return null
-  const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), IMAGE_FETCH_TIMEOUT_MS)
-  try {
-    const params = new URLSearchParams({
-      action: 'query', generator: 'search', gsrsearch: title, gsrnamespace: '6', gsrlimit: '3',
-      prop: 'imageinfo', iiprop: 'url|extmetadata', format: 'json', origin: '*',
-    })
-    const response = await fetch(`https://commons.wikimedia.org/w/api.php?${params}`, { headers: { 'User-Agent': 'FOR-THE-CULTURE-Editorial-Radar/4.0' }, signal: controller.signal })
-    if (!response.ok) return null
-    const data = await response.json()
-    const pages = Object.values(data?.query?.pages || {})
-    const page = pages.find((entry) => entry?.imageinfo?.[0]?.url && /\.(jpe?g|png|webp)$/i.test(entry.imageinfo[0].url))
-    if (!page) return null
-    const info = page.imageinfo[0]
-    const credit = info.extmetadata?.Artist?.value || info.extmetadata?.Credit?.value || 'Wikimedia Commons'
-    return { url: info.url, credit: decode(String(credit).replace(/<[^>]+>/g, '')), source_url: `https://commons.wikimedia.org/wiki/${encodeURIComponent(String(page.title || '').replace(/ /g, '_'))}` }
-  } catch { return null } finally { clearTimeout(timer) }
-}
-
-async function enrichImages(items) {
-  return Promise.all(items.map(async (item) => {
-    if (item.image_url) return { ...item, image_source: item.source_name, image_credit: item.source_name }
-    const articleImage = await fetchArticleImage(item.source_url)
-    if (articleImage) return { ...item, image_url: articleImage, image_source: item.source_name, image_credit: item.source_name }
-    const commons = await findWikimediaImage(item.title)
-    if (commons) return { ...item, image_url: commons.url, image_source: 'Wikimedia Commons', image_credit: commons.credit, image_source_url: commons.source_url }
-    return { ...item, image_url: null, image_source: null, image_credit: null }
-  }))
-}
 function relevance(item) {
   const text = `${item.title} ${item.excerpt}`.toLowerCase(); let score = item.source_weight || 0
   for (const term of RELEVANCE_TERMS) if (text.includes(term)) score += term.includes(' ') ? 3 : 1
@@ -184,9 +117,8 @@ async function main() {
 
   const newStories = []
   const failures = []
-  let selectedCandidates = newCandidates.slice(0, Math.max(MAX_STORIES, 5))
+  const selectedCandidates = newCandidates.slice(0, Math.max(MAX_STORIES, 5))
   if (selectedCandidates.length) {
-    selectedCandidates = await enrichImages(selectedCandidates)
     try {
       const drafts = await draftBatch(selectedCandidates)
       const byIndex = new Map(drafts.map(draft => [Number(draft.source_index), draft]))
@@ -196,7 +128,7 @@ async function main() {
           failures.push({ title: item.title, error: 'Gemini did not return a complete story for this source item.' })
           return
         }
-        newStories.push({ id: `ftc-${Date.now()}-${newStories.length}`, source_name: item.source_name, source_url: item.source_url, source_title: item.title, source_excerpt: item.excerpt, image_url: item.image_url || null, image_source: item.image_source || null, image_credit: item.image_credit || null, image_source_url: item.image_source_url || item.source_url || null, source_published_at: item.published_at, relevance_score: item.relevance_score, headline: draft.headline, dek: draft.dek, body: draft.body, category: draft.category || category(item), status: 'published', published_at: new Date().toISOString() })
+        newStories.push({ id: `ftc-${Date.now()}-${newStories.length}`, source_name: item.source_name, source_url: item.source_url, source_title: item.title, source_excerpt: item.excerpt, image_url: item.image_url || null, source_published_at: item.published_at, relevance_score: item.relevance_score, headline: draft.headline, dek: draft.dek, body: draft.body, category: draft.category || category(item), status: 'published', published_at: new Date().toISOString() })
       })
     } catch (batchError) {
       failures.push({ title: 'BATCH', error: String(batchError?.message || batchError) })
@@ -205,7 +137,7 @@ async function main() {
         if (newStories.length >= MAX_STORIES) break
         try {
           const draft = await draftStory(item)
-          newStories.push({ id: `ftc-${Date.now()}-${newStories.length}`, source_name: item.source_name, source_url: item.source_url, source_title: item.title, source_excerpt: item.excerpt, image_url: item.image_url || null, image_source: item.image_source || null, image_credit: item.image_credit || null, image_source_url: item.image_source_url || item.source_url || null, source_published_at: item.published_at, relevance_score: item.relevance_score, headline: draft.headline, dek: draft.dek, body: draft.body, category: draft.category || category(item), status: 'published', published_at: new Date().toISOString() })
+          newStories.push({ id: `ftc-${Date.now()}-${newStories.length}`, source_name: item.source_name, source_url: item.source_url, source_title: item.title, source_excerpt: item.excerpt, image_url: item.image_url || null, source_published_at: item.published_at, relevance_score: item.relevance_score, headline: draft.headline, dek: draft.dek, body: draft.body, category: draft.category || category(item), status: 'published', published_at: new Date().toISOString() })
         } catch (error) { failures.push({ title: item.title, error: String(error?.message || error) }) }
       }
     }
