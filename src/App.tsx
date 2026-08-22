@@ -1,20 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 
-import logoImg from "@/imports/galaxy_studio_logo_for_video_without_background.png";
-import heroImg from "@/imports/bcff0804-5388-404a-8e04-15f201fad894.JPG";
-import deskImg from "@/imports/3fdd97c2-2891-4094-9214-196df630473f.JPG";
-import micCloseImg from "@/imports/9b6f958a-50ea-406b-b280-731a77251cd2.JPG";
-import micWideImg from "@/imports/2dad0e2f-97cd-4bc5-8a40-6d2ca428cee7.JPG";
-import monitorsImg from "@/imports/c896af71-ea06-4d96-9f86-afc747ae9b1f.JPG";
-import mpcLitImg from "@/imports/5f761b8a-db00-4f37-be3f-8a9cf9ced4ba.JPG";
-import mpcDemoImg from "@/imports/e2706307-4e0c-4c81-8ad8-c2b703520b7a.JPG";
-import interfaceImg from "@/imports/e508b057-4fc6-4354-b78c-ed237765bde3.JPG";
-import keyboardImg from "@/imports/b58464ee-8826-4dcf-82c2-e782d895a5eb.JPG";
-import speakerImg from "@/imports/7aa7a4d2-c05f-4d17-ace1-204719c82c51.JPG";
-import promoStudioTimeImg from "@/imports/IMG_3312.PNG";
-import promoBeatsImg from "@/imports/IMG_3365.PNG";
-import promoSuperstarsImg from "@/imports/IMG_3360.PNG";
-import promoMixMasterImg from "@/imports/IMG_3359.PNG";
+import logoImg from "@/imports/galaxy_studio_logo_for_video_without_background.webp";
+import heroImg from "@/imports/bcff0804-5388-404a-8e04-15f201fad894.webp";
+import deskImg from "@/imports/3fdd97c2-2891-4094-9214-196df630473f.webp";
+import micCloseImg from "@/imports/9b6f958a-50ea-406b-b280-731a77251cd2.webp";
+import micWideImg from "@/imports/2dad0e2f-97cd-4bc5-8a40-6d2ca428cee7.webp";
+import monitorsImg from "@/imports/c896af71-ea06-4d96-9f86-afc747ae9b1f.webp";
+import mpcLitImg from "@/imports/5f761b8a-db00-4f37-be3f-8a9cf9ced4ba.webp";
+import mpcDemoImg from "@/imports/e2706307-4e0c-4c81-8ad8-c2b703520b7a.webp";
+import interfaceImg from "@/imports/e508b057-4fc6-4354-b78c-ed237765bde3.webp";
+import keyboardImg from "@/imports/b58464ee-8826-4dcf-82c2-e782d895a5eb.webp";
+import speakerImg from "@/imports/7aa7a4d2-c05f-4d17-ace1-204719c82c51.webp";
+import promoStudioTimeImg from "@/imports/IMG_3312.webp";
+import promoBeatsImg from "@/imports/IMG_3365.webp";
+import promoSuperstarsImg from "@/imports/IMG_3360.webp";
+import promoMixMasterImg from "@/imports/IMG_3359.webp";
 import visual01 from "@/imports/visuals/visual_01.webp";
 import visual02 from "@/imports/visuals/visual_02.webp";
 import visual03 from "@/imports/visuals/visual_03.webp";
@@ -44,10 +44,12 @@ import visual26 from "@/imports/visuals/visual_26.webp";
 import visual27 from "@/imports/visuals/visual_27.webp";
 import visual28 from "@/imports/visuals/visual_28.webp";
 import visual29 from "@/imports/visuals/visual_29.webp";
+import cultureArt from "@/imports/for-the-culture.webp";
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [visualSlide, setVisualSlide] = useState(0);
+  const [visualPaused, setVisualPaused] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [bookingSubmitted, setBookingSubmitted] = useState(false);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
@@ -402,6 +404,14 @@ export default function App() {
     return visualImages.slice(start, end);
   });
 
+  useEffect(() => {
+    if (visualPaused) return;
+    const timer = window.setInterval(() => {
+      setVisualSlide((current) => (current + 1) % visualSlides.length);
+    }, 5200);
+    return () => window.clearInterval(timer);
+  }, [visualPaused, visualSlides.length]);
+
   const beatArt = "/beats/galaxy-records-art.png";
   const beats = [
     { id: "beat-01", title: "Crimson Motion", bpm: 110, key: "G♯ Minor", mode: "Minor", mood: "Dark / Cinematic", genre: "Galaxy Fire Original", preview: "/beats/beat_1_gsharp_minor_110.mp3" },
@@ -621,6 +631,11 @@ export default function App() {
     setSelectedBeat(beat);
     setBeatProgress(0);
     setBeatDropdownOpen(false);
+    requestAnimationFrame(() => {
+      const active = document.activeElement as HTMLElement | null;
+      if (active?.tagName === "INPUT") active.blur();
+      window.scrollTo({ top: window.scrollY, behavior: "auto" });
+    });
   };
 
   useEffect(() => {
@@ -715,7 +730,7 @@ export default function App() {
 
       {/* HERO */}
       <section className="hero" id="home">
-        <img src={heroImg} alt="Galaxy Studios control room" className="hero-photo" />
+        <img src={heroImg} alt="Galaxy Studios control room" className="hero-photo" fetchPriority="high" />
         <div className="hero-overlay" />
         <div className="hero-content">
           <div className="eyebrow">PROFESSIONAL RECORDING STUDIO · NIGERIA</div>
@@ -812,11 +827,25 @@ export default function App() {
           <p>Professional photography, music videos and creative visual production designed to give your music and brand the visual identity it deserves.</p>
         </div>
 
-        <div className="visual-slider">
+        <div
+          className={`visual-slider ${visualPaused ? "paused" : ""}`}
+          onPointerEnter={() => setVisualPaused(true)}
+          onPointerLeave={() => setVisualPaused(false)}
+          onPointerDown={() => setVisualPaused(true)}
+          onPointerUp={() => setVisualPaused(false)}
+          onPointerCancel={() => setVisualPaused(false)}
+        >
           <div className="visual-grid">
             {visualSlides[visualSlide].map((image, index) => (
               <div className={`visual-grid-item visual-grid-item-${index + 1}`} key={`${visualSlide}-${index}`}>
-                <img src={image} alt={`Galaxy Fire Studios photography and visual production ${visualSlide * 10 + index + 1}`} loading="lazy" decoding="async" width="1600" height="1067" />
+                <img
+                  src={image}
+                  alt={`Galaxy Fire Studios photography and visual production ${visualSlide * 10 + index + 1}`}
+                  loading={visualSlide === 0 && index < 2 ? "eager" : "lazy"}
+                  decoding="async"
+                  width="1600"
+                  height="1067"
+                />
               </div>
             ))}
           </div>
@@ -829,6 +858,7 @@ export default function App() {
             </div>
             <button type="button" onClick={() => setVisualSlide((visualSlide + 1) % 3)} aria-label="Next visual slide">→</button>
           </div>
+          <div className="visual-slider-status" aria-live="polite">{visualPaused ? "PAUSED · RELEASE TO CONTINUE" : "AUTO PLAY · HOLD TO PAUSE"}</div>
         </div>
 
         <div className="visual-services-pricing">
@@ -1014,6 +1044,7 @@ export default function App() {
 
       {/* FOR THE CULTURE */}
       <section className="culture" id="culture">
+        <div className="culture-artwork" aria-hidden="true" style={{ backgroundImage: `url(${cultureArt})` }} />
         <div className="section-heading">
           <div className="section-number">08 / FOR THE CULTURE</div>
           <h2>THE SOUND.<br /><span>THE PEOPLE. THE CULTURE.</span></h2>
@@ -2349,6 +2380,100 @@ export default function App() {
         .checkout-total { display:flex; justify-content:space-between; align-items:center; margin:25px 0; padding:18px 0; border-top:1px solid #333; border-bottom:1px solid #333; }
         .checkout-total span { color:#777; font-size:10px; letter-spacing:.12em; }
         .checkout-total strong { font-size:24px; }
+
+        /* CURRENT PHASE REFINEMENTS */
+        .nav { height: 94px; padding: 0 4.5%; }
+        .logo { gap: 15px; }
+        .logo-img { width: 60px; height: 60px; }
+        .logo-title { font-size: 18px; letter-spacing: 2.2px; }
+        .logo-sub { font-size: 9px; letter-spacing: 2.2px; }
+        .nav-links { gap: 30px; font-size: 12px; }
+        .nav-button { padding: 14px 24px; }
+
+        /* Photography autoplay / touch-hold */
+        .visual-slider { position: relative; }
+        .visual-slider-status { margin-top: 12px; text-align: center; color: #555; font-family: 'Barlow Condensed', sans-serif; font-size: 8px; font-weight: 700; letter-spacing: .18em; transition: color .2s; }
+        .visual-slider.paused .visual-slider-status { color: #aaa; }
+        .visual-grid { user-select: none; -webkit-user-select: none; }
+        .visual-grid img { -webkit-user-drag: none; }
+
+        /* Realistic vinyl deck motion */
+        .vinyl-player { perspective: 900px; }
+        .vinyl-platter { will-change: transform; }
+        .vinyl-grooves::after { content: ""; position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; transform: translate(-50%,-50%); border-radius: 50%; background: radial-gradient(circle,#d8d8d8 0 18%,#555 19% 40%,#111 41% 100%); box-shadow: 0 0 0 2px #090909, 0 0 0 3px #555; }
+        .tonearm { transition: transform 1s cubic-bezier(.22,.61,.36,1), filter .3s; }
+        .tonearm.stopped { transform: rotate(43deg); }
+        .tonearm.playing { transform: rotate(20deg); filter: brightness(1.12); }
+        .tonearm.slowing { transform: rotate(32deg); }
+        .vinyl-player.playing .vinyl-label { box-shadow: 0 0 0 5px #090909,0 0 32px rgba(229,9,20,.24); }
+        .vinyl-play { transition: transform .2s, background .2s, border-color .2s; }
+        .vinyl-play:hover { transform: scale(1.06); }
+
+        /* FOR THE CULTURE visual language */
+        .culture { position: relative; isolation: isolate; overflow: hidden; background: radial-gradient(circle at 12% 20%, rgba(120,35,150,.22), transparent 34%), radial-gradient(circle at 88% 75%, rgba(75,25,115,.18), transparent 38%), #0a0a0a; }
+        .culture-artwork { position: absolute; z-index: 0; top: 0; right: -80px; width: min(48vw, 650px); height: min(48vw, 650px); background-position: center; background-size: cover; background-repeat: no-repeat; opacity: .10; filter: saturate(1.2) contrast(1.05); mask-image: radial-gradient(circle, #000 35%, transparent 75%); -webkit-mask-image: radial-gradient(circle, #000 35%, transparent 75%); pointer-events: none; }
+        .culture > *:not(.culture-artwork) { position: relative; z-index: 1; }
+        .culture .section-number, .culture .eyebrow { color: #b66cff; }
+        .culture h2 span { color: #b66cff; }
+        .culture-card { background: linear-gradient(145deg, rgba(24,18,30,.96), rgba(12,12,12,.96)); border-color: #30243a; }
+        .culture-card::after { background: rgba(155,70,210,.14); }
+        .culture-card:hover { border-color: #9d4edd; background: linear-gradient(145deg,#1d1524,#111); }
+        .culture-card-featured { border-color: #9d4edd; background: linear-gradient(145deg,rgba(42,20,55,.96),rgba(13,10,16,.96)); }
+        .culture-card-number, .culture-card strong { color: #b66cff; }
+        .culture-statement { border-color: #30243a; background: linear-gradient(135deg,rgba(24,18,30,.94),#111); }
+        #radio { background: radial-gradient(circle at 82% 35%, rgba(130,45,175,.20), transparent 32%), #0b0b0b; }
+        #radio .section-number { color: #b66cff; }
+        #radio h2 span { color: #b66cff; }
+        #blog { background: radial-gradient(circle at 18% 65%, rgba(95,35,140,.16), transparent 32%), #080808; }
+        #blog .section-number { color: #b66cff; }
+        #blog h2 span { color: #b66cff; }
+        .beats-marketplace { background: radial-gradient(circle at 50% 0%, rgba(95,30,125,.10), transparent 35%), #050505; }
+        .beats-marketplace .section-number { color: #b66cff; }
+
+        /* More compact PRO AUDIO store without shrinking usability */
+        .store-section { padding: 78px 5%; }
+        .store-heading { margin-bottom: 30px; }
+        .store-heading p { margin-top: 14px; line-height: 1.65; }
+        .store-topbar { margin-bottom: 22px; }
+        .store-categories { gap: 6px; }
+        .store-filter, .cart-button { padding: 9px 11px; font-size: 9px; }
+        .store-grid { gap: 12px; }
+        .product-image-wrap { aspect-ratio: 1.12 / 1; }
+        .product-info { padding: 14px; }
+        .product-category { margin-bottom: 6px; font-size: 8px; }
+        .product-info h3 { font-size: 17px; margin-bottom: 7px; }
+        .product-info p { font-size: 11px; line-height: 1.45; min-height: 48px; margin-bottom: 12px; }
+        .product-bottom strong { font-size: 16px; }
+        .add-button { padding: 9px 10px; font-size: 8px; }
+        .product-info small { margin-top: 9px; font-size: 8px; }
+
+        /* Prevent mobile browser input zoom and keep beat selection comfortable */
+        @media (max-width: 900px) {
+          .nav { height: 88px; }
+          .nav-links { top: 88px; max-height: calc(100vh - 88px); }
+          .logo-img { width: 56px; height: 56px; }
+          .logo-title { font-size: 17px; }
+        }
+        @media (max-width: 700px) {
+          .beat-selector-tools input, .beat-selector-trigger { font-size: 16px; }
+          .beat-selector-trigger { min-height: 56px; }
+          .beat-selector-current small, .beat-selector-option-title, .beat-selector-option-meta, .beat-selector-option-bpm { font-size: 11px; }
+          .beat-selector-option { min-height: 48px; }
+          .beat-selector-tools input { min-height: 44px; }
+          .store-section { padding: 70px 5%; }
+          .store-heading { margin-bottom: 24px; }
+          .store-topbar { gap: 12px; margin-bottom: 18px; }
+          .store-filter, .cart-button { padding: 8px 9px; font-size: 8px; }
+          .product-info { padding: 12px; }
+          .product-info h3 { font-size: 16px; }
+          .product-info p { min-height: 0; }
+          .product-bottom { align-items: flex-end; flex-direction: column; }
+          .add-button { width: 100%; }
+          .culture-artwork { right: -170px; width: 500px; height: 500px; opacity: .08; }
+        }
+        @media (min-width: 1400px) {
+          .store-grid { grid-template-columns: repeat(5,1fr); }
+        }
       `}</style>
     </div>
   );
