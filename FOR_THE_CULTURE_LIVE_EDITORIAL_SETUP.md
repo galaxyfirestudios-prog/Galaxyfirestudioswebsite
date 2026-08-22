@@ -4,7 +4,7 @@ This version is tuned for a fast, continuously refreshed editorial homepage.
 
 ## Editorial cadence
 
-- The Vercel production cron is configured for **every 15 minutes**.
+- The Vercel production cron is configured for **every 15 minutes** and authenticates with `CRON_SECRET`.
 - The homepage checks the editorial feed every **5 minutes while the browser tab is visible**.
 - The feed API is CDN-cached for 60 seconds with stale-while-revalidate, so visitors do not trigger expensive database work.
 - The scanner fetches all configured sources in parallel, ranks by relevance + freshness, de-duplicates, then publishes the strongest new stories.
@@ -25,7 +25,8 @@ New editorial configuration:
 
 - `OPENAI_API_KEY`
 - `EDITORIAL_MODEL` (default: `gpt-5-mini`)
-- `EDITORIAL_CRON_SECRET`
+- `CRON_SECRET` (required for Vercel Cron authentication)
+- `EDITORIAL_CRON_SECRET` (optional manual/editorial trigger secret)
 
 Optional source tuning:
 
@@ -54,3 +55,10 @@ The navigation tabs smoothly scroll to their actual platform sections and update
 - Below-the-fold editorial sections use `content-visibility:auto`.
 - Story images are lazy-loaded except for the hero image.
 - Mobile uses the same responsive content model rather than loading a second page.
+
+## Deployment diagnostics
+
+Visit `/api/editorial-status` on the production site to see whether Supabase, OpenAI, the editorial table, and the configured RSS sources are reachable. This endpoint never returns secret values.
+
+### Important Vercel Cron detail
+Vercel sends the configured `CRON_SECRET` as `Authorization: Bearer <secret>` for cron invocations. The scanner accepts that standard Vercel secret and also accepts `EDITORIAL_CRON_SECRET` for manual calls.

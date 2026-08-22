@@ -70,3 +70,10 @@ After deployment and environment/database setup, the homepage should show:
 - otherwise "EDITORIAL RADAR INITIALIZING".
 
 A missing backend must never silently fall back to Galaxy Fire photography as if it were current news.
+
+## Deployment diagnostics
+
+Visit `/api/editorial-status` on the production site to see whether Supabase, OpenAI, the editorial table, and the configured RSS sources are reachable. This endpoint never returns secret values.
+
+### Important Vercel Cron detail
+Vercel sends the configured `CRON_SECRET` as `Authorization: Bearer <secret>` for cron invocations. The scanner accepts that standard Vercel secret and also accepts `EDITORIAL_CRON_SECRET` for manual calls.

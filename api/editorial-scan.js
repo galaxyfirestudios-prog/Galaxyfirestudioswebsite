@@ -197,11 +197,15 @@ async function processCandidate(supabase, item) {
 }
 
 module.exports = async (req, res) => {
-  const expected = process.env.EDITORIAL_CRON_SECRET || process.env.CRON_SECRET
+  // Vercel Cron authenticates with CRON_SECRET via Authorization: Bearer <secret>.
+  // EDITORIAL_CRON_SECRET remains available for manual/editorial calls.
+  const cronSecret = process.env.CRON_SECRET || ''
+  const editorialSecret = process.env.EDITORIAL_CRON_SECRET || ''
   const auth = req.headers.authorization || ''
   const bearer = auth.startsWith('Bearer ') ? auth.slice(7) : ''
   const supplied = req.headers['x-editorial-secret'] || req.query?.secret || bearer
-  if (!expected || supplied !== expected) return res.status(401).json({ error: 'Unauthorized' })
+  const authorized = Boolean(supplied) && [cronSecret, editorialSecret].filter(Boolean).includes(supplied)
+  if (!authorized) return res.status(401).json({ error: 'Unauthorized' })
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
