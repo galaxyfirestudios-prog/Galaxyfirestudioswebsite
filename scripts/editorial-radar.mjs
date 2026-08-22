@@ -2,7 +2,7 @@ import fs from 'node:fs/promises'
 import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
-const { draftStoriesWithGemini, draftStoryWithGemini, DEFAULT_MODEL } = require('../lib/gemini-editorial.cjs')
+const { draftStoryWithGemini, DEFAULT_MODEL } = require('../lib/gemini-editorial.cjs')
 
 const SOURCES = [
   { name: 'The NATIVE', url: process.env.EDITORIAL_NATIVE_FEED || 'https://thenativemag.com/feed/', weight: 12 },
@@ -27,10 +27,10 @@ const CATEGORY_RULES = [
 ]
 
 const MAX_SOURCE_ITEMS = Number(process.env.EDITORIAL_SOURCE_ITEMS || 18)
-const MAX_STORIES = Number(process.env.EDITORIAL_MAX_STORIES_PER_SCAN || 5)
+const MAX_STORIES = Number(process.env.EDITORIAL_MAX_STORIES_PER_SCAN || 3)
 const MAX_AGE_HOURS = Number(process.env.EDITORIAL_MAX_AGE_HOURS || 96)
 const FETCH_TIMEOUT_MS = Number(process.env.EDITORIAL_FETCH_TIMEOUT_MS || 6500)
-const GEMINI_TIMEOUT_MS = Number(process.env.EDITORIAL_GEMINI_TIMEOUT_MS || 30000)
+const GEMINI_TIMEOUT_MS = Number(process.env.EDITORIAL_GEMINI_TIMEOUT_MS || 15000)
 
 function decode(value = '') {
   return value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gi, '$1').replace(/<[^>]*>/g, ' ')
@@ -72,73 +72,6 @@ async function fetchFeed(source) {
     return { source, items: parseFeed(await response.text(), source.name, source.weight) }
   } finally { clearTimeout(timer) }
 }
-
-const IMAGE_FETCH_TIMEOUT_MS = Number(process.env.EDITORIAL_IMAGE_FETCH_TIMEOUT_MS || 3000)
-
-function extractMetaImage(html = '') {
-  const patterns = [
-    /<meta[^>]+property=["']og:image(?::secure_url)?["'][^>]+content=["']([^"']+)["'][^>]*>/i,
-    /<meta[^>]+name=["']twitter:image(?::src)?["'][^>]+content=["']([^"']+)["'][^>]*>/i,
-    /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image(?::secure_url)?["'][^>]*>/i,
-    /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image(?::src)?["'][^>]*>/i,
-  ]
-  for (const pattern of patterns) {
-    const match = html.match(pattern)
-    if (match?.[1]) return match[1]
-  }
-  return ''
-}
-
-function absoluteUrl(value, base) {
-  try { return new URL(value, base).toString() } catch { return value || '' }
-}
-
-async function fetchArticleImage(url) {
-  if (!url) return null
-  const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), IMAGE_FETCH_TIMEOUT_MS)
-  try {
-    const response = await fetch(url, {
-      headers: { 'User-Agent': 'FOR-THE-CULTURE-Editorial-Radar/4.0 (+https://galaxyfirestudios.com)', Accept: 'text/html,application/xhtml+xml' },
-      signal: controller.signal,
-      redirect: 'follow',
-    })
-    if (!response.ok) return null
-    const html = await response.text()
-    const image = extractMetaImage(html)
-    return image ? absoluteUrl(image, url) : null
-  } catch { return null } finally { clearTimeout(timer) }
-}
-
-async function findWikimediaImage(title) {
-  if (!title) return null
-  const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), IMAGE_FETCH_TIMEOUT_MS)
-  try {
-    const params = new URLSearchParams({
-      action: 'query', generator: 'search', gsrsearch: title, gsrnamespace: '6', gsrlimit: '3',
-      prop: 'imageinfo', iiprop: 'url|extmetadata', format: 'json', origin: '*',
-    })
-    const response = await fetch(`https://commons.wikimedia.org/w/api.php?${params}`, { headers: { 'User-Agent': 'FOR-THE-CULTURE-Editorial-Radar/4.0' }, signal: controller.signal })
-    if (!response.ok) return null
-    const data = await response.json()
-    const pages = Object.values(data?.query?.pages || {})
-    const page = pages.find((entry) => entry?.imageinfo?.[0]?.url && /\.(jpe?g|png|webp)$/i.test(entry.imageinfo[0].url))
-    if (!page) return null
-    const info = page.imageinfo[0]
-    const credit = info.extmetadata?.Artist?.value || info.extmetadata?.Credit?.value || 'Wikimedia Commons'
-    return { url: info.url, credit: decode(String(credit).replace(/<[^>]+>/g, '')), source_url: `https://commons.wikimedia.org/wiki/${encodeURIComponent(String(page.title || '').replace(/ /g, '_'))}` }
-  } catch { return null } finally { clearTimeout(timer) }
-}
-
-async function enrichImages(items) {
-  return Promise.all(items.map(async (item) => {
-    if (item.image_url) return { ...item, image_source: item.source_name, image_credit: item.source_name }
-    const articleImage = await fetchArticleImage(item.source_url)
-    if (articleImage) return { ...item, image_url: articleImage, image_source: item.source_name, image_credit: item.source_name, image_source_url: item.source_url }
-    const commons = await findWikimediaImage(item.title)
-    if (commons) return { ...item, image_url: commons.url, image_source: 'Wikimedia Commons', image_credit: commons.credit, image_source_url: commons.source_url }
-    return { ...item, image_url: null, image_source: null, image_credit: null }
-  }))
-}
 function relevance(item) {
   const text = `${item.title} ${item.excerpt}`.toLowerCase(); let score = item.source_weight || 0
   for (const term of RELEVANCE_TERMS) if (text.includes(term)) score += term.includes(' ') ? 3 : 1
@@ -157,16 +90,26 @@ function titleTokens(title) { return new Set(normalizeTitle(title).split(/\s+/).
 function similarity(a, b) { const A = titleTokens(a), B = titleTokens(b); if (!A.size || !B.size) return 0; let intersection = 0; for (const token of A) if (B.has(token)) intersection++; return intersection / (A.size + B.size - intersection) }
 
 async function draftStory(item) {
-  return draftStoryWithGemini({ apiKey: process.env.GEMINI_API_KEY, model: process.env.EDITORIAL_MODEL || DEFAULT_MODEL, prompt: `You are the editorial desk for FOR THE CULTURE, an African music, culture and entertainment platform by Galaxy Fire Studios. Create an ORIGINAL short news brief from the supplied source metadata. Do not copy phrases or sentence structures. Do not invent facts. Return only JSON with headline, dek, body and category. The body must be 2-4 short paragraphs suitable for mobile reading and must clearly attribute the reporting to the named source where appropriate. Category must be MUSIC, CULTURE, STYLE, FILM, ART or EVENTS. Source: ${item.source_name}\nOriginal headline: ${item.title}\nOriginal URL: ${item.source_url}\nSource excerpt: ${item.excerpt}\nSuggested category: ${category(item)}`, timeoutMs: GEMINI_TIMEOUT_MS })
-}
+  const prompt = `You are the editorial desk for FOR THE CULTURE, an African music, culture and entertainment platform by Galaxy Fire Studios. Create an ORIGINAL short news brief from the supplied source metadata. Do not copy phrases or sentence structures. Do not invent facts. Return only JSON with headline, dek, body and category. The body must be 2-4 short paragraphs suitable for mobile reading and must clearly attribute the reporting to the named source where appropriate. Category must be MUSIC, CULTURE, STYLE, FILM, ART or EVENTS. Source: ${item.source_name}\nOriginal headline: ${item.title}\nOriginal URL: ${item.source_url}\nSource excerpt: ${item.excerpt}\nSuggested category: ${category(item)}`
 
-async function draftBatch(items) {
-  return draftStoriesWithGemini({
-    apiKey: process.env.GEMINI_API_KEY,
-    model: process.env.EDITORIAL_MODEL || DEFAULT_MODEL,
-    items: items.map(item => ({ ...item, category: category(item) })),
-    timeoutMs: GEMINI_TIMEOUT_MS,
-  })
+  let lastError
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      return await draftStoryWithGemini({
+        apiKey: process.env.GEMINI_API_KEY,
+        model: process.env.EDITORIAL_MODEL || DEFAULT_MODEL,
+        prompt,
+        timeoutMs: GEMINI_TIMEOUT_MS,
+      })
+    } catch (error) {
+      lastError = error
+      const message = String(error?.message || error)
+      const retryable = /Gemini returned (429|500|502|503|504)|timed out|aborted|fetch failed/i.test(message)
+      if (!retryable || attempt === 2) break
+      await new Promise(resolve => setTimeout(resolve, 1200 * attempt))
+    }
+  }
+  throw lastError
 }
 
 async function main() {
@@ -184,32 +127,12 @@ async function main() {
 
   const newStories = []
   const failures = []
-  let selectedCandidates = newCandidates.slice(0, Math.max(MAX_STORIES, 5))
-  if (selectedCandidates.length) {
+  for (const item of newCandidates.slice(0, Math.max(MAX_STORIES * 4, 12))) {
+    if (newStories.length >= MAX_STORIES) break
     try {
-      const drafts = await draftBatch(selectedCandidates)
-      let visualCandidates = selectedCandidates
-      try { visualCandidates = await enrichImages(selectedCandidates) } catch { visualCandidates = selectedCandidates }
-      const byIndex = new Map(drafts.map(draft => [Number(draft.source_index), draft]))
-      visualCandidates.forEach((item, index) => {
-        const draft = byIndex.get(index)
-        if (!draft?.headline || !draft?.body) {
-          failures.push({ title: item.title, error: 'Gemini did not return a complete story for this source item.' })
-          return
-        }
-        newStories.push({ id: `ftc-${Date.now()}-${newStories.length}`, source_name: item.source_name, source_url: item.source_url, source_title: item.title, source_excerpt: item.excerpt, image_url: item.image_url || null, image_source: item.image_source || null, image_credit: item.image_credit || null, image_source_url: item.image_source_url || item.source_url || null, source_published_at: item.published_at, relevance_score: item.relevance_score, headline: draft.headline, dek: draft.dek, body: draft.body, category: draft.category || category(item), status: 'published', published_at: new Date().toISOString() })
-      })
-    } catch (batchError) {
-      failures.push({ title: 'BATCH', error: String(batchError?.message || batchError) })
-      // If a batch request is temporarily rejected, try up to MAX_STORIES individual stories.
-      for (const item of selectedCandidates.slice(0, MAX_STORIES)) {
-        if (newStories.length >= MAX_STORIES) break
-        try {
-          const draft = await draftStory(item)
-          newStories.push({ id: `ftc-${Date.now()}-${newStories.length}`, source_name: item.source_name, source_url: item.source_url, source_title: item.title, source_excerpt: item.excerpt, image_url: item.image_url || null, image_source: item.image_source || null, image_credit: item.image_credit || null, image_source_url: item.image_source_url || item.source_url || null, source_published_at: item.published_at, relevance_score: item.relevance_score, headline: draft.headline, dek: draft.dek, body: draft.body, category: draft.category || category(item), status: 'published', published_at: new Date().toISOString() })
-        } catch (error) { failures.push({ title: item.title, error: String(error?.message || error) }) }
-      }
-    }
+      const draft = await draftStory(item)
+      newStories.push({ id: `ftc-${Date.now()}-${newStories.length}`, source_name: item.source_name, source_url: item.source_url, source_title: item.title, source_excerpt: item.excerpt, image_url: item.image_url || null, source_published_at: item.published_at, relevance_score: item.relevance_score, headline: draft.headline, dek: draft.dek, body: draft.body, category: draft.category || category(item), status: 'published', published_at: new Date().toISOString() })
+    } catch (error) { failures.push({ title: item.title, error: String(error?.message || error) }) }
   }
 
   const stories = [...newStories, ...prior].sort((a,b) => new Date(b.published_at || 0) - new Date(a.published_at || 0)).slice(0, 60)
