@@ -41,3 +41,17 @@ The Gemini Developer API currently lists Gemini 3.7 Flash as available on its Fr
 ## No OpenAI API key is required by this build
 
 The editorial-generation path no longer references `OPENAI_API_KEY`, `openai.com`, or `gpt-5-mini`.
+
+## Multi-story editorial publishing
+The editorial radar now sends the selected candidates to Gemini as one structured batch request. This reduces free-tier rate-limit pressure and allows up to 5 new stories per scan. If the batch request fails, the engine falls back to individual story generation.
+
+## FOR THE CULTURE internal reader
+Editorial cards now open an in-site FOR THE CULTURE reader. The original source is retained as an attribution link inside the reader and opens in a new tab; visitors no longer leave the platform merely by clicking a story card.
+
+## Live radio now-playing
+The site reads `public/radio-now-playing.json` every 30 seconds. To connect real station metadata, add these GitHub repository Variables under Settings -> Secrets and variables -> Actions -> Variables:
+- `RADIO_NOW_PLAYING_URL` — JSON endpoint from the radio provider containing current-track metadata.
+- `RADIO_STREAM_URL` — direct stream URL, if the metadata endpoint does not provide one.
+- `RADIO_SHOW_NAME` — optional station/show name fallback.
+
+The metadata updater understands common AzuraCast-style and simple JSON payloads and writes normalized `artist`, `title`, `artwork_url`, `stream_url`, `show`, and `dj` fields to `public/radio-now-playing.json`.
