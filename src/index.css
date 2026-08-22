@@ -1,2 +1,65 @@
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;800;900&family=Barlow:wght@400;500;600&display=swap');
 @import 'tailwindcss';
+
+
+/* FOR THE CULTURE editorial image direction — rich, cinematic, image-led */
+.culture-hero-image-wrap,
+.culture-story-card,
+.culture-feature-image,
+.culture-video-feature,
+.culture-artist-grid a,
+.culture-radio-promo {
+  overflow: hidden;
+}
+
+.culture-hero-image-wrap { isolation: isolate; background:#111; }
+.culture-hero-image { transition: transform .8s cubic-bezier(.2,.7,.2,1), filter .5s ease; filter:saturate(1.08) contrast(1.04); }
+.culture-hero-image-wrap::after {
+  content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
+  background:linear-gradient(90deg,rgba(0,0,0,.08) 15%,rgba(0,0,0,.02) 48%,rgba(0,0,0,.58) 100%),linear-gradient(0deg,rgba(0,0,0,.45),transparent 42%);
+  mix-blend-mode:multiply;
+}
+.culture-hero-image-wrap .culture-hero-stamp { z-index:2; }
+.culture-hero-story:hover .culture-hero-image { transform:scale(1.035); }
+
+.culture-story-card { position:relative; background:#0b0b0b; }
+.culture-story-card > img { transition:transform .6s ease, filter .4s ease; filter:saturate(1.06) contrast(1.03); }
+.culture-story-card::after,
+.culture-feature-image::after,
+.culture-video-feature::after,
+.culture-radio-promo::after {
+  content:""; position:absolute; inset:0; pointer-events:none; z-index:1;
+  background:linear-gradient(180deg,transparent 35%,rgba(0,0,0,.48) 100%);
+}
+.culture-story-card > div { position:relative; z-index:2; }
+.culture-story-card:hover > img { transform:scale(1.04); filter:saturate(1.15) contrast(1.05); }
+
+.culture-feature-image,
+.culture-video-feature,
+.culture-radio-promo { isolation:isolate; }
+.culture-feature-image img,
+.culture-video-feature img,
+.culture-radio-promo-image { transition:transform .65s ease, filter .45s ease; filter:saturate(1.08) contrast(1.04); }
+.culture-feature-image > span,
+.culture-video-feature > span,
+.culture-video-copy,
+.culture-radio-promo-copy { position:relative; z-index:2; }
+.culture-feature-link:hover .culture-feature-image img,
+.culture-video-feature:hover img,
+.culture-radio-promo:hover .culture-radio-promo-image { transform:scale(1.035); }
+
+.culture-music-row img,
+.culture-artist-grid a img,
+.culture-radio-story-image {
+  object-fit:cover; filter:saturate(1.08) contrast(1.04); transition:transform .5s ease, filter .4s ease;
+}
+.culture-music-row:hover img,
+.culture-artist-grid a:hover img { transform:scale(1.04); filter:saturate(1.18) contrast(1.06); }
+
+.culture-story-no-image,
+.culture-music-no-image { background:radial-gradient(circle at 30% 20%,#5c1b87 0,#17101e 42%,#080808 100%); }
+
+.culture-reader-image { background:#111; object-fit:cover; filter:saturate(1.06) contrast(1.03); }
+.culture-reader-body { position:relative; }
+.culture-reader-body::before { content:""; display:block; height:2px; width:80px; background:#9b3df0; margin-bottom:24px; }
+.culture-reader-copy { max-width:760px; }
