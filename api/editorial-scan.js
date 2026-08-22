@@ -1,113 +1,167 @@
-const { createClient } = require('@supabase/supabase-js');
-const { DEFAULT_SOURCES, CULTURE_TERMS, BLOCKED_TERMS } = require('./editorial-config');
-const { parseFeed, relevanceScore, slugify, fingerprint, extractOutputText } = require('./editorial-utils');
+const { createClient } = require('@supabase/supabase-js')
 
-function json(res, status, body) { return res.status(status).json(body); }
-function isAuthorized(req) {
-  const secret = process.env.EDITORIAL_CRON_SECRET || process.env.CRON_SECRET;
-  if (!secret) return false;
-  const auth = req.headers.authorization || '';
-  const provided = auth.startsWith('Bearer ') ? auth.slice(7) : (req.query?.secret || '');
-  return provided === secret;
+const SOURCES = [
+  { name: 'The NATIVE', url: process.env.EDITORIAL_NATIVE_FEED || 'https://thenativemag.com/feed/' },
+  { name: 'PUNCH Entertainment', url: 'https://rss.punchng.com/v1/category/entertainment' },
+  { name: 'PUNCH Interviews', url: 'https://rss.punchng.com/v1/category/interview' },
+  { name: 'PUNCH Special Features', url: 'https://rss.punchng.com/v1/category/special_feature' },
+  { name: 'PUNCH Videos', url: 'https://rss.punchng.com/v1/category/videos' },
+  { name: 'The Guardian Nigeria', url: process.env.EDITORIAL_GUARDIAN_FEED || 'https://guardian.ng/feed/' },
+]
+
+const RELEVANCE_TERMS = [
+  'music','artist','singer','rapper','producer','dj','album','single','ep','mixtape',
+  'afrobeats','afrobeat','alte','hip-hop','hip hop','amapiano','fuji','highlife',
+  'nigeria','nigerian','africa','african','lagos','abuja','accra','ghana','culture',
+  'fashion','film','nollywood','photography','art','creative','creator','festival',
+  'concert','showcase','event','nightlife','radio','podcast','community','dance',
+  'entertainment','visual','design','media','label','recording','streaming'
+]
+
+function decode(value='') {
+  return value
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gi, '$1')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/\s+/g, ' ').trim()
 }
 
-async function openAiDraft(item) {
-  if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not configured.');
-  const model = process.env.EDITORIAL_MODEL || 'gpt-5-mini';
-  const prompt = `You are the launch editorial desk for FOR THE CULTURE, a Nigerian/African music, culture and entertainment platform owned by Galaxy Fire Studios. Create a concise, original news brief from ONLY the supplied feed metadata. Do not reproduce sentences from the source, do not invent facts, quotes, dates or details, and do not imply FOR THE CULTURE witnessed events. Preserve proper names exactly as supplied. The output must be JSON with keys: headline, dek, body, category, tags. Body should be 2-4 short paragraphs, roughly 120-220 words. Make the angle useful to readers interested in African music, culture and creative life. Mention the source publication naturally in the body or dek when appropriate and never hide the source link.
+function tag(block, name) {
+  const re = new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)</${name}>`, 'i')
+  return block.match(re)?.[1] || ''
+}
 
-SOURCE: ${item.source_name}
-TITLE: ${item.title}
-EXCERPT: ${item.excerpt}
-PUBLISHED: ${item.published_at}
-SOURCE URL: ${item.url}`;
+function imageFrom(block) {
+  const media = block.match(/<media:content[^>]+url=["']([^"']+)["']/i)
+    || block.match(/<media:thumbnail[^>]+url=["']([^"']+)["']/i)
+    || block.match(/<enclosure[^>]+url=["']([^"']+)["']/i)
+    || block.match(/<img[^>]+src=["']([^"']+)["']/i)
+  return media?.[1] || ''
+}
+
+function parseFeed(xml, sourceName) {
+  const blocks = xml.match(/<item\b[\s\S]*?<\/item>/gi) || xml.match(/<entry\b[\s\S]*?<\/entry>/gi) || []
+  return blocks.slice(0, 12).map(block => {
+    const rawTitle = tag(block, 'title')
+    const linkMatch = block.match(/<link[^>]+href=["']([^"']+)["']/i)
+    const rawLink = tag(block, 'link') || linkMatch?.[1] || ''
+    const rawDate = tag(block, 'pubDate') || tag(block, 'published') || tag(block, 'updated')
+    const description = tag(block, 'description') || tag(block, 'summary') || tag(block, 'content')
+    return {
+      source_name: sourceName,
+      title: decode(rawTitle),
+      source_url: decode(rawLink),
+      excerpt: decode(description).slice(0, 1000),
+      published_at: rawDate ? new Date(rawDate).toISOString() : new Date().toISOString(),
+      image_url: imageFrom(block),
+    }
+  }).filter(item => item.title && item.source_url)
+}
+
+function relevance(item) {
+  const text = `${item.title} ${item.excerpt}`.toLowerCase()
+  let score = 0
+  for (const term of RELEVANCE_TERMS) if (text.includes(term)) score += term.includes(' ') ? 2 : 1
+  if (/(nigeria|nigerian|africa|african|lagos|abuja|accra|ghana)/i.test(text)) score += 4
+  return Math.min(100, score * 7)
+}
+
+function category(item) {
+  const text = `${item.title} ${item.excerpt}`.toLowerCase()
+  if (/(album|single|ep|singer|rapper|producer|dj|music|afrobeats|afrobeat|alte|amapiano)/.test(text)) return 'MUSIC'
+  if (/(fashion|style|design)/.test(text)) return 'STYLE'
+  if (/(film|nollywood|cinema|movie)/.test(text)) return 'FILM'
+  if (/(art|photograph|visual|creative)/.test(text)) return 'ART'
+  if (/(concert|festival|showcase|event|nightlife)/.test(text)) return 'EVENTS'
+  return 'CULTURE'
+}
+
+async function draftStory(item) {
+  if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not configured')
+
+  const prompt = `You are the editorial desk for FOR THE CULTURE, an African music, culture and entertainment platform by Galaxy Fire Studios.
+Create a concise ORIGINAL news brief from the supplied source metadata. Do not copy phrases or reproduce the source article. Do not invent facts.
+Return strict JSON with: headline, dek, body, category.
+The body should be 2-4 short paragraphs and clearly attribute factual reporting to the named source where appropriate.
+Source: ${item.source_name}
+Original headline: ${item.title}
+Original URL: ${item.source_url}
+Source excerpt: ${item.excerpt}
+Suggested category: ${category(item)}`
 
   const response = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-    body: JSON.stringify({ model, input: prompt, text: { format: { type: 'json_object' } } }),
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error?.message || `OpenAI request failed (${response.status}).`);
-  const raw = extractOutputText(data);
-  const parsed = JSON.parse(raw);
-  if (!parsed.headline || !parsed.body) throw new Error('OpenAI returned an incomplete editorial draft.');
-  return parsed;
+    headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: process.env.EDITORIAL_MODEL || 'gpt-5-mini',
+      input: prompt,
+      text: { format: { type: 'json_object' } },
+      max_output_tokens: 900
+    })
+  })
+  if (!response.ok) throw new Error(`OpenAI returned ${response.status}: ${await response.text()}`)
+  const data = await response.json()
+  const text = data.output_text || data.output?.flatMap(x => x.content || []).map(x => x.text || '').join('') || ''
+  return JSON.parse(text)
 }
 
 module.exports = async (req, res) => {
-  if (req.method !== 'GET' && req.method !== 'POST') return json(res, 405, { ok: false, message: 'Method not allowed.' });
-  if (!isAuthorized(req)) return json(res, 401, { ok: false, message: 'Unauthorized editorial scan.' });
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) return json(res, 500, { ok: false, message: 'Supabase server credentials are missing.' });
+  const expected = process.env.EDITORIAL_CRON_SECRET || process.env.CRON_SECRET
+  const auth = req.headers.authorization || ''
+  const bearer = auth.startsWith('Bearer ') ? auth.slice(7) : ''
+  const supplied = req.headers['x-editorial-secret'] || req.query?.secret || bearer
+  if (!expected || supplied !== expected) return res.status(401).json({ error: 'Unauthorized' })
+  if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-  const started = Date.now();
-  const results = { sources: 0, fetched: 0, relevant: 0, published: 0, skipped: 0, errors: [] };
+  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+  const results = []
 
   try {
-    let { data: dbSources, error: sourceError } = await supabase.from('editorial_sources').select('*').eq('enabled', true);
-    if (sourceError) throw sourceError;
-    const sources = dbSources?.length ? dbSources : DEFAULT_SOURCES;
-    results.sources = sources.length;
-
-    for (const source of sources) {
+    for (const source of SOURCES) {
       try {
-        const response = await fetch(source.feed_url, { headers: { 'User-Agent': 'FOR-THE-CULTURE-Editorial-Radar/1.0' } });
-        if (!response.ok) throw new Error(`Feed returned ${response.status}`);
-        const xml = await response.text();
-        const items = parseFeed(xml, source);
-        results.fetched += items.length;
+        const response = await fetch(source.url, { headers: { 'User-Agent': 'FOR-THE-CULTURE-Editorial-Radar/1.0' } })
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        const xml = await response.text()
+        const items = parseFeed(xml, source.name)
+        for (const item of items) {
+          const score = relevance(item)
+          if (score < 28) continue
 
-        for (const item of items.slice(0, 12)) {
-          const score = relevanceScore(item, CULTURE_TERMS, BLOCKED_TERMS);
-          if (score < Number(process.env.EDITORIAL_MIN_SCORE || 16)) { results.skipped++; continue; }
-          results.relevant++;
-          const sourceFingerprint = fingerprint(item);
+          const { data: existing } = await supabase.from('editorial_stories').select('id').eq('source_url', item.source_url).maybeSingle()
+          if (existing) continue
 
-          const { data: existing } = await supabase.from('editorial_stories').select('id,status').eq('source_fingerprint', sourceFingerprint).maybeSingle();
-          if (existing) { results.skipped++; continue; }
-
-          let draft;
-          try {
-            draft = await openAiDraft(item);
-          } catch (error) {
-            results.errors.push(`${source.name}: ${error.message}`);
-            continue;
-          }
-
-          const record = {
+          const draft = await draftStory(item)
+          const row = {
             source_name: item.source_name,
             source_url: item.source_url,
-            original_url: item.url,
-            original_title: item.title,
-            original_excerpt: item.excerpt,
-            original_published_at: item.published_at,
-            source_fingerprint: sourceFingerprint,
+            source_title: item.title,
+            source_excerpt: item.excerpt,
+            image_url: item.image_url || null,
+            source_published_at: item.published_at,
             relevance_score: score,
-            headline: String(draft.headline).slice(0, 180),
-            dek: String(draft.dek || '').slice(0, 420),
-            body: String(draft.body).slice(0, 12000),
-            category: String(draft.category || item.source_category || 'Culture').slice(0, 80),
-            tags: Array.isArray(draft.tags) ? draft.tags.slice(0, 10).map(String) : [],
-            slug: `${slugify(draft.headline)}-${sourceFingerprint.slice(0, 8)}`,
+            headline: draft.headline,
+            dek: draft.dek,
+            body: draft.body,
+            category: draft.category || category(item),
             status: 'published',
-            auto_published: true,
-            published_at: new Date().toISOString(),
-          };
-          const { error: insertError } = await supabase.from('editorial_stories').insert(record);
-          if (insertError) { results.errors.push(`${source.name}: ${insertError.message}`); continue; }
-          results.published += 1;
-          if (results.published >= Number(process.env.EDITORIAL_MAX_PER_RUN || 5)) break;
+            published_at: new Date().toISOString()
+          }
+
+          const { error } = await supabase.from('editorial_stories').insert(row)
+          if (error) throw error
+          results.push({ source: source.name, title: row.headline })
+          if (results.length >= 5) break
         }
-        if (results.published >= Number(process.env.EDITORIAL_MAX_PER_RUN || 5)) break;
-      } catch (error) {
-        results.errors.push(`${source.name}: ${error.message}`);
+      } catch (sourceError) {
+        results.push({ source: source.name, error: sourceError.message })
       }
+      if (results.filter(x => !x.error).length >= 5) break
     }
 
-    return json(res, 200, { ok: true, duration_ms: Date.now() - started, ...results, auto_publish: true });
+    return res.status(200).json({ ok: true, published: results.filter(x => !x.error).length, results })
   } catch (error) {
-    console.error('Editorial scan error:', error);
-    return json(res, 500, { ok: false, message: error.message, ...results });
+    console.error('editorial-scan:', error)
+    return res.status(500).json({ error: error.message })
   }
-};
+}

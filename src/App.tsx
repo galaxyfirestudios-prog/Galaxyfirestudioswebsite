@@ -48,11 +48,6 @@ import cultureArt from "@/imports/for-the-culture.webp";
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [editorialStories, setEditorialStories] = useState<Array<{
-    id: number; headline: string; dek?: string; body: string; category: string;
-    source_name: string; original_url: string; published_at?: string; auto_published?: boolean;
-  }>>([]);
-  const [editorialLoaded, setEditorialLoaded] = useState(false);
   const [visualSlide, setVisualSlide] = useState(0);
   const [visualPaused, setVisualPaused] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -60,6 +55,38 @@ export default function App() {
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState("");
   const [paymentReference, setPaymentReference] = useState("");
+  const [cultureStories, setCultureStories] = useState([]);
+  const [cultureFeedStatus, setCultureFeedStatus] = useState("loading");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCultureStories() {
+      try {
+        setCultureFeedStatus("loading");
+        const response = await fetch("/api/editorial-feed?limit=6", {
+          headers: { Accept: "application/json" },
+        });
+        if (!response.ok) throw new Error(`Editorial feed returned ${response.status}`);
+        const data = await response.json();
+        if (!cancelled) {
+          const stories = Array.isArray(data.stories) ? data.stories : [];
+          setCultureStories(stories);
+          setCultureFeedStatus(stories.length ? "ready" : "empty");
+        }
+      } catch (error) {
+        console.error("FOR THE CULTURE editorial feed:", error);
+        if (!cancelled) {
+          setCultureStories([]);
+          setCultureFeedStatus("error");
+        }
+      }
+    }
+
+    loadCultureStories();
+    return () => { cancelled = true; };
+  }, []);
+
   const [booking, setBooking] = useState({
     service: "The Fire Session",
     date: "",
@@ -237,20 +264,6 @@ export default function App() {
   const updateBooking = (field: string, value: string) => {
     setBooking((current) => ({ ...current, [field]: value }));
   };
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/editorial-feed?limit=6')
-      .then((response) => response.ok ? response.json() : { stories: [] })
-      .then((data) => {
-        if (!cancelled) {
-          setEditorialStories(Array.isArray(data.stories) ? data.stories : []);
-          setEditorialLoaded(true);
-        }
-      })
-      .catch(() => { if (!cancelled) setEditorialLoaded(true); });
-    return () => { cancelled = true; };
-  }, []);
 
   useEffect(() => {
     const existing = document.querySelector('script[src="https://js.paystack.co/v2/inline.js"]');
@@ -1104,23 +1117,49 @@ export default function App() {
             <div className="culture-content-grid">
               <section className="culture-stories-block">
                 <div className="culture-section-head"><h3>LATEST STORIES</h3><a href="#blog">VIEW ALL STORIES →</a></div>
-                <div className="culture-story-grid">
-                  {(editorialStories.length ? editorialStories : [
-                    { id: 1, category: 'MUSIC', headline: 'THE VOICES DEFINING THE NEXT WAVE', source_name: 'FOR THE CULTURE', original_url: '#blog', published_at: '2026-08-22' },
-                    { id: 2, category: 'STYLE', headline: 'WHY AFRICAN VISUAL CULTURE KEEPS MOVING FORWARD', source_name: 'FOR THE CULTURE', original_url: '#blog', published_at: '2026-08-22' },
-                    { id: 3, category: 'ARTISTS', headline: 'MEET THE CREATORS MAKING THEIR OWN RULES', source_name: 'FOR THE CULTURE', original_url: '#blog', published_at: '2026-08-22' },
-                  ]).slice(0, 3).map((story, index) => {
-                    const storyImage = [visual02, visual06, visual12][index] || visual02;
-                    const date = story.published_at ? new Date(story.published_at).toLocaleDateString('en-NG', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
-                    return (
-                      <a href={story.original_url || '#blog'} target={story.original_url?.startsWith('http') ? '_blank' : undefined} rel={story.original_url?.startsWith('http') ? 'noreferrer' : undefined} className="culture-story-card" key={story.id}>
-                        <img src={storyImage} alt="FOR THE CULTURE editorial story" loading="lazy" />
-                        <div><span>{story.category || 'CULTURE'}</span><h4>{story.headline}</h4><small>{story.source_name || 'FOR THE CULTURE'} · {date}</small></div>
+                {cultureFeedStatus === "ready" ? (
+                  <div className="culture-story-grid">
+                    {cultureStories.slice(0, 6).map((story) => (
+                      <a
+                        href={story.source_url || "#"}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="culture-story-card culture-live-story-card"
+                        key={story.id || story.source_url}
+                      >
+                        {story.image_url ? (
+                          <img
+                            src={story.image_url}
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                            referrerPolicy="no-referrer"
+                            onError={(event) => { event.currentTarget.style.display = "none"; }}
+                          />
+                        ) : (
+                          <div className="culture-story-no-image" aria-hidden="true">FOR THE CULTURE</div>
+                        )}
+                        <div>
+                          <span>{story.category || "CULTURE"}</span>
+                          <h4>{story.headline || story.title}</h4>
+                          <small>{story.source_name || "FOR THE CULTURE"} · {story.published_at ? new Date(story.published_at).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" }) : "Latest"}</small>
+                        </div>
                       </a>
-                    );
-                  })}
-                </div>
-                {editorialLoaded && editorialStories.length > 0 && <div className="culture-editorial-status">● AUTO-PUBLISHED EDITORIAL RADAR IS LIVE · SOURCES ARE ATTRIBUTED BELOW EACH STORY</div>}
+                    ))}
+                  </div>
+                ) : (
+                  <div className={`culture-editorial-state ${cultureFeedStatus}`}>
+                    <div className="culture-editorial-state-mark">●</div>
+                    <div>
+                      <strong>{cultureFeedStatus === "loading" ? "LOADING THE CULTURE RADAR" : "EDITORIAL RADAR INITIALIZING"}</strong>
+                      <p>
+                        {cultureFeedStatus === "loading"
+                          ? "Checking the latest stories from our editorial sources."
+                          : "No published stories are available yet. The newsroom is checking the culture radar."}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </section>
 
               <aside className="culture-radio-card" id="radio">
@@ -2553,6 +2592,16 @@ export default function App() {
         @media (min-width: 1400px) {
           .store-grid { grid-template-columns: repeat(5,1fr); }
         }
+        .culture-live-story-card { min-height: 100%; }
+        .culture-live-story-card img { width:100%; aspect-ratio: 16 / 10; object-fit:cover; display:block; background:#111; }
+        .culture-story-no-image { width:100%; aspect-ratio:16 / 10; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#130d1b,#050505); color:#a96cff; font-size:12px; font-weight:800; letter-spacing:.16em; }
+        .culture-editorial-state { grid-column:1 / -1; min-height:190px; display:flex; align-items:center; gap:18px; padding:28px; border:1px solid #25202b; background:#090909; }
+        .culture-editorial-state-mark { width:34px; height:34px; border-radius:50%; display:grid; place-items:center; color:#9b5cff; background:#1a1026; box-shadow:0 0 24px rgba(155,92,255,.2); }
+        .culture-editorial-state.loading .culture-editorial-state-mark { animation:culturePulse 1.2s ease-in-out infinite; }
+        .culture-editorial-state strong { font-size:13px; letter-spacing:.12em; }
+        .culture-editorial-state p { margin:7px 0 0; color:#888; font-size:13px; line-height:1.6; max-width:620px; }
+        @keyframes culturePulse { 50% { transform:scale(.72); opacity:.45; } }
+
         /* FOR THE CULTURE — editorial platform homepage */
         .culture-platform { background:#050505; color:#fff; overflow:hidden; border-top:1px solid #171717; }
         .culture-platform-topline { min-height:38px; padding:0 4.5%; display:flex; align-items:center; justify-content:space-between; gap:20px; border-bottom:1px solid #1d1d1d; color:#9f9f9f; font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:900; letter-spacing:1.5px; }
@@ -2622,7 +2671,6 @@ export default function App() {
         .culture-video-feature { position:relative; overflow:hidden; }.culture-video-feature img{width:100%;height:260px;object-fit:cover;filter:saturate(.75)}.culture-video-feature button{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:54px;height:54px;border-radius:50%;border:1px solid #fff;background:rgba(0,0,0,.45);color:#fff;cursor:pointer}.culture-video-feature span{position:absolute;left:12px;bottom:12px;color:#b66cff;font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:900;letter-spacing:1.5px}
         .culture-event-row { display:grid; grid-template-columns:48px 1fr auto; gap:10px; align-items:center; padding:15px 0; border-bottom:1px solid #1d1d1d; }.culture-event-row>b{color:#b66cff;font-family:'Barlow Condensed',sans-serif;font-size:9px;line-height:1}.culture-event-row>b strong{font-size:23px}.culture-event-row div strong,.culture-event-row div small{display:block}.culture-event-row div strong{font-size:11px}.culture-event-row div small{color:#555;font-size:8px;margin-top:4px}.culture-event-row>a{color:#b66cff;font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:900}
         .culture-artist-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }.culture-artist-grid a{position:relative;overflow:hidden;aspect-ratio:1/1}.culture-artist-grid img{width:100%;height:100%;object-fit:cover;filter:saturate(.65);transition:transform .3s}.culture-artist-grid a:hover img{transform:scale(1.06)}.culture-artist-grid span{position:absolute;left:6px;bottom:6px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:7px;font-weight:900;letter-spacing:.8px;text-shadow:0 2px 8px #000}
-        .culture-editorial-status { margin-top:12px; color:#555; font-family:'Barlow Condensed',sans-serif; font-size:8px; font-weight:900; letter-spacing:1.1px; }
         .culture-manifesto { margin-top:18px; padding:35px; display:grid; grid-template-columns:1fr 1.2fr auto; gap:35px; align-items:center; background:linear-gradient(105deg,#140d1a,#080808); border:1px solid #30243a; position:relative; overflow:hidden; }.culture-manifesto::before{content:"";position:absolute;right:-100px;top:-100px;width:300px;height:300px;border-radius:50%;background:rgba(143,53,220,.13);filter:blur(10px)}.culture-manifesto>div,.culture-manifesto>p,.culture-manifesto>a{position:relative;z-index:1}.culture-manifesto h3{font-family:'Barlow Condensed',sans-serif;font-size:52px;line-height:.8;margin:12px 0 0}.culture-manifesto h3 em{color:#b66cff;font-style:normal}.culture-manifesto p{color:#777;font-size:12px;line-height:1.7;margin:0}
         @media (max-width:1100px){.culture-platform-shell{grid-template-columns:190px minmax(0,1fr)}.culture-brand-rail{padding-left:25px}.culture-platform-columns{grid-template-columns:1fr 1fr}.culture-radio-promo{grid-column:1/-1;min-height:260px}.culture-platform-columns.lower{grid-template-columns:1fr 1fr}.culture-artist-grid{grid-template-columns:repeat(4,1fr)}.culture-manifesto{grid-template-columns:1fr 1fr}.culture-manifesto .culture-action{justify-self:start}}
         @media (max-width:800px){.culture-platform-topline{padding:0 5%;font-size:8px}.culture-platform-live{display:none}.culture-platform-shell{display:block}.culture-brand-rail{padding:20px 5%;border-right:0;border-bottom:1px solid #222;display:grid;grid-template-columns:85px 1fr;column-gap:16px;align-items:center}.culture-brand-art{width:85px;height:85px}.culture-brand-kicker{margin:0}.culture-brand-rail p{grid-column:2;margin:7px 0 0}.culture-platform-main{padding:0 5% 45px}.culture-platform-nav{height:56px;gap:20px}.culture-platform-nav a{padding:20px 0 17px}.culture-hero-story{grid-template-columns:1fr;min-height:0}.culture-hero-copy{padding:40px 0 20px;order:2}.culture-hero-image-wrap{order:1}.culture-hero-image{height:390px;min-height:390px}.culture-hero-copy h2{font-size:clamp(52px,15vw,82px)}.culture-hero-controls{left:0;bottom:auto;top:365px}.culture-content-grid,.culture-platform-columns,.culture-platform-columns.lower{grid-template-columns:1fr}.culture-story-grid{grid-template-columns:1fr 1fr}.culture-radio-promo{grid-column:auto}.culture-manifesto{grid-template-columns:1fr;gap:20px;padding:25px}.culture-manifesto h3{font-size:45px}}

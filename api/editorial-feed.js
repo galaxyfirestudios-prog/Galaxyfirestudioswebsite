@@ -1,15 +1,40 @@
-const { createClient } = require('@supabase/supabase-js');
+const { createClient } = require('@supabase/supabase-js')
+
+function json(res, status, body) {
+  res.status(status).setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300')
+  return res.status(status).json(body)
+}
+
 module.exports = async (req, res) => {
-  if (req.method !== 'GET') return res.status(405).json({ stories: [] });
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) return res.status(200).json({ stories: [], configured: false });
-  try {
-    const limit = Math.min(Math.max(Number(req.query?.limit || 6), 1), 12);
-    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-    const { data, error } = await supabase.from('editorial_stories').select('id,headline,dek,body,category,tags,source_name,original_url,published_at,auto_published').eq('status', 'published').order('published_at', { ascending: false }).limit(limit);
-    if (error) throw error;
-    return res.status(200).json({ stories: data || [], configured: true });
-  } catch (error) {
-    console.error('Editorial feed error:', error);
-    return res.status(200).json({ stories: [], configured: true });
+  if (req.method !== 'GET') return json(res, 405, { error: 'Method not allowed' })
+
+  const url = process.env.SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!url || !key) {
+    return json(res, 503, { error: 'Editorial feed is not configured', stories: [] })
   }
-};
+
+  try {
+    const supabase = createClient(url, key)
+    const limit = Math.min(Math.max(Number(req.query?.limit || 6), 1), 12)
+
+    const { data, error } = await supabase
+      .from('editorial_stories')
+      .select('id,headline,dek,category,source_name,source_url,image_url,published_at')
+      .eq('status', 'published')
+      .order('published_at', { ascending: false })
+      .limit(limit)
+
+    if (error) throw error
+
+    return json(res, 200, {
+      stories: data || [],
+      count: data?.length || 0,
+      source: 'FOR THE CULTURE Editorial Engine'
+    })
+  } catch (error) {
+    console.error('editorial-feed:', error)
+    return json(res, 500, { error: 'Editorial feed unavailable', stories: [] })
+  }
+}

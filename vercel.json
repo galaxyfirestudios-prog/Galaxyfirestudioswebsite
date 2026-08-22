@@ -17,9 +17,6 @@
     },
     "api/verify-store-payment.js": {
       "maxDuration": 10
-    },
-    "api/editorial-scan.js": {
-      "maxDuration": 60
     }
   },
   "rewrites": [
