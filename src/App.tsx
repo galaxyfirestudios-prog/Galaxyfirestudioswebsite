@@ -58,10 +58,7 @@ export default function App() {
   const [cultureStories, setCultureStories] = useState([]);
   const [cultureFeedStatus, setCultureFeedStatus] = useState("loading");
   const [cultureActiveTab, setCultureActiveTab] = useState("home");
-  const [selectedCultureStory, setSelectedCultureStory] = useState<any | null>(null);
-  const [radioNowPlaying, setRadioNowPlaying] = useState<any | null>(null);
-  const [radioPlaying, setRadioPlaying] = useState(false);
-  const radioAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [cultureReaderStory, setCultureReaderStory] = useState<any | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -129,31 +126,13 @@ export default function App() {
   }, [cultureStories]);
 
   useEffect(() => {
-    let cancelled = false;
-    let timer: ReturnType<typeof setInterval> | undefined;
-    async function loadNowPlaying() {
-      try {
-        const response = await fetch(`${import.meta.env.BASE_URL}radio-now-playing.json?ts=${Date.now()}`, { cache: "no-store", headers: { Accept: "application/json" } });
-        if (!response.ok) return;
-        const data = await response.json();
-        if (!cancelled && data && typeof data === "object") setRadioNowPlaying(data);
-      } catch (error) {
-        console.warn("FOR THE CULTURE radio metadata unavailable:", error);
-      }
-    }
-    loadNowPlaying();
-    timer = setInterval(loadNowPlaying, 30 * 1000);
-    return () => { cancelled = true; if (timer) clearInterval(timer); };
-  }, []);
-
-  useEffect(() => {
-    const audio = radioAudioRef.current;
-    if (!audio || !radioNowPlaying?.stream_url) return;
-    if (audio.src !== radioNowPlaying.stream_url) {
-      audio.src = radioNowPlaying.stream_url;
-      audio.load();
-    }
-  }, [radioNowPlaying?.stream_url]);
+    if (!cultureReaderStory) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeCultureStory();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [cultureReaderStory]);
 
   const [booking, setBooking] = useState({
     service: "The Fire Session",
@@ -196,9 +175,6 @@ export default function App() {
   const featureStory = visualStories[0] || storyAt(1) || heroStory;
   const videoStory = storyAt(3) || storyAt(2) || heroStory;
   const radioStory = storyAt(4) || storyAt(2) || heroStory;
-  const radioArtist = radioNowPlaying?.artist || "FOR THE CULTURE RADIO";
-  const radioTitle = radioNowPlaying?.title || "LIVE RADIO";
-  const radioArtwork = radioNowPlaying?.artwork_url || cultureArt;
   const artistStories = musicStories.length ? musicStories.slice(0, 4) : editorialStories.slice(0, 4);
   const newMusicStories = musicStories.length ? musicStories.slice(0, 3) : editorialStories.slice(0, 3);
   const featuredEventStories = eventStories.length ? eventStories.slice(0, 3) : editorialStories.slice(0, 3);
@@ -207,11 +183,21 @@ export default function App() {
   const storyTitle = (story: any) => story?.headline || story?.title || "Latest from the culture";
   const storyDek = (story: any) => story?.dek || story?.source_excerpt || "The FOR THE CULTURE editorial desk is following the story.";
   const storyDate = (story: any) => story?.published_at ? new Date(story.published_at).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" }) : "Latest";
+  const openCultureStory = (story: any) => {
+    setCultureReaderStory(story || null);
+    if (story) {
+      document.body.style.overflow = "hidden";
+    }
+  };
+  const closeCultureStory = () => {
+    setCultureReaderStory(null);
+    document.body.style.overflow = "";
+  };
   const storyLinkProps = (story: any) => ({
-    href: "#culture-reader",
-    onClick: (event: any) => {
+    href: "#culture-story-reader",
+    onClick: (event: React.MouseEvent<HTMLAnchorElement>) => {
       event.preventDefault();
-      setSelectedCultureStory(story);
+      openCultureStory(story);
     },
   });
   const cultureTabs = [
@@ -1267,25 +1253,17 @@ export default function App() {
 
               <aside className="culture-radio-card" id="culture-radio">
                 <div className="culture-section-head"><h3>RADIO</h3><a href="#culture-radio">OPEN RADIO →</a></div>
-                <div className="culture-live-radio">
-                  <div className="culture-radio-art-wrap">
-                    <img className="culture-radio-story-image" src={radioArtwork} alt={`${radioArtist} artwork`} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
-                    <span className="culture-radio-live-dot">● LIVE</span>
-                  </div>
-                  <div className="culture-on-air"><span>NOW PLAYING</span><small>{radioNowPlaying?.show || "FOR THE CULTURE RADIO"}</small></div>
-                  <h4>{radioTitle}</h4>
-                  <p className="culture-radio-artist">{radioArtist}</p>
-                  {radioNowPlaying?.dj && <p className="culture-radio-dj">DJ / HOST: {radioNowPlaying.dj}</p>}
-                  <button type="button" className="culture-radio-button" onClick={async () => {
-                    const audio = radioAudioRef.current;
-                    if (!audio || !radioNowPlaying?.stream_url) return;
-                    if (audio.paused) { try { await audio.play(); setRadioPlaying(true); } catch (error) { console.warn("Radio playback could not start:", error); } }
-                    else { audio.pause(); setRadioPlaying(false); }
-                  }}>
-                    {radioNowPlaying?.stream_url ? (radioPlaying ? "PAUSE RADIO" : "LISTEN LIVE") : "RADIO METADATA"} <span>{radioNowPlaying?.stream_url ? "→" : "•"}</span>
-                  </button>
-                  <audio ref={radioAudioRef} preload="none" onPlay={() => setRadioPlaying(true)} onPause={() => setRadioPlaying(false)} onEnded={() => setRadioPlaying(false)} />
-                </div>
+                {radioStory ? (
+                  <>
+                    {storyImage(radioStory) && <img className="culture-radio-story-image" src={storyImage(radioStory)} alt={storyTitle(radioStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" />}
+                    <div className="culture-on-air"><span>EDITORIAL UPDATE</span><small>{radioStory.source_name || "FOR THE CULTURE"}</small></div>
+                    <h4>{storyTitle(radioStory)}</h4>
+                    <p>{storyDek(radioStory)}</p>
+                    <a {...storyLinkProps(radioStory)} className="culture-radio-button">READ THE STORY <span>→</span></a>
+                  </>
+                ) : (
+                  <><div className="culture-on-air"><span>RADIO</span><small>FOR THE CULTURE</small></div><h4>THE CULTURE<br />NEVER STOPS.</h4><p>The radio experience will connect here as the station infrastructure comes online.</p><a href="#radio" className="culture-radio-button">OPEN RADIO <span>→</span></a></>
+                )}
               </aside>
             </div>
 
@@ -1312,7 +1290,7 @@ export default function App() {
 
               <section className="culture-panel culture-radio-promo">
                 {storyImage(radioStory) ? <img className="culture-radio-promo-image" src={storyImage(radioStory)} alt={storyTitle(radioStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" /> : <div className="culture-editorial-visual-fallback"><span>FOR THE<br />CULTURE</span></div>}
-                <div className="culture-radio-promo-copy"><span>NOW PLAYING</span><h3>{radioTitle}<br /><em>{radioArtist}</em></h3><p>{radioNowPlaying?.show || "FOR THE CULTURE RADIO"}</p><button type="button" className="culture-action" onClick={() => { if (radioStory) setSelectedCultureStory(radioStory); }}>OPEN LATEST STORY →</button></div>
+                <div className="culture-radio-promo-copy"><span>EDITORIAL RADAR</span><h3>WHAT'S<br />MOVING<br /><em>NOW.</em></h3><p>{radioStory ? storyDek(radioStory) : "Live culture stories, written and curated by the FOR THE CULTURE editorial engine."}</p><a href={radioStory ? storyUrl(radioStory) : "#culture-stories"} className="culture-action">READ THE LATEST →</a></div>
               </section>
             </div>
 
@@ -1344,45 +1322,21 @@ export default function App() {
         </div>
       </section>
 
-      {selectedCultureStory && (
-        <div className="culture-reader-backdrop" id="culture-reader" role="dialog" aria-modal="true" aria-label="FOR THE CULTURE story reader" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedCultureStory(null); }}>
-          <article className="culture-reader">
-            <button type="button" className="culture-reader-close" aria-label="Close story" onClick={() => setSelectedCultureStory(null)}>×</button>
-            {storyImage(selectedCultureStory) && <img className="culture-reader-image" src={storyImage(selectedCultureStory)} alt={storyTitle(selectedCultureStory)} />}
-            <div className="culture-reader-body">
-              <span className="culture-label">{selectedCultureStory.category || "CULTURE"} · {selectedCultureStory.source_name || "FOR THE CULTURE"}</span>
-              <h2>{storyTitle(selectedCultureStory)}</h2>
-              <p className="culture-reader-dek">{storyDek(selectedCultureStory)}</p>
-              <div className="culture-reader-copy">{String(selectedCultureStory.body || selectedCultureStory.source_excerpt || "").split(/\n{2,}/).filter(Boolean).map((paragraph: string, index: number) => <p key={index}>{paragraph}</p>)}</div>
-              <div className="culture-reader-meta">Published {storyDate(selectedCultureStory)}</div>
-              {selectedCultureStory.source_url && <a href={selectedCultureStory.source_url} target="_blank" rel="noreferrer" className="culture-reader-source">READ THE ORIGINAL SOURCE ↗</a>}
-            </div>
-          </article>
-        </div>
-      )}
-
-      {/* FOR THE CULTURE LIVE RADIO */}
+      {/* ECOSYSTEM COMING SOON */}
       <section className="ecosystem-preview" id="studio-radio-preview">
-        <div className="ecosystem-preview-inner culture-live-radio-section">
+        <div className="ecosystem-preview-inner">
           <div>
             <div className="section-number">09 / RADIO</div>
             <h2>FOR THE<br /><span>CULTURE RADIO.</span></h2>
             <p>
-              Live station playback, now-playing artwork, artist and song information, guest mixes,
-              artist spotlights and original FOR THE CULTURE shows.
+              The live station is coming. This space will become the home for the FOR THE CULTURE
+              stream, now-playing information, guest mixes, artist spotlights and original shows.
             </p>
           </div>
-          <div className="ecosystem-status culture-now-playing-panel">
-            <img src={radioArtwork} alt={`${radioArtist} artwork`} className="culture-now-playing-art" loading="lazy" decoding="async" />
-            <span>● NOW PLAYING</span>
-            <strong>{radioTitle}</strong>
-            <small>{radioArtist}{radioNowPlaying?.dj ? ` · DJ ${radioNowPlaying.dj}` : ""}</small>
-            <button type="button" className="culture-radio-button" onClick={async () => {
-              const audio = radioAudioRef.current;
-              if (!audio || !radioNowPlaying?.stream_url) return;
-              if (audio.paused) { try { await audio.play(); setRadioPlaying(true); } catch (error) { console.warn("Radio playback could not start:", error); } }
-              else { audio.pause(); setRadioPlaying(false); }
-            }}>{radioNowPlaying?.stream_url ? (radioPlaying ? "PAUSE RADIO" : "LISTEN LIVE") : "CONNECT RADIO STREAM"} <span>→</span></button>
+          <div className="ecosystem-status">
+            <span>STATUS</span>
+            <strong>COMING SOON</strong>
+            <small>LIVE INTERNET RADIO WILL BE CONNECTED HERE.</small>
           </div>
         </div>
       </section>
@@ -1733,6 +1687,42 @@ export default function App() {
         </div>
       </section>
 
+      {cultureReaderStory && (
+        <div className="culture-story-reader" id="culture-story-reader" role="dialog" aria-modal="true" aria-labelledby="culture-story-reader-title">
+          <div className="culture-story-reader-backdrop" onClick={closeCultureStory} />
+          <article className="culture-story-reader-card">
+            <button type="button" className="culture-story-reader-close" onClick={closeCultureStory} aria-label="Close story reader">×</button>
+            {storyImage(cultureReaderStory) && (
+              <img
+                className="culture-story-reader-image"
+                src={storyImage(cultureReaderStory)}
+                alt={storyTitle(cultureReaderStory)}
+                loading="eager"
+                decoding="async"
+                referrerPolicy="no-referrer"
+              />
+            )}
+            <div className="culture-story-reader-content">
+              <div className="culture-story-reader-meta">
+                <span>{cultureReaderStory.category || "CULTURE"}</span>
+                <span>{cultureReaderStory.source_name || "FOR THE CULTURE"}</span>
+                <span>{storyDate(cultureReaderStory)}</span>
+              </div>
+              <h2 id="culture-story-reader-title">{storyTitle(cultureReaderStory)}</h2>
+              <p className="culture-story-reader-dek">{storyDek(cultureReaderStory)}</p>
+              <div className="culture-story-reader-body">
+                {(cultureReaderStory.body || cultureReaderStory.source_excerpt || "The FOR THE CULTURE editorial desk is following this story.")
+                  .split(/\n\s*\n|(?<=\.)\s{2,}/)
+                  .map((paragraph: string, index: number) => paragraph.trim() ? <p key={index}>{paragraph.trim()}</p> : null)}
+              </div>
+              {storyUrl(cultureReaderStory) !== "#" && (
+                <a className="culture-story-reader-source" href={storyUrl(cultureReaderStory)} target="_blank" rel="noreferrer">READ THE ORIGINAL SOURCE ↗</a>
+              )}
+            </div>
+          </article>
+        </div>
+      )}
+
       {bookingOpen && (
         <div className="booking-modal" role="dialog" aria-modal="true" aria-labelledby="booking-title">
           <div className="booking-modal-backdrop" onClick={closeBooking} />
@@ -2070,6 +2060,19 @@ export default function App() {
         /* BOOKING */
         .booking { min-height: 750px; position: relative; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
         .booking-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+        .culture-story-reader { position: fixed; inset: 0; z-index: 12000; display: grid; place-items: center; padding: 24px; }
+        .culture-story-reader-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.9); backdrop-filter: blur(12px); }
+        .culture-story-reader-card { position: relative; z-index: 1; width: min(980px, 100%); max-height: 94vh; overflow-y: auto; background: #080808; border: 1px solid #2a2a2a; box-shadow: 0 40px 140px rgba(0,0,0,.75); }
+        .culture-story-reader-close { position: absolute; z-index: 3; top: 16px; right: 16px; width: 44px; height: 44px; border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.72); color: #fff; font-size: 32px; line-height: 1; cursor: pointer; }
+        .culture-story-reader-image { display: block; width: 100%; max-height: 430px; object-fit: cover; border-bottom: 1px solid #242424; }
+        .culture-story-reader-content { padding: clamp(28px, 5vw, 58px); }
+        .culture-story-reader-meta { display: flex; flex-wrap: wrap; gap: 12px 22px; color: #a86cff; font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+        .culture-story-reader-content h2 { margin: 18px 0 16px; max-width: 850px; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(46px, 7vw, 88px); line-height: .9; text-transform: uppercase; }
+        .culture-story-reader-dek { max-width: 760px; margin: 0 0 30px; color: #aaa; font-size: 18px; line-height: 1.6; }
+        .culture-story-reader-body { max-width: 760px; color: #e1e1e1; font-size: 17px; line-height: 1.8; }
+        .culture-story-reader-body p { margin: 0 0 22px; }
+        .culture-story-reader-source { display: inline-flex; margin-top: 12px; padding: 14px 18px; background: #9d43f5; color: #fff; text-decoration: none; font-size: 11px; font-weight: 900; letter-spacing: .12em; }
+
         .booking-overlay { position: absolute; inset: 0; background: linear-gradient(rgba(0,0,0,.72), rgba(0,0,0,.92)); }
         .booking-content { position: relative; z-index: 1; max-width: 900px; padding: 0 5%; }
         .booking-content h2 { font-size: clamp(55px, 8vw, 110px); }
@@ -2405,6 +2408,14 @@ export default function App() {
           .ecosystem-status { width: 100%; min-width: 0; }
           .stats { gap: 25px; }
           .contact-details { flex-direction: column; gap: 25px; align-items: center; }
+          .culture-story-reader { padding: 10px; }
+          .culture-story-reader-card { max-height: 96vh; }
+          .culture-story-reader-image { max-height: 260px; }
+          .culture-story-reader-content { padding: 28px 20px 34px; }
+          .culture-story-reader-content h2 { font-size: clamp(40px, 14vw, 68px); }
+          .culture-story-reader-dek { font-size: 16px; }
+          .culture-story-reader-body { font-size: 16px; line-height: 1.7; }
+
           .booking-modal { padding: 10px; }
           .booking-modal-card { padding: 35px 20px 25px; max-height: 96vh; }
           .booking-form-grid, .payment-options { grid-template-columns: 1fr; }
@@ -2762,31 +2773,6 @@ export default function App() {
         .culture-editorial-state strong { font-size:13px; letter-spacing:.12em; }
         .culture-editorial-state p { margin:7px 0 0; color:#888; font-size:13px; line-height:1.6; max-width:620px; }
         @keyframes culturePulse { 50% { transform:scale(.72); opacity:.45; } }
-
-
-        .culture-radio-art-wrap { position:relative; }
-        .culture-radio-live-dot { position:absolute; left:10px; top:10px; padding:5px 8px; background:#8f35dc; color:#fff; font-size:8px; font-weight:900; letter-spacing:1px; }
-        .culture-radio-artist { color:#fff !important; font-family:'Barlow Condensed',sans-serif; font-size:22px !important; text-transform:uppercase; letter-spacing:.5px; margin-top:0 !important; }
-        .culture-radio-dj { color:#999 !important; font-size:9px !important; text-transform:uppercase; letter-spacing:1px; }
-        .culture-reader-backdrop { position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.88); backdrop-filter:blur(12px); display:flex; justify-content:center; align-items:flex-start; overflow:auto; padding:40px 20px; }
-        .culture-reader { width:min(900px,100%); background:#090909; border:1px solid #352040; box-shadow:0 25px 80px rgba(0,0,0,.7); position:relative; }
-        .culture-reader-close { position:absolute; right:12px; top:12px; z-index:3; width:40px; height:40px; border:1px solid #555; background:rgba(0,0,0,.75); color:#fff; font-size:28px; cursor:pointer; }
-        .culture-reader-image { width:100%; max-height:500px; object-fit:cover; display:block; }
-        .culture-reader-body { padding:34px clamp(22px,5vw,60px) 50px; }
-        .culture-reader-body h2 { font-family:'Barlow Condensed',sans-serif; font-size:clamp(46px,7vw,86px); line-height:.86; text-transform:uppercase; margin:15px 0 20px; }
-        .culture-reader-dek { color:#aaa !important; font-size:17px !important; line-height:1.6 !important; max-width:760px; }
-        .culture-reader-copy { margin-top:28px; font-size:16px; line-height:1.8; color:#ddd; }
-        .culture-reader-copy p { margin:0 0 20px; }
-        .culture-reader-meta { color:#777; font-size:10px; letter-spacing:1px; text-transform:uppercase; margin-top:30px; }
-        .culture-reader-source { display:inline-flex; margin-top:20px; padding:12px 16px; background:#8f35dc; color:#fff; font-size:10px; font-weight:900; letter-spacing:1px; }
-
-
-        .culture-live-radio-section { align-items:stretch; }
-        .culture-now-playing-panel { min-width:min(360px,100%); display:grid; gap:9px; align-content:start; }
-        .culture-now-playing-art { width:100%; aspect-ratio:1; object-fit:cover; display:block; margin-bottom:8px; }
-        .culture-now-playing-panel span { color:#b66cff; font-size:9px; font-weight:900; letter-spacing:1.4px; }
-        .culture-now-playing-panel strong { color:#fff; font-family:'Barlow Condensed',sans-serif; font-size:36px; line-height:.9; text-transform:uppercase; }
-        .culture-now-playing-panel small { color:#aaa; font-size:11px; }
 
         /* FOR THE CULTURE — editorial platform homepage */
         .culture-platform { background:#050505; color:#fff; overflow:hidden; border-top:1px solid #171717; }
