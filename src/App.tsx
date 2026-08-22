@@ -64,24 +64,35 @@ export default function App() {
     let timer: ReturnType<typeof setInterval> | undefined;
 
     async function loadCultureStories(showLoading = false) {
-      try {
-        if (showLoading) setCultureFeedStatus("loading");
-        const response = await fetch("/api/editorial-feed?limit=12", {
-          headers: { Accept: "application/json" },
-          cache: "no-store",
-        });
-        if (!response.ok) throw new Error(`Editorial feed returned ${response.status}`);
-        const data = await response.json();
-        if (!cancelled) {
-          const stories = Array.isArray(data.stories) ? data.stories : [];
-          setCultureStories(stories);
-          setCultureFeedStatus(stories.length ? "ready" : "empty");
+      if (showLoading) setCultureFeedStatus("loading");
+      const endpoints = [
+        `${import.meta.env.BASE_URL}editorial-feed.json?ts=${Date.now()}`,
+        "/api/editorial-feed?limit=12",
+      ];
+
+      for (const endpoint of endpoints) {
+        try {
+          const response = await fetch(endpoint, {
+            headers: { Accept: "application/json" },
+            cache: "no-store",
+          });
+          if (!response.ok) continue;
+          const data = await response.json();
+          if (!Array.isArray(data.stories)) continue;
+
+          if (!cancelled) {
+            const stories = data.stories;
+            setCultureStories(stories);
+            setCultureFeedStatus(stories.length ? "ready" : "empty");
+          }
+          return;
+        } catch (error) {
+          console.warn("FOR THE CULTURE editorial feed endpoint unavailable:", endpoint, error);
         }
-      } catch (error) {
-        console.error("FOR THE CULTURE editorial feed:", error);
-        if (!cancelled) {
-          setCultureFeedStatus((current) => current === "ready" ? current : "error");
-        }
+      }
+
+      if (!cancelled) {
+        setCultureFeedStatus((current) => current === "ready" ? current : "error");
       }
     }
 
