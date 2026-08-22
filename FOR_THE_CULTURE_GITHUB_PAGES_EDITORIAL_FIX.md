@@ -1,55 +1,40 @@
-# FOR THE CULTURE — Hosting and Editorial Fix
+# FOR THE CULTURE — GitHub Pages Editorial Engine (Corrected)
 
-## Why the previous editorial system showed no stories
+The live site is hosted on GitHub Pages, so `/api/*.js` files cannot execute there. The editorial system therefore runs in GitHub Actions and writes a static `public/editorial-feed.json` that the website consumes.
 
-The live site is hosted on GitHub Pages. GitHub Pages serves the built Vite files but does **not** execute the project's `/api/*.js` serverless functions.
+## What is different in this corrected build
 
-The previous build therefore requested `/api/editorial-feed` from GitHub Pages and received a 404.
+- The editorial radar runs on every push to `main`, every 15 minutes, and manually from Actions.
+- It fetches all configured sources in parallel.
+- It ranks stories by relevance and freshness and removes duplicates.
+- It uses OpenAI server-side inside GitHub Actions to create the FOR THE CULTURE write-up.
+- Supabase is no longer a hard dependency for the public feed. This removes the failure point caused by expecting GitHub Pages to execute Supabase-backed API routes.
+- Existing Supabase support can be reconnected later as the newsroom database, but the static feed can now publish independently.
+- The website reads `public/editorial-feed.json` first.
 
-This update fixes that hosting mismatch without requiring you to move the site immediately.
+## One required secret
 
-## How this version works
-
-1. GitHub Pages continues to host the website.
-2. A GitHub Actions workflow runs the editorial radar every 15 minutes.
-3. The workflow securely uses repository secrets for Supabase and OpenAI.
-4. The radar reads multiple RSS sources, ranks relevant stories, removes duplicates, asks OpenAI for an original FOR THE CULTURE brief, and stores the published story in the existing Supabase editorial table.
-5. The workflow writes the latest 12 published stories to `public/editorial-feed.json`.
-6. The workflow deploys the updated static site to GitHub Pages.
-7. The browser reads `editorial-feed.json` first, so it no longer depends on a `/api` route that GitHub Pages cannot execute.
-8. The existing `/api` functions are retained for a future Vercel/server deployment and for existing Galaxy Fire server integrations.
-
-## Required one-time setup
-
-### A. Supabase migration
-
-Run `supabase-editorial.sql` once in the same Supabase project already used by Galaxy Fire Studios.
-
-### B. GitHub repository secrets
-
-In GitHub:
-
-Settings → Secrets and variables → Actions → New repository secret
+In GitHub: **Settings → Secrets and variables → Actions → New repository secret**
 
 Add:
 
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
 - `OPENAI_API_KEY`
 
-Do **not** put the service-role key or OpenAI key in `VITE_` variables, source files, or committed files.
+Do not put this key in the website, `VITE_` variables, or committed files.
 
-### C. Start the radar
+## First run
 
-After adding the three secrets:
+After replacing the project in the GitHub repository and pushing to `main`:
 
-Actions → FOR THE CULTURE Editorial Radar → Run workflow
+1. Open **Actions**.
+2. Select **FOR THE CULTURE Editorial Radar**.
+3. Click **Run workflow**.
+4. Open the run and inspect the `Check editorial run status` step.
+5. The workflow will write `public/editorial-feed.json` and deploy GitHub Pages.
 
-The workflow will perform the first scan immediately. After that, the scheduled scan runs every 15 minutes.
+The scheduled job then repeats every 15 minutes.
 
-The first run may take a little time because it has to fetch the sources, generate the first stories, update Supabase, rebuild the site and deploy it.
-
-## Sources currently monitored
+## Sources
 
 - The NATIVE
 - The NATIVE Music
@@ -61,17 +46,4 @@ The first run may take a little time because it has to fetch the sources, genera
 
 ## Automatic publication
 
-Automatic publication is ON.
-
-The radar publishes up to 3 strong stories per scan, after relevance, freshness and duplicate checks. It does not copy the source article; it creates an original FOR THE CULTURE brief from the supplied feed metadata and keeps the original source URL.
-
-## Website behavior
-
-FOR THE CULTURE checks the static editorial feed when the page loads and periodically while the tab is visible. The latest deployed feed drives the hero, Latest Stories, New Music, Culture, Events, Artists and other editorial modules.
-
-## Important
-
-The GitHub Pages `/api/editorial-status` URL will still return 404 because GitHub Pages does not run serverless API files. That is no longer required by this version.
-
-To inspect the latest radar run, use the GitHub Actions run log for `FOR THE CULTURE Editorial Radar`.
-
+Automatic publication is enabled. Up to three new stories are generated per scan. Stories are filtered for relevance, freshness and duplicates before the AI writes the original FOR THE CULTURE brief. The original source URL remains attached to every story.

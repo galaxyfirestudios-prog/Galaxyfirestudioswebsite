@@ -1218,8 +1218,8 @@ export default function App() {
                   <div className={`culture-editorial-state ${cultureFeedStatus}`}>
                     <div className="culture-editorial-state-mark">●</div>
                     <div>
-                      <strong>{cultureFeedStatus === "loading" ? "LOADING THE CULTURE RADAR" : "EDITORIAL RADAR INITIALIZING"}</strong>
-                      <p>{cultureFeedStatus === "loading" ? "Checking the latest stories from the editorial sources." : "No published stories are available yet. The newsroom is waiting for the first AI-written stories."}</p>
+                      <strong>{cultureFeedStatus === "loading" ? "LOADING THE CULTURE RADAR" : cultureFeedStatus === "error" ? "EDITORIAL FEED UNAVAILABLE" : "EDITORIAL RADAR INITIALIZING"}</strong>
+                      <p>{cultureFeedStatus === "loading" ? "Checking the latest stories from the editorial sources." : cultureFeedStatus === "error" ? "The live editorial feed could not be reached. The newsroom will retry automatically." : "The editorial feed is empty. Once the newsroom scan publishes stories, every FOR THE CULTURE visual will update from the live feed."}</p>
                     </div>
                   </div>
                 )}
