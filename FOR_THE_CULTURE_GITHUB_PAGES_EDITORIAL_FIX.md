@@ -11,6 +11,7 @@ The live site is hosted on GitHub Pages, so `/api/*.js` files cannot execute the
 - Supabase is no longer a hard dependency for the public feed. This removes the failure point caused by expecting GitHub Pages to execute Supabase-backed API routes.
 - Existing Supabase support can be reconnected later as the newsroom database, but the static feed can now publish independently.
 - The website reads `public/editorial-feed.json` first.
+- The editorial workflow now synchronizes with the latest `main` branch before pushing the generated feed, with up to three safe push attempts. This fixes the non-fast-forward failure that occurred after the Gemini generation step succeeded.
 
 ## One required secret
 
@@ -31,6 +32,7 @@ After replacing the project in the GitHub repository and pushing to `main`:
 3. Click **Run workflow**.
 4. Open the run and inspect the `Check editorial run status` step.
 5. The workflow will write `public/editorial-feed.json` and deploy GitHub Pages.
+6. If another commit lands on `main` while the editorial scan is running, the workflow automatically refreshes its checkout and retries the feed push instead of failing with a non-fast-forward error.
 
 The scheduled job then repeats every 15 minutes.
 
