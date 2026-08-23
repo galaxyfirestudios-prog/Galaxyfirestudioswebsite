@@ -27,9 +27,10 @@ const CATEGORY_RULES = [
 ]
 
 const MAX_SOURCE_ITEMS = Number(process.env.EDITORIAL_SOURCE_ITEMS || 18)
-const MAX_STORIES = Number(process.env.EDITORIAL_MAX_STORIES_PER_SCAN || 3)
+const MAX_STORIES = Number(process.env.EDITORIAL_MAX_STORIES_PER_SCAN || 4)
 const MAX_AGE_HOURS = Number(process.env.EDITORIAL_MAX_AGE_HOURS || 96)
 const FETCH_TIMEOUT_MS = Number(process.env.EDITORIAL_FETCH_TIMEOUT_MS || 6500)
+const IMAGE_FETCH_TIMEOUT_MS = Number(process.env.EDITORIAL_IMAGE_FETCH_TIMEOUT_MS || 5000)
 const GEMINI_TIMEOUT_MS = Number(process.env.EDITORIAL_GEMINI_TIMEOUT_MS || 15000)
 
 function decode(value = '') {
@@ -43,11 +44,57 @@ function tag(block, name) {
   return block.match(re)?.[1] || ''
 }
 function imageFrom(block) {
-  const media = block.match(/<media:(?:content|thumbnail)[^>]+url=["']([^"']+)["']/i)
-    || block.match(/<enclosure[^>]+url=["']([^"']+)["']/i)
-    || block.match(/<img[^>]+src=["']([^"']+)["']/i)
+  const media = block.match(/<media:(?:content|thumbnail)[^>]+url=[\"']([^\"']+)[\"']/i)
+    || block.match(/<enclosure[^>]+url=[\"']([^\"']+)[\"']/i)
+    || block.match(/<img[^>]+(?:src|data-src)=[\"']([^\"']+)[\"']/i)
   return media?.[1] || ''
 }
+
+function absoluteUrl(value, baseUrl) {
+  if (!value) return ''
+  try { return new URL(value, baseUrl).toString() } catch { return '' }
+}
+
+function imageFromHtml(html, pageUrl) {
+  const candidates = [
+    html.match(/<meta[^>]+property=[\"']og:image(?::secure_url)?[\"'][^>]+content=[\"']([^\"']+)[\"']/i)?.[1],
+    html.match(/<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+property=[\"']og:image(?::secure_url)?[\"']/i)?.[1],
+    html.match(/<meta[^>]+name=[\"']twitter:image(?::src)?[\"'][^>]+content=[\"']([^\"']+)[\"']/i)?.[1],
+    html.match(/<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+name=[\"']twitter:image(?::src)?[\"']/i)?.[1],
+    html.match(/<link[^>]+rel=[\"'][^\"']*image_src[^\"']*[\"'][^>]+href=[\"']([^\"']+)[\"']/i)?.[1],
+  ]
+  return candidates.map(value => absoluteUrl(value, pageUrl)).find(Boolean) || ''
+}
+
+async function fetchArticleImage(pageUrl) {
+  if (!pageUrl) return ''
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), IMAGE_FETCH_TIMEOUT_MS)
+  try {
+    const response = await fetch(pageUrl, {
+      headers: {
+        'User-Agent': 'FOR-THE-CULTURE-Editorial-Radar/5.0 (+https://galaxyfirestudios.com)',
+        Accept: 'text/html,application/xhtml+xml'
+      },
+      signal: controller.signal,
+      redirect: 'follow'
+    })
+    if (!response.ok) return ''
+    const html = (await response.text()).slice(0, 1000000)
+    return imageFromHtml(html, pageUrl)
+  } catch {
+    return ''
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+async function enrichImage(item) {
+  const feedImage = absoluteUrl(item.image_url, item.source_url)
+  if (feedImage) return feedImage
+  return await fetchArticleImage(item.source_url)
+}
+
 function parseDate(value) {
   if (!value) return null
   const date = new Date(value)
@@ -90,7 +137,7 @@ function titleTokens(title) { return new Set(normalizeTitle(title).split(/\s+/).
 function similarity(a, b) { const A = titleTokens(a), B = titleTokens(b); if (!A.size || !B.size) return 0; let intersection = 0; for (const token of A) if (B.has(token)) intersection++; return intersection / (A.size + B.size - intersection) }
 
 async function draftStory(item) {
-  const prompt = `You are the editorial desk for FOR THE CULTURE, an African music, culture and entertainment platform by Galaxy Fire Studios. Create an ORIGINAL short news brief from the supplied source metadata. Do not copy phrases or sentence structures. Do not invent facts. Return only JSON with headline, dek, body and category. The body must be 2-4 short paragraphs suitable for mobile reading and must clearly attribute the reporting to the named source where appropriate. Category must be MUSIC, CULTURE, STYLE, FILM, ART or EVENTS. Source: ${item.source_name}\nOriginal headline: ${item.title}\nOriginal URL: ${item.source_url}\nSource excerpt: ${item.excerpt}\nSuggested category: ${category(item)}`
+  const prompt = `You are the editorial desk for FOR THE CULTURE, an African music, culture and entertainment platform by Galaxy Fire Studios. Create an ORIGINAL editorial news story from the supplied source metadata. Do not copy phrases, sentence structures or distinctive wording from the source. Do not invent facts, quotes, dates or details that are not supported by the supplied metadata. The result should feel like a confident human FOR THE CULTURE newsroom story, not a generic AI summary. Return only JSON with headline, dek, body and category. The body should be 4-6 short paragraphs, roughly 300-450 words, with useful context and clear attribution to the named source where appropriate. Keep paragraphs mobile-friendly. Category must be MUSIC, CULTURE, STYLE, FILM, ART or EVENTS. Source: ${item.source_name}\nOriginal headline: ${item.title}\nOriginal URL: ${item.source_url}\nSource excerpt: ${item.excerpt}\nSuggested category: ${category(item)}`
 
   let lastError
   for (let attempt = 1; attempt <= 2; attempt++) {
@@ -115,7 +162,7 @@ async function draftStory(item) {
 async function main() {
   const fetched = await Promise.allSettled(SOURCES.map(fetchFeed))
   const sourceReport = fetched.map((result, index) => ({ source: SOURCES[index].name, ok: result.status === 'fulfilled', items: result.status === 'fulfilled' ? result.value.items.length : 0, error: result.status === 'rejected' ? String(result.reason?.message || result.reason) : null }))
-  const candidates = fetched.filter(r => r.status === 'fulfilled').flatMap(r => r.value.items).map(item => ({ ...item, relevance_score: relevance(item) })).filter(item => item.relevance_score >= 12).sort((a,b) => b.relevance_score - a.relevance_score)
+  const candidates = fetched.filter(r => r.status === 'fulfilled').flatMap(r => r.value.items).map(item => ({ ...item, relevance_score: relevance(item) })).filter(item => item.relevance_score >= 10).sort((a,b) => b.relevance_score - a.relevance_score)
   const uniqueCandidates = []
   for (const item of candidates) { if (uniqueCandidates.some(existing => existing.source_url === item.source_url || similarity(existing.title, item.title) >= 0.72)) continue; uniqueCandidates.push(item) }
 
@@ -127,11 +174,33 @@ async function main() {
 
   const newStories = []
   const failures = []
-  for (const item of newCandidates.slice(0, Math.max(MAX_STORIES * 4, 12))) {
+  const sourceBalancedCandidates = []
+  const sourceBuckets = new Map()
+  for (const item of newCandidates) {
+    const bucket = sourceBuckets.get(item.source_name) || []
+    bucket.push(item)
+    sourceBuckets.set(item.source_name, bucket)
+  }
+  const bucketNames = [...sourceBuckets.keys()]
+  let round = 0
+  while (sourceBalancedCandidates.length < Math.max(MAX_STORIES * 5, 20) && bucketNames.length) {
+    let added = false
+    for (const name of bucketNames) {
+      const bucket = sourceBuckets.get(name) || []
+      if (bucket[round]) {
+        sourceBalancedCandidates.push(bucket[round])
+        added = true
+      }
+    }
+    if (!added) break
+    round += 1
+  }
+  for (const item of sourceBalancedCandidates) {
     if (newStories.length >= MAX_STORIES) break
     try {
       const draft = await draftStory(item)
-      newStories.push({ id: `ftc-${Date.now()}-${newStories.length}`, source_name: item.source_name, source_url: item.source_url, source_title: item.title, source_excerpt: item.excerpt, image_url: item.image_url || null, source_published_at: item.published_at, relevance_score: item.relevance_score, headline: draft.headline, dek: draft.dek, body: draft.body, category: draft.category || category(item), status: 'published', published_at: new Date().toISOString() })
+      const enrichedImage = await enrichImage(item)
+      newStories.push({ id: `ftc-${Date.now()}-${newStories.length}`, source_name: item.source_name, source_url: item.source_url, source_title: item.title, source_excerpt: item.excerpt, image_url: enrichedImage || null, source_published_at: item.published_at, relevance_score: item.relevance_score, headline: draft.headline, dek: draft.dek, body: draft.body, category: draft.category || category(item), status: 'published', published_at: new Date().toISOString() })
     } catch (error) { failures.push({ title: item.title, error: String(error?.message || error) }) }
   }
 

@@ -179,10 +179,17 @@ export default function App() {
   const newMusicStories = musicStories.length ? musicStories.slice(0, 3) : editorialStories.slice(0, 3);
   const featuredEventStories = eventStories.length ? eventStories.slice(0, 3) : editorialStories.slice(0, 3);
   const storyUrl = (story: any) => story?.source_url || "#";
-  const storyImage = (story: any) => story?.image_url || "";
+  const storyImage = (story: any) => story?.image_url || story?.source_image_url || "";
   const storyTitle = (story: any) => story?.headline || story?.title || "Latest from the culture";
   const storyDek = (story: any) => story?.dek || story?.source_excerpt || "The FOR THE CULTURE editorial desk is following the story.";
   const storyDate = (story: any) => story?.published_at ? new Date(story.published_at).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" }) : "Latest";
+  const handleStoryImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    const image = event.currentTarget;
+    if (image.dataset.ftcFallback === "true") return;
+    image.dataset.ftcFallback = "true";
+    image.src = cultureArt;
+    image.classList.add("culture-image-fallback");
+  };
   const openCultureStory = (story: any) => {
     setCultureReaderStory(story || null);
     if (story) {
@@ -1204,7 +1211,7 @@ export default function App() {
                 </div>
                 <div className="culture-hero-image-wrap">
                   {storyImage(heroStory) ? (
-                    <img src={storyImage(heroStory)} alt={storyTitle(heroStory)} className="culture-hero-image" loading="eager" decoding="async" referrerPolicy="no-referrer" />
+                    <img src={storyImage(heroStory)} alt={storyTitle(heroStory)} className="culture-hero-image" loading="eager" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} />
                   ) : (
                     <div className="culture-editorial-visual-fallback"><span>FOR THE<br />CULTURE</span></div>
                   )}
@@ -1230,7 +1237,7 @@ export default function App() {
                   <div className="culture-story-grid">
                     {editorialStories.slice(0, 6).map((story: any) => (
                       <a {...storyLinkProps(story)} className="culture-story-card culture-live-story-card" key={story.id || story.source_url}>
-                        {storyImage(story) ? <img src={storyImage(story)} alt={storyTitle(story)} loading="lazy" decoding="async" referrerPolicy="no-referrer" /> : <div className="culture-story-no-image">FOR THE CULTURE</div>}
+                        {storyImage(story) ? <img src={storyImage(story)} alt={storyTitle(story)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} /> : <div className="culture-story-no-image">FOR THE CULTURE</div>}
                         <div>
                           <span>{story.category || "CULTURE"}</span>
                           <h4>{storyTitle(story)}</h4>
@@ -1255,7 +1262,7 @@ export default function App() {
                 <div className="culture-section-head"><h3>RADIO</h3><a href="#culture-radio">OPEN RADIO →</a></div>
                 {radioStory ? (
                   <>
-                    {storyImage(radioStory) && <img className="culture-radio-story-image" src={storyImage(radioStory)} alt={storyTitle(radioStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" />}
+                    {storyImage(radioStory) && <img className="culture-radio-story-image" src={storyImage(radioStory)} alt={storyTitle(radioStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} />}
                     <div className="culture-on-air"><span>EDITORIAL UPDATE</span><small>{radioStory.source_name || "FOR THE CULTURE"}</small></div>
                     <h4>{storyTitle(radioStory)}</h4>
                     <p>{storyDek(radioStory)}</p>
@@ -1272,7 +1279,7 @@ export default function App() {
                 <div className="culture-section-head"><h3>NEW MUSIC</h3><a href="#culture-music">VIEW ALL →</a></div>
                 {newMusicStories.length ? newMusicStories.map((story: any) => (
                   <a {...storyLinkProps(story)} className="culture-music-row" key={story.id || story.source_url}>
-                    {storyImage(story) ? <img src={storyImage(story)} alt={storyTitle(story)} loading="lazy" decoding="async" referrerPolicy="no-referrer" /> : <div className="culture-music-no-image">FTC</div>}
+                    {storyImage(story) ? <img src={storyImage(story)} alt={storyTitle(story)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} /> : <div className="culture-music-no-image">FTC</div>}
                     <div><strong>{storyTitle(story)}</strong><small>{storyDek(story)}</small></div><span className="culture-play">→</span>
                   </a>
                 )) : <div className="culture-panel-empty">NEW MUSIC STORIES WILL APPEAR HERE AUTOMATICALLY.</div>}
@@ -1282,14 +1289,14 @@ export default function App() {
                 <div className="culture-section-head"><h3>CULTURE</h3><a href="#culture-stories">VIEW ALL →</a></div>
                 {featureStory ? (
                   <a {...storyLinkProps(featureStory)} className="culture-feature-link">
-                    <div className="culture-feature-image">{storyImage(featureStory) ? <img src={storyImage(featureStory)} alt={storyTitle(featureStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" /> : <div className="culture-editorial-visual-fallback"><span>CULTURE</span></div>}<span>{featureStory.category || "CULTURE"}</span></div>
+                    <div className="culture-feature-image">{storyImage(featureStory) ? <img src={storyImage(featureStory)} alt={storyTitle(featureStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} /> : <div className="culture-editorial-visual-fallback"><span>CULTURE</span></div>}<span>{featureStory.category || "CULTURE"}</span></div>
                     <h4>{storyTitle(featureStory)}</h4><p>{storyDek(featureStory)}</p>
                   </a>
                 ) : <div className="culture-panel-empty">THE CULTURE DESK IS WAITING FOR LIVE STORIES.</div>}
               </section>
 
               <section className="culture-panel culture-radio-promo">
-                {storyImage(radioStory) ? <img className="culture-radio-promo-image" src={storyImage(radioStory)} alt={storyTitle(radioStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" /> : <div className="culture-editorial-visual-fallback"><span>FOR THE<br />CULTURE</span></div>}
+                {storyImage(radioStory) ? <img className="culture-radio-promo-image" src={storyImage(radioStory)} alt={storyTitle(radioStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} /> : <div className="culture-editorial-visual-fallback"><span>FOR THE<br />CULTURE</span></div>}
                 <div className="culture-radio-promo-copy"><span>EDITORIAL RADAR</span><h3>WHAT'S<br />MOVING<br /><em>NOW.</em></h3><p>{radioStory ? storyDek(radioStory) : "Live culture stories, written and curated by the FOR THE CULTURE editorial engine."}</p><a href={radioStory ? storyUrl(radioStory) : "#culture-stories"} className="culture-action">READ THE LATEST →</a></div>
               </section>
             </div>
@@ -1297,7 +1304,7 @@ export default function App() {
             <div className="culture-platform-columns lower">
               <section className="culture-panel culture-video-panel" id="culture-video">
                 <div className="culture-section-head"><h3>LATEST STORY / VIDEO</h3><a href="#culture-stories">VIEW ALL →</a></div>
-                {videoStory ? <a {...storyLinkProps(videoStory)} className="culture-video-feature">{storyImage(videoStory) ? <img src={storyImage(videoStory)} alt={storyTitle(videoStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" /> : <div className="culture-editorial-visual-fallback"><span>VIDEO<br />CULTURE</span></div>}<span>{videoStory.category || "CULTURE"}</span><div className="culture-video-copy"><strong>{storyTitle(videoStory)}</strong><small>{storyDek(videoStory)}</small></div></a> : <div className="culture-panel-empty">LATEST VIDEO COVERAGE WILL APPEAR HERE.</div>}
+                {videoStory ? <a {...storyLinkProps(videoStory)} className="culture-video-feature">{storyImage(videoStory) ? <img src={storyImage(videoStory)} alt={storyTitle(videoStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} /> : <div className="culture-editorial-visual-fallback"><span>VIDEO<br />CULTURE</span></div>}<span>{videoStory.category || "CULTURE"}</span><div className="culture-video-copy"><strong>{storyTitle(videoStory)}</strong><small>{storyDek(videoStory)}</small></div></a> : <div className="culture-panel-empty">LATEST VIDEO COVERAGE WILL APPEAR HERE.</div>}
               </section>
 
               <section className="culture-panel" id="culture-events">
@@ -1308,7 +1315,7 @@ export default function App() {
               <section className="culture-panel" id="culture-artists">
                 <div className="culture-section-head"><h3>ARTISTS / CREATORS</h3><a href="#culture-artists">DISCOVER →</a></div>
                 <div className="culture-artist-grid">
-                  {artistStories.length ? artistStories.map((story: any) => <a {...storyLinkProps(story)} key={story.id || story.source_url}>{storyImage(story) ? <img src={storyImage(story)} alt={storyTitle(story)} loading="lazy" decoding="async" referrerPolicy="no-referrer" /> : <div className="culture-editorial-visual-fallback"><span>FTC</span></div>}<span>{storyTitle(story)}</span></a>) : <div className="culture-panel-empty">ARTIST AND CREATOR STORIES WILL APPEAR HERE.</div>}
+                  {artistStories.length ? artistStories.map((story: any) => <a {...storyLinkProps(story)} key={story.id || story.source_url}>{storyImage(story) ? <img src={storyImage(story)} alt={storyTitle(story)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} /> : <div className="culture-editorial-visual-fallback"><span>FTC</span></div>}<span>{storyTitle(story)}</span></a>) : <div className="culture-panel-empty">ARTIST AND CREATOR STORIES WILL APPEAR HERE.</div>}
                 </div>
               </section>
             </div>
@@ -1700,6 +1707,7 @@ export default function App() {
                 loading="eager"
                 decoding="async"
                 referrerPolicy="no-referrer"
+                onError={handleStoryImageError}
               />
             )}
             <div className="culture-story-reader-content">
@@ -2064,7 +2072,7 @@ export default function App() {
         .culture-story-reader-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.9); backdrop-filter: blur(12px); }
         .culture-story-reader-card { position: relative; z-index: 1; width: min(980px, 100%); max-height: 94vh; overflow-y: auto; background: #080808; border: 1px solid #2a2a2a; box-shadow: 0 40px 140px rgba(0,0,0,.75); }
         .culture-story-reader-close { position: absolute; z-index: 3; top: 16px; right: 16px; width: 44px; height: 44px; border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.72); color: #fff; font-size: 32px; line-height: 1; cursor: pointer; }
-        .culture-story-reader-image { display: block; width: 100%; max-height: 430px; object-fit: cover; border-bottom: 1px solid #242424; }
+        .culture-story-reader-image { display: block; width: 100%; max-height: 430px; object-fit: cover; border-bottom: 1px solid #242424; background: radial-gradient(circle at 70% 20%, rgba(143,53,220,.25), transparent 42%), #090909; mask-image: linear-gradient(to bottom, #000 86%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, #000 86%, transparent 100%); }
         .culture-story-reader-content { padding: clamp(28px, 5vw, 58px); }
         .culture-story-reader-meta { display: flex; flex-wrap: wrap; gap: 12px 22px; color: #a86cff; font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
         .culture-story-reader-content h2 { margin: 18px 0 16px; max-width: 850px; font-family: 'Barlow Condensed', sans-serif; font-size: clamp(46px, 7vw, 88px); line-height: .9; text-transform: uppercase; }
@@ -2746,10 +2754,13 @@ export default function App() {
         }
         .culture-live-story-card { min-height: 100%; }
         .culture-live-story-card img { width:100%; aspect-ratio: 16 / 10; object-fit:cover; display:block; background:#111; }
+        .culture-live-story-card img { mask-image: linear-gradient(to bottom, #000 76%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, #000 76%, transparent 100%); transition: transform .35s ease, filter .35s ease, opacity .35s ease; }
+        .culture-live-story-card:hover img { transform: scale(1.025); filter: saturate(.92) contrast(1.08); }
+        .culture-image-fallback { object-fit: cover !important; filter: saturate(.55) contrast(1.08) !important; opacity: .9; }
         .culture-story-no-image { width:100%; aspect-ratio:16 / 10; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#130d1b,#050505); color:#a96cff; font-size:12px; font-weight:800; letter-spacing:.16em; }
         .culture-story-card p,.culture-feature-panel p,.culture-radio-card p,.culture-video-copy small,.culture-event-row small,.culture-music-row small { color:#777; font-size:10px; line-height:1.5; margin:6px 0 0; display:block; }
         .culture-story-byline { display:block; color:#555; margin-top:10px; font-size:9px; letter-spacing:.4px; }
-        .culture-radio-story-image { width:100%; height:150px; object-fit:cover; display:block; margin-bottom:14px; filter:saturate(.75) contrast(1.05); }
+        .culture-radio-story-image { width:100%; height:150px; object-fit:cover; display:block; margin-bottom:14px; filter:saturate(.75) contrast(1.05); mask-image: linear-gradient(to bottom, #000 80%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent 100%); }
         .culture-radio-promo { position:relative; overflow:hidden; min-height:300px; }
         .culture-radio-promo-image { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:saturate(.55) contrast(1.15); opacity:.5; }
         .culture-radio-promo::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg,rgba(0,0,0,.96),rgba(0,0,0,.45),rgba(30,0,45,.25)); }
@@ -2798,7 +2809,8 @@ export default function App() {
         .culture-action { display:inline-flex; align-items:center; gap:14px; padding:12px 17px; background:#8f35dc; color:#fff; font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:900; letter-spacing:1.1px; transition:transform .2s,background .2s; }
         .culture-action:hover { background:#b66cff; transform:translateY(-2px); }
         .culture-hero-image-wrap { position:relative; min-width:0; overflow:hidden; }
-        .culture-hero-image { width:100%; height:100%; min-height:570px; object-fit:cover; object-position:center; display:block; filter:saturate(.78) contrast(1.12); }
+        .culture-hero-image { width:100%; height:100%; min-height:570px; object-fit:cover; object-position:center; display:block; filter:saturate(.78) contrast(1.12); transition: transform .6s ease, filter .4s ease; }
+        .culture-hero-story:hover .culture-hero-image { transform: scale(1.018); filter:saturate(.9) contrast(1.08); }
         .culture-hero-image-wrap::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg,#090909 0%,rgba(9,9,9,.12) 38%,rgba(10,4,16,.08) 100%),linear-gradient(0deg,rgba(0,0,0,.45),transparent 45%); }
         .culture-hero-stamp { position:absolute; z-index:2; right:25px; bottom:27px; color:#b66cff; font-family:'Barlow Condensed',sans-serif; font-size:27px; line-height:.83; font-weight:900; font-style:italic; letter-spacing:-1px; transform:rotate(-7deg); text-align:right; text-shadow:0 4px 20px #000; }
         .culture-hero-controls { position:absolute; z-index:3; bottom:22px; left:0; display:flex; gap:7px; }

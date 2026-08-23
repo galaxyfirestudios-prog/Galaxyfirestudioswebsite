@@ -30,10 +30,11 @@ const CATEGORY_RULES = [
 ]
 
 const MAX_SOURCE_ITEMS = Number(process.env.EDITORIAL_SOURCE_ITEMS || 18)
-const MAX_STORIES = Number(process.env.EDITORIAL_MAX_STORIES_PER_SCAN || 3)
+const MAX_STORIES = Number(process.env.EDITORIAL_MAX_STORIES_PER_SCAN || 4)
 const MAX_AGE_HOURS = Number(process.env.EDITORIAL_MAX_AGE_HOURS || 96)
 const FETCH_TIMEOUT_MS = Number(process.env.EDITORIAL_FETCH_TIMEOUT_MS || 6500)
-const GEMINI_TIMEOUT_MS = Number(process.env.EDITORIAL_GEMINI_TIMEOUT_MS || 8000)
+const GEMINI_TIMEOUT_MS = Number(process.env.EDITORIAL_GEMINI_TIMEOUT_MS || 20000)
+const IMAGE_FETCH_TIMEOUT_MS = Number(process.env.EDITORIAL_IMAGE_FETCH_TIMEOUT_MS || 5000)
 
 function decode(value='') {
   return value
@@ -123,23 +124,75 @@ async function fetchWithTimeout(url) {
   }
 }
 
+function absoluteUrl(value, baseUrl) {
+  if (!value) return ''
+  try { return new URL(value, baseUrl).toString() } catch { return '' }
+}
+
+function imageFromHtml(html, pageUrl) {
+  const candidates = [
+    html.match(/<meta[^>]+property=[\"']og:image(?::secure_url)?[\"'][^>]+content=[\"']([^\"']+)[\"']/i)?.[1],
+    html.match(/<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+property=[\"']og:image(?::secure_url)?[\"']/i)?.[1],
+    html.match(/<meta[^>]+name=[\"']twitter:image(?::src)?[\"'][^>]+content=[\"']([^\"']+)[\"']/i)?.[1],
+    html.match(/<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+name=[\"']twitter:image(?::src)?[\"']/i)?.[1],
+  ]
+  return candidates.map(value => absoluteUrl(value, pageUrl)).find(Boolean) || ''
+}
+
+async function fetchArticleImage(pageUrl) {
+  if (!pageUrl) return ''
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), IMAGE_FETCH_TIMEOUT_MS)
+  try {
+    const response = await fetch(pageUrl, {
+      headers: { 'User-Agent': 'FOR-THE-CULTURE-Editorial-Radar/5.0', Accept: 'text/html,application/xhtml+xml' },
+      signal: controller.signal,
+      redirect: 'follow'
+    })
+    if (!response.ok) return ''
+    return imageFromHtml((await response.text()).slice(0, 1000000), pageUrl)
+  } catch {
+    return ''
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+async function enrichImage(item) {
+  const feedImage = absoluteUrl(item.image_url, item.source_url)
+  if (feedImage) return feedImage
+  return fetchArticleImage(item.source_url)
+}
+
 async function draftStory(item) {
   const prompt = `You are the editorial desk for FOR THE CULTURE, an African music, culture and entertainment platform by Galaxy Fire Studios.
-Create a concise ORIGINAL news brief from the supplied source metadata. Do not copy phrases or reproduce the source article. Do not invent facts. If the source excerpt is too thin to support a claim, keep the wording cautious.
+Create an ORIGINAL editorial news story from the supplied source metadata. Do not copy phrases, sentence structures or distinctive wording from the source. Do not invent facts, quotes, dates or details that are not supported by the supplied metadata. The result should feel like a confident human FOR THE CULTURE newsroom story, not a generic AI summary.
 Return strict JSON with: headline, dek, body, category.
-The headline should be punchy but factual. The dek should be one sentence. The body should be 2-4 short paragraphs. Clearly attribute reporting to the named source where appropriate. Keep the story useful, culturally aware and readable on mobile.
+The headline should be punchy but factual. The dek should be one sentence. The body should be 4-6 short paragraphs, roughly 300-450 words, with useful context and clear attribution to the named source where appropriate. Keep paragraphs mobile-friendly and culturally aware.
 Source: ${item.source_name}
 Original headline: ${item.title}
 Original URL: ${item.source_url}
 Source excerpt: ${item.excerpt}
 Suggested category: ${category(item)}`
 
-  return draftStoryWithGemini({
-    apiKey: process.env.GEMINI_API_KEY,
-    model: process.env.EDITORIAL_MODEL || DEFAULT_MODEL,
-    prompt,
-    timeoutMs: GEMINI_TIMEOUT_MS,
-  })
+  let lastError
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      return await draftStoryWithGemini({
+        apiKey: process.env.GEMINI_API_KEY,
+        model: process.env.EDITORIAL_MODEL || DEFAULT_MODEL,
+        prompt,
+        timeoutMs: GEMINI_TIMEOUT_MS,
+      })
+    } catch (error) {
+      lastError = error
+      const message = String(error?.message || error)
+      const retryable = /Gemini returned (429|500|502|503|504)|timed out|aborted|fetch failed/i.test(message)
+      if (!retryable || attempt === 2) break
+      await new Promise(resolve => setTimeout(resolve, 1200 * attempt))
+    }
+  }
+  throw lastError
 }
 
 async function processCandidate(supabase, item) {
@@ -157,13 +210,13 @@ async function processCandidate(supabase, item) {
     .limit(1)
   if (existingTitle?.length) return { skipped: true, reason: 'duplicate' }
 
-  const draft = await draftStory(item)
+  const [draft, enrichedImage] = await Promise.all([draftStory(item), enrichImage(item)])
   const row = {
     source_name: item.source_name,
     source_url: item.source_url,
     source_title: item.title,
     source_excerpt: item.excerpt,
-    image_url: item.image_url || null,
+    image_url: enrichedImage || null,
     source_published_at: item.published_at,
     relevance_score: relevance(item),
     headline: draft.headline,
@@ -222,7 +275,7 @@ module.exports = async (req, res) => {
       const key = fingerprint(item)
       if (!key || seen.has(key)) return false
       seen.add(key)
-      return relevance(item) >= 28
+      return relevance(item) >= 10
     }).sort((a, b) => relevance(b) - relevance(a))
 
     for (const item of candidates) {

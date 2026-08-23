@@ -1,6 +1,6 @@
 # FOR THE CULTURE — Gemini Editorial Engine Setup
 
-This build replaces the OpenAI editorial-generation layer with Google's Gemini Developer API while preserving the existing FOR THE CULTURE source feeds, relevance scoring, duplicate protection, publication feed, GitHub Actions deployment, Supabase support, and website UI.
+This build uses Google's Gemini Developer API for the FOR THE CULTURE editorial-generation layer while preserving the existing source feeds, relevance scoring, duplicate protection, publication feed, GitHub Actions deployment, Supabase support, internal story reader and website UI. It also enriches stories with source-page images when available and asks Gemini for a longer 4–6 paragraph editorial treatment.
 
 ## Required GitHub Secret
 
@@ -37,6 +37,8 @@ The Gemini Developer API currently lists Gemini 3.7 Flash as available on its Fr
 
 - `gemini_configured` instead of `openai_configured` in `editorial-run-status.json`.
 - Gemini HTTP errors are preserved in the failure output, without exposing the API key.
+- Image lookup is optional and cannot prevent a story from publishing.
+- Stories are written as 4–6 short paragraphs of approximately 300–450 words.
 
 ## No OpenAI API key is required by this build
 
