@@ -6,4 +6,4 @@ Required GitHub Actions secret: `GEMINI_API_KEY`.
 
 The existing Galaxy Fire Supabase backend is not required for the public editorial feed in this version. The feed is generated into `public/editorial-feed.json` and deployed with the site.
 
-Run the **FOR THE CULTURE Editorial Radar** workflow manually once after the first push. It will then run every 15 minutes automatically.
+Run the **FOR THE CULTURE Editorial Radar** workflow manually once after the first push. It will then run every 6 hours automatically.

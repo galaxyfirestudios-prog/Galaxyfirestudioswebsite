@@ -2,7 +2,7 @@ import fs from 'node:fs/promises'
 import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
-const { draftStoryWithGemini, DEFAULT_MODEL } = require('../lib/gemini-editorial.cjs')
+const { draftStoriesWithGemini, DEFAULT_MODEL } = require('../lib/gemini-editorial.cjs')
 
 const SOURCES = [
   { name: 'The NATIVE', url: process.env.EDITORIAL_NATIVE_FEED || 'https://thenativemag.com/feed/', weight: 12 },
@@ -136,27 +136,80 @@ function normalizeTitle(title) { return title.toLowerCase().replace(/[^a-z0-9]+/
 function titleTokens(title) { return new Set(normalizeTitle(title).split(/\s+/).filter(token => token.length > 2)) }
 function similarity(a, b) { const A = titleTokens(a), B = titleTokens(b); if (!A.size || !B.size) return 0; let intersection = 0; for (const token of A) if (B.has(token)) intersection++; return intersection / (A.size + B.size - intersection) }
 
-async function draftStory(item) {
-  const prompt = `You are the editorial desk for FOR THE CULTURE, an African music, culture and entertainment platform by Galaxy Fire Studios. Create an ORIGINAL editorial news story from the supplied source metadata. Do not copy phrases, sentence structures or distinctive wording from the source. Do not invent facts, quotes, dates or details that are not supported by the supplied metadata. The result should feel like a confident human FOR THE CULTURE newsroom story, not a generic AI summary. Return only JSON with headline, dek, body and category. The body should be 4-6 short paragraphs, roughly 300-450 words, with useful context and clear attribution to the named source where appropriate. Keep paragraphs mobile-friendly. Category must be MUSIC, CULTURE, STYLE, FILM, ART or EVENTS. Source: ${item.source_name}\nOriginal headline: ${item.title}\nOriginal URL: ${item.source_url}\nSource excerpt: ${item.excerpt}\nSuggested category: ${category(item)}`
+function buildBatchPrompt(items) {
+  const packet = items.map((item, index) => [
+    `STORY ${index + 1}`,
+    `source_index: ${index}`,
+    `source_name: ${item.source_name}`,
+    `original_headline: ${item.title}`,
+    `original_url: ${item.source_url}`,
+    `source_published_at: ${item.published_at || ''}`,
+    `source_excerpt: ${item.excerpt}`,
+    `suggested_category: ${category(item)}`,
+  ].join('\n')).join('\n\n')
+
+  return `You are the editorial desk for FOR THE CULTURE, an African music, culture and entertainment platform by Galaxy Fire Studios.
+
+Create ORIGINAL editorial news stories for every supplied candidate that is suitable for publication. Return one JSON object containing a "stories" array. Each story must include the exact source_index supplied for its candidate so the newsroom can match the finished story to the correct source.
+
+Do not copy phrases, sentence structures or distinctive wording from the source. Do not invent facts, quotes, dates, names, numbers or details that are not supported by the supplied metadata. You may add useful context only when it is directly supported by the supplied material. Do not pretend to have read the full source article beyond the metadata provided here.
+
+Each published story should feel like a confident human FOR THE CULTURE newsroom story rather than a generic AI summary:
+- headline: punchy, factual and original.
+- dek: one clear sentence that adds useful context.
+- body: 4–6 mobile-friendly paragraphs, approximately 300–450 words.
+- Give the story enough context to feel substantial, but stay strictly within the supplied facts.
+- Attribute the source naturally where appropriate.
+- category: MUSIC, CULTURE, STYLE, FILM, ART or EVENTS.
+- Return a story for each candidate unless the supplied metadata is genuinely insufficient to write a factual story. Never invent missing information to fill a gap.
+
+SOURCE CANDIDATES:
+
+${packet}`
+}
+
+async function draftStories(items) {
+  if (!items.length) return []
 
   let lastError
-  for (let attempt = 1; attempt <= 2; attempt++) {
+  const maxAttempts = Number(process.env.EDITORIAL_GEMINI_ATTEMPTS || 1)
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      return await draftStoryWithGemini({
+      return await draftStoriesWithGemini({
         apiKey: process.env.GEMINI_API_KEY,
         model: process.env.EDITORIAL_MODEL || DEFAULT_MODEL,
-        prompt,
+        prompt: buildBatchPrompt(items),
         timeoutMs: GEMINI_TIMEOUT_MS,
       })
     } catch (error) {
       lastError = error
       const message = String(error?.message || error)
-      const retryable = /Gemini returned (429|500|502|503|504)|timed out|aborted|fetch failed/i.test(message)
-      if (!retryable || attempt === 2) break
-      await new Promise(resolve => setTimeout(resolve, 1200 * attempt))
+      // A 429 is a quota/rate-limit response. Retrying immediately only
+      // consumes more quota and cannot solve a daily free-tier exhaustion.
+      const retryable = /Gemini returned (500|502|503|504)|timed out|aborted|fetch failed/i.test(message)
+      if (!retryable || attempt === maxAttempts) break
+      await new Promise(resolve => setTimeout(resolve, 2000 * attempt))
     }
   }
+
   throw lastError
+}
+
+function cleanDraft(draft, item, index) {
+  if (!draft || typeof draft !== 'object') throw new Error(`Gemini returned no draft for source ${index}.`)
+  const headline = String(draft.headline || '').trim()
+  const dek = String(draft.dek || '').trim()
+  const body = String(draft.body || '').trim()
+  const draftCategory = String(draft.category || '').toUpperCase().trim()
+  const allowedCategories = new Set(['MUSIC', 'CULTURE', 'STYLE', 'FILM', 'ART', 'EVENTS'])
+  if (!headline || !dek || !body) throw new Error(`Gemini returned an incomplete draft for "${item.title}".`)
+  return {
+    headline,
+    dek,
+    body,
+    category: allowedCategories.has(draftCategory) ? draftCategory : category(item),
+  }
 }
 
 async function main() {
@@ -174,6 +227,7 @@ async function main() {
 
   const newStories = []
   const failures = []
+
   const sourceBalancedCandidates = []
   const sourceBuckets = new Map()
   for (const item of newCandidates) {
@@ -183,7 +237,7 @@ async function main() {
   }
   const bucketNames = [...sourceBuckets.keys()]
   let round = 0
-  while (sourceBalancedCandidates.length < Math.max(MAX_STORIES * 5, 20) && bucketNames.length) {
+  while (sourceBalancedCandidates.length < Math.max(MAX_STORIES * 3, 12) && bucketNames.length) {
     let added = false
     for (const name of bucketNames) {
       const bucket = sourceBuckets.get(name) || []
@@ -195,21 +249,97 @@ async function main() {
     if (!added) break
     round += 1
   }
-  for (const item of sourceBalancedCandidates) {
-    if (newStories.length >= MAX_STORIES) break
+
+  // IMPORTANT: one Gemini request creates the complete batch. This prevents
+  // four separate model calls per scan from burning through the free-tier
+  // quota before the newsroom can publish multiple stories.
+  const selectedCandidates = sourceBalancedCandidates.slice(0, MAX_STORIES)
+
+  if (selectedCandidates.length) {
     try {
-      const draft = await draftStory(item)
-      const enrichedImage = await enrichImage(item)
-      newStories.push({ id: `ftc-${Date.now()}-${newStories.length}`, source_name: item.source_name, source_url: item.source_url, source_title: item.title, source_excerpt: item.excerpt, image_url: enrichedImage || null, source_published_at: item.published_at, relevance_score: item.relevance_score, headline: draft.headline, dek: draft.dek, body: draft.body, category: draft.category || category(item), status: 'published', published_at: new Date().toISOString() })
-    } catch (error) { failures.push({ title: item.title, error: String(error?.message || error) }) }
+      const drafts = await draftStories(selectedCandidates)
+      const draftByIndex = new Map()
+      for (const draft of drafts) {
+        const sourceIndex = Number(draft?.source_index)
+        if (Number.isInteger(sourceIndex) && sourceIndex >= 0 && sourceIndex < selectedCandidates.length) {
+          if (!draftByIndex.has(sourceIndex)) draftByIndex.set(sourceIndex, draft)
+        }
+      }
+
+      const enrichedImages = await Promise.all(selectedCandidates.map(item => enrichImage(item)))
+
+      for (let index = 0; index < selectedCandidates.length; index++) {
+        const item = selectedCandidates[index]
+        const draft = draftByIndex.get(index)
+        if (!draft) {
+          failures.push({
+            title: item.title,
+            error: `Gemini did not return a story for source_index ${index}.`
+          })
+          continue
+        }
+
+        try {
+          const cleaned = cleanDraft(draft, item, index)
+          newStories.push({
+            id: `ftc-${Date.now()}-${newStories.length}`,
+            source_name: item.source_name,
+            source_url: item.source_url,
+            source_title: item.title,
+            source_excerpt: item.excerpt,
+            image_url: enrichedImages[index] || null,
+            source_published_at: item.published_at,
+            relevance_score: item.relevance_score,
+            headline: cleaned.headline,
+            dek: cleaned.dek,
+            body: cleaned.body,
+            category: cleaned.category,
+            status: 'published',
+            published_at: new Date().toISOString()
+          })
+        } catch (error) {
+          failures.push({ title: item.title, error: String(error?.message || error) })
+        }
+      }
+    } catch (error) {
+      // Preserve the exact Gemini error in the run report. In particular,
+      // a 429 should be visible without causing the already-published feed
+      // to be erased.
+      failures.push({
+        title: 'Batch editorial generation',
+        error: String(error?.message || error)
+      })
+    }
   }
 
   const stories = [...newStories, ...prior].sort((a,b) => new Date(b.published_at || 0) - new Date(a.published_at || 0)).slice(0, 60)
   await fs.mkdir('public', { recursive: true })
   await fs.writeFile('public/editorial-feed.json', JSON.stringify({ stories, count: stories.length, source: 'FOR THE CULTURE Editorial Engine', generated_at: new Date().toISOString() }, null, 2) + '\n')
-  await fs.writeFile('editorial-run-status.json', JSON.stringify({ generated_at: new Date().toISOString(), published_this_run: newStories.length, sources: sourceReport, candidates: candidates.length, new_candidates: newCandidates.length, failures, gemini_configured: Boolean(process.env.GEMINI_API_KEY), supabase_optional: true }, null, 2) + '\n')
+  const runStatus = {
+    generated_at: new Date().toISOString(),
+    published_this_run: newStories.length,
+    selected_for_gemini: selectedCandidates.length,
+    gemini_requests_this_run: selectedCandidates.length ? 1 : 0,
+    generation_mode: 'single-batch',
+    sources: sourceReport,
+    candidates: candidates.length,
+    new_candidates: newCandidates.length,
+    failures,
+    gemini_configured: Boolean(process.env.GEMINI_API_KEY),
+    supabase_optional: true,
+  }
+  await fs.writeFile('editorial-run-status.json', JSON.stringify(runStatus, null, 2) + '\n')
 
-  console.log(JSON.stringify({ published: newStories.length, feedStories: stories.length, candidates: candidates.length, newCandidates: newCandidates.length, sources: sourceReport, failures }, null, 2))
+  console.log(JSON.stringify({
+    published: newStories.length,
+    feedStories: stories.length,
+    candidates: candidates.length,
+    newCandidates: newCandidates.length,
+    selectedForGemini: selectedCandidates.length,
+    geminiRequests: selectedCandidates.length ? 1 : 0,
+    sources: sourceReport,
+    failures
+  }, null, 2))
   if (!process.env.GEMINI_API_KEY) process.exitCode = 2
 }
 main().catch(error => { console.error(error); process.exit(1) })

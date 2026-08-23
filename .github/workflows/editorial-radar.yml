@@ -1,11 +1,11 @@
 name: FOR THE CULTURE Editorial Radar
 
 on:
-  push:
-    branches:
-      - main
+  # The editorial engine is intentionally not triggered on every code push.
+  # Gemini's free tier has a daily request quota; one batched request can
+  # publish several stories, so scheduled runs are spaced six hours apart.
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "0 */6 * * *"
   workflow_dispatch:
 
 permissions:
@@ -48,7 +48,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           EDITORIAL_MODEL: gemini-3.7-flash
           EDITORIAL_MAX_STORIES_PER_SCAN: 4
-          EDITORIAL_GEMINI_RETRIES: 2
+          EDITORIAL_GEMINI_ATTEMPTS: 1
           EDITORIAL_MAX_AGE_HOURS: 96
           EDITORIAL_FETCH_TIMEOUT_MS: 6500
           EDITORIAL_IMAGE_FETCH_TIMEOUT_MS: 5000
@@ -74,6 +74,21 @@ jobs:
           # the current remote branch, then apply the feed on top of that branch.
           # This prevents the non-fast-forward push failure that stopped the
           # newsroom after Gemini successfully generated stories.
+          # Only publish the feed when this scan actually created stories.
+          # This avoids needless commits/deploys when a scheduled scan finds
+          # no new candidates or Gemini is temporarily quota-limited.
+          if [ -f editorial-run-status.json ]; then
+            PUBLISHED="$(node -e "const fs=require('fs'); const s=JSON.parse(fs.readFileSync('editorial-run-status.json','utf8')); process.stdout.write(String(s.published_this_run || 0))")"
+          else
+            PUBLISHED="0"
+          fi
+
+          if [ "$PUBLISHED" = "0" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No new published editorial stories in this scan."
+            exit 0
+          fi
+
           if git diff --quiet -- public/editorial-feed.json; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "No new published editorial feed content."

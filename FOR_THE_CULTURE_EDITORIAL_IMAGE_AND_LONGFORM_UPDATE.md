@@ -42,11 +42,13 @@ Gemini output capacity was increased to support the longer editorial format.
 
 The scan can now publish up to 4 new stories per run by default. Candidate selection is source-balanced so the engine does not unnecessarily fill a scan with stories from only one publication when relevant candidates exist elsewhere.
 
-The workflow still runs every 15 minutes, on pushes to `main`, and manually through GitHub Actions.
+All selected stories are generated in a single Gemini request. This is the key reliability change: the engine no longer spends a separate Gemini request on every story in the same scan. The workflow is scheduled every 6 hours and manual runs remain available, which keeps normal usage well below the free-tier daily request limit.
+
+The workflow runs automatically every 6 hours and can also be started manually through GitHub Actions. It is intentionally not triggered on every code push so Gemini free-tier quota is protected.
 
 ## Reliability protection
 
-- Gemini transient 429/5xx/network/timeout failures are retried.
+- Gemini transient 5xx/network/timeout failures can be retried when configured. 429 quota errors are recorded without retrying, because repeated quota requests do not restore the allowance.
 - Image lookup failures are non-fatal.
 - Existing published stories remain in `public/editorial-feed.json` when a scan finds no new stories.
 - The GitHub feed commit step keeps the existing non-fast-forward synchronization protection.
