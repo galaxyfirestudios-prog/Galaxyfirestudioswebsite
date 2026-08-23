@@ -65,6 +65,23 @@ jobs:
         run: |
           if [ -f editorial-run-status.json ]; then cat editorial-run-status.json; fi
 
+      - name: Validate editorial feed before publishing
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs')
+          const feed = JSON.parse(fs.readFileSync('public/editorial-feed.json', 'utf8'))
+          if (!Array.isArray(feed.stories)) throw new Error('editorial-feed.json has no stories array')
+          const status = fs.existsSync('editorial-run-status.json')
+            ? JSON.parse(fs.readFileSync('editorial-run-status.json', 'utf8'))
+            : {}
+          const published = Number(status.published_this_run || 0)
+          if (published > 0 && feed.stories.length === 0) {
+            throw new Error('Editorial radar reported published stories, but the public feed is empty.')
+          }
+          console.log(`Feed validation OK: ${feed.stories.length} stories; ${published} published this run.`)
+          NODE
+
       - name: Commit new editorial feed when stories changed
         id: feed_commit
         run: |
@@ -128,17 +145,10 @@ jobs:
           echo "Unable to push the editorial feed after 3 synchronization attempts."
           exit 1
 
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-
-      - name: Build website
-        run: pnpm run build
-
-      - name: Upload website artifact
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: ./dist
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Report deployment handoff
+        run: |
+          if [ "${{ steps.feed_commit.outputs.changed }}" = "true" ]; then
+            echo "Editorial feed committed to main. The Deploy Galaxy Fire Studios Website workflow will build and deploy the updated feed from the remote main branch."
+          else
+            echo "No editorial feed commit was required. Existing deployed content is left untouched."
+          fi

@@ -314,10 +314,29 @@ async function main() {
 
   const stories = [...newStories, ...prior].sort((a,b) => new Date(b.published_at || 0) - new Date(a.published_at || 0)).slice(0, 60)
   await fs.mkdir('public', { recursive: true })
-  await fs.writeFile('public/editorial-feed.json', JSON.stringify({ stories, count: stories.length, source: 'FOR THE CULTURE Editorial Engine', generated_at: new Date().toISOString() }, null, 2) + '\n')
+
+  // IMPORTANT: do not rewrite a healthy feed when this scan produced no new
+  // stories. This keeps the last known-good newsroom feed intact during a
+  // temporary Gemini quota/auth/source failure and prevents a failed scan from
+  // looking like a fresh empty publication. A genuinely empty feed is still
+  // allowed during first-time initialization.
+  let feedWasWritten = false
+  if (newStories.length > 0 || prior.length === 0) {
+    await fs.writeFile('public/editorial-feed.json', JSON.stringify({
+      stories,
+      count: stories.length,
+      source: 'FOR THE CULTURE Editorial Engine',
+      generated_at: new Date().toISOString()
+    }, null, 2) + '\n')
+    feedWasWritten = true
+  }
+
   const runStatus = {
     generated_at: new Date().toISOString(),
     published_this_run: newStories.length,
+    feed_story_count: stories.length,
+    feed_was_written: feedWasWritten,
+    feed_preserved: !feedWasWritten && prior.length > 0,
     selected_for_gemini: selectedCandidates.length,
     gemini_requests_this_run: selectedCandidates.length ? 1 : 0,
     generation_mode: 'single-batch',

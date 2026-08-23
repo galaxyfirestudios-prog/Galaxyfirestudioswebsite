@@ -2,7 +2,7 @@
 
 This build uses Google's Gemini Developer API for the FOR THE CULTURE editorial-generation layer while preserving the existing source feeds, relevance scoring, duplicate protection, publication feed, GitHub Actions deployment, Supabase support, internal story reader and website UI. It also enriches stories with source-page images when available and asks Gemini for longer 4–6 paragraph editorial treatments.
 
-The editorial radar now sends the selected candidates to Gemini in ONE batched generation request and can publish up to 4 stories from that response. This is deliberately designed to reduce Gemini free-tier request consumption and prevent the old one-request-per-story behaviour from exhausting the quota.
+The editorial radar now sends the selected candidates to Gemini in ONE batched generation request and can publish up to 4 stories from that response. A temporary Gemini failure preserves the last known-good feed instead of rewriting it. This is deliberately designed to reduce Gemini free-tier request consumption and prevent the old one-request-per-story behaviour from exhausting the quota.
 
 ## Required GitHub Secret
 

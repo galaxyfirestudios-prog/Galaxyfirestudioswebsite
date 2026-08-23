@@ -71,6 +71,8 @@ export default function App() {
         "/api/editorial-feed?limit=12",
       ];
 
+      let validEmptyFeedSeen = false;
+
       for (const endpoint of endpoints) {
         try {
           const response = await fetch(endpoint, {
@@ -81,10 +83,18 @@ export default function App() {
           const data = await response.json();
           if (!Array.isArray(data.stories)) continue;
 
+          // A static GitHub Pages feed can briefly be empty while a backend
+          // endpoint already has published stories. Do not stop at the first
+          // valid-but-empty response; try the next endpoint before declaring
+          // the newsroom empty.
+          if (data.stories.length === 0) {
+            validEmptyFeedSeen = true;
+            continue;
+          }
+
           if (!cancelled) {
-            const stories = data.stories;
-            setCultureStories(stories);
-            setCultureFeedStatus(stories.length ? "ready" : "empty");
+            setCultureStories(data.stories);
+            setCultureFeedStatus("ready");
           }
           return;
         } catch (error) {
@@ -93,7 +103,7 @@ export default function App() {
       }
 
       if (!cancelled) {
-        setCultureFeedStatus((current) => current === "ready" ? current : "error");
+        setCultureFeedStatus(validEmptyFeedSeen ? "empty" : "error");
       }
     }
 
