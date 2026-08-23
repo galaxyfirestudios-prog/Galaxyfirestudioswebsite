@@ -1,0 +1,53 @@
+{
+  "stationName": "FOR THE CULTURE RADIO",
+  "host": "DJ NEBULAE",
+  "mode": "browser-playlist",
+  "description": "Phase 1 test rotation using original Galaxy Fire / Detailmadeit recordings supplied for the station. Beat Store inventory is intentionally excluded.",
+  "tracks": [
+    {
+      "artist": "Detailmadeit",
+      "title": "Hustlers Ambition",
+      "show": "DJ NEBULAE TEST ROTATION",
+      "genre": "Hip-Hop/Rap",
+      "year": 2022,
+      "sourceNote": "Metadata verified from The NATIVE and Detailmadeit lyric catalogue.",
+      "src": "radio/hustlers-ambition.mp3"
+    },
+    {
+      "artist": "Detailmadeit feat. DJ Neptune & BabyFresh",
+      "title": "Issa Vibe",
+      "show": "DJ NEBULAE TEST ROTATION",
+      "genre": "Afro-Pop / Amapiano",
+      "year": 2022,
+      "sourceNote": "Metadata verified from Audiomack and tooXclusive.",
+      "src": "radio/issa-vibe.mp3"
+    },
+    {
+      "artist": "Detailmadeit",
+      "title": "FAYA",
+      "show": "DJ NEBULAE TEST ROTATION",
+      "genre": "Afro-Pop",
+      "year": 2024,
+      "sourceNote": "Metadata verified from Apple Music / Amazon Music / DistroKid.",
+      "src": "radio/faya.mp3"
+    },
+    {
+      "artist": "Detailmadeit",
+      "title": "Love Me Like You Do",
+      "show": "DJ NEBULAE TEST ROTATION",
+      "genre": "Afro-Pop",
+      "year": 2022,
+      "sourceNote": "Metadata verified from Apple Music.",
+      "src": "radio/love-me-like-you-do.mp3"
+    },
+    {
+      "artist": "Detailmadeit feat. David Acekeyz, Hotyce & Rudy",
+      "title": "Good Vibrations",
+      "show": "DJ NEBULAE TEST ROTATION",
+      "genre": "Hip-Hop/Rap",
+      "year": 2023,
+      "sourceNote": "Metadata verified from Apple Music / Shazam.",
+      "src": "radio/good-vibrations.mp3"
+    }
+  ]
+}

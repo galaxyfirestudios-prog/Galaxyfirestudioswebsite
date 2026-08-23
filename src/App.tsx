@@ -68,9 +68,14 @@ export default function App() {
     try { return localStorage.getItem("gfs-radio-paused") === "1"; } catch { return false; }
   });
   const [radioStreamUrl, setRadioStreamUrl] = useState((import.meta.env.VITE_RADIO_STREAM_URL || "").trim());
-  const radioTrack = { artist: "FOR THE CULTURE RADIO", title: "The Culture Soundtrack", show: "FOR THE CULTURE LIVE", host: "DJ NEBULAE" };
-  const radioRecentlyPlayed = [
-    ["Ayra Starr", "Rush"], ["Rema", "Charm"], ["Wande Coal", "Kpe Paso"], ["Tems", "Love Me JeJe"], ["Asake", "Lonely At The Top"]
+  const [radioPlaylist, setRadioPlaylist] = useState<any[]>([]);
+  const [radioTrackIndex, setRadioTrackIndex] = useState(() => {
+    try { return Number(localStorage.getItem("gfs-radio-track-index") || "0"); } catch { return 0; }
+  });
+  const [radioHistory, setRadioHistory] = useState<any[]>([]);
+  const radioTrack = radioPlaylist[radioTrackIndex] || { artist: "FOR THE CULTURE RADIO", title: "DJ NEBULAE TEST ROTATION", show: "FOR THE CULTURE LIVE", host: "DJ NEBULAE", src: "" };
+  const radioRecentlyPlayed = radioHistory.length ? radioHistory : [
+    { artist: "FOR THE CULTURE RADIO", title: "Waiting for the first track…" },
   ];
   const radioSchedule = [
     ["00:00 – 04:00", "SOUND OF THE DIASPORA", "DJ NEBULAE", "Diaspora sounds. Global connection."],
@@ -80,7 +85,35 @@ export default function App() {
     ["13:00 – 16:00", "BEATS & RHYMES", "DJ NEBULAE", "Hip hop. Bars. Classics. New school."],
   ];
 
+  const playRadioTrack = async (index: number, fromUser = false) => {
+    const audio = radioAudioRef.current;
+    const track = radioPlaylist[index];
+    if (!audio || !track?.src) { setRadioPlayerOpen(true); return false; }
+    setRadioTrackIndex(index);
+    try { localStorage.setItem("gfs-radio-track-index", String(index)); } catch {}
+    const base = import.meta.env.BASE_URL || "/";
+    audio.src = `${base.replace(/\/$/, "")}/${String(track.src).replace(/^\//, "")}`;
+    audio.volume = radioVolume;
+    if (track.poster) audio.dataset.poster = track.poster;
+    if (fromUser) {
+      try { localStorage.removeItem("gfs-radio-paused"); } catch {}
+      setRadioPausedByUser(false);
+    }
+    try {
+      await audio.play();
+      setRadioPlaying(true);
+      setRadioStreamReady(true);
+      setRadioPlayerOpen(true);
+      return true;
+    } catch (error) {
+      console.info("FOR THE CULTURE RADIO playback was blocked until the browser receives a user gesture.", error);
+      setRadioPlayerOpen(true);
+      return false;
+    }
+  };
+
   const startRadio = async (fromUser = false) => {
+    if (radioPlaylist.length) return playRadioTrack(radioTrackIndex, fromUser);
     const audio = radioAudioRef.current;
     if (!audio || !radioStreamUrl) { setRadioPlayerOpen(true); return false; }
     audio.src = radioStreamUrl;
@@ -130,13 +163,44 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    const base = import.meta.env.BASE_URL || "./";
+    const playlistUrl = `${base.replace(/\/$/, "")}/radio-playlist.json?ts=${Date.now()}`;
+    fetch(playlistUrl, { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((playlist) => {
+        if (cancelled || !Array.isArray(playlist?.tracks)) return;
+        setRadioPlaylist(playlist.tracks.filter((track: any) => typeof track?.src === "string" && track.src));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("gfs-radio-history") || "[]");
+      if (Array.isArray(stored)) setRadioHistory(stored.slice(0, 8));
+    } catch {}
+  }, []);
+
+  useEffect(() => {
     const audio = radioAudioRef.current;
     if (!audio) return;
     audio.volume = radioVolume;
   }, [radioVolume]);
 
+  const advanceRadioTrack = () => {
+    if (!radioPlaylist.length) return;
+    const nextIndex = (radioTrackIndex + 1) % radioPlaylist.length;
+    const historyEntry = { artist: radioTrack.artist, title: radioTrack.title };
+    const nextHistory = [historyEntry, ...radioHistory.filter((item) => `${item.artist}-${item.title}` !== `${historyEntry.artist}-${historyEntry.title}`)].slice(0, 8);
+    setRadioHistory(nextHistory);
+    try { localStorage.setItem("gfs-radio-history", JSON.stringify(nextHistory)); } catch {}
+    playRadioTrack(nextIndex, false);
+  };
+
   useEffect(() => {
-    if (!radioStreamUrl || radioPausedByUser) return;
+    if ((!radioStreamUrl && !radioPlaylist.length) || radioPausedByUser) return;
     const tryStart = () => { startRadio(false); };
     tryStart();
     const onFirstGesture = () => {
@@ -150,7 +214,7 @@ export default function App() {
       window.removeEventListener("pointerdown", onFirstGesture);
       window.removeEventListener("keydown", onFirstGesture);
     };
-  }, [radioStreamUrl, radioPausedByUser]);
+  }, [radioStreamUrl, radioPlaylist, radioPausedByUser]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1470,7 +1534,7 @@ export default function App() {
 
           <div className="radio-main-player">
             <div className="radio-player-glow"></div>
-            <div className="radio-player-badge">{radioPlaying ? "LIVE ON AIR" : "FOR THE CULTURE RADIO"}</div>
+            <div className="radio-player-badge">{radioPlaying ? "ON AIR" : "FOR THE CULTURE RADIO"}</div>
             <div className="radio-player-body">
               <div className="radio-art-wrap">
                 <img src={cultureArt} alt="For the Culture Radio artwork" />
@@ -1497,10 +1561,10 @@ export default function App() {
         <div className="radio-content-grid">
           <section className="radio-panel recently-played">
             <div className="radio-panel-head"><h3>RECENTLY PLAYED</h3><span>VIEW ALL</span></div>
-            {radioRecentlyPlayed.map(([artist, title], index) => (
-              <div className="radio-track-row" key={`${artist}-${title}`}>
+            {radioRecentlyPlayed.map((item: any, index) => (
+              <div className="radio-track-row" key={`${item.artist}-${item.title}-${index}`}>
                 <img src={cultureArt} alt="" />
-                <div><strong>{artist}</strong><small>{title}</small></div>
+                <div><strong>{item.artist}</strong><small>{item.title}</small></div>
                 <span>{index === 0 && radioPlaying ? "NOW" : `${4 + index}:${String(32 - index * 2).padStart(2, "0")} PM`}</span>
               </div>
             ))}
@@ -1520,11 +1584,11 @@ export default function App() {
             <div className="radio-panel-head"><h3>THE STATION</h3><span>DJ NEBULAE</span></div>
             <h4>MUSIC.<br />CULTURE.<br /><em>CONNECTION.</em></h4>
             <p>FOR THE CULTURE RADIO is the live audio layer of the Galaxy Fire ecosystem — built for records, stories, artists, conversations and the sounds moving the culture.</p>
-            <div className="radio-source-note"><span>RADIO ENGINE</span><strong>{radioStreamUrl ? "STREAM CONFIGURED" : "AWAITING STREAM SOURCE"}</strong></div>
+            <div className="radio-source-note"><span>RADIO ENGINE</span><strong>{radioPlaylist.length ? `${radioPlaylist.length} TRACK ROTATION READY` : (radioStreamUrl ? "STREAM CONFIGURED" : "PLAYLIST READYING")}</strong></div>
           </aside>
         </div>
 
-        <audio ref={radioAudioRef} preload="none" onPlaying={() => setRadioPlaying(true)} onPause={() => setRadioPlaying(false)} onCanPlay={() => setRadioStreamReady(true)} onError={() => setRadioStreamReady(false)} aria-label="For the Culture Radio" />
+        <audio ref={radioAudioRef} preload="none" onPlaying={() => setRadioPlaying(true)} onPause={() => setRadioPlaying(false)} onEnded={advanceRadioTrack} onCanPlay={() => setRadioStreamReady(true)} onError={() => setRadioStreamReady(false)} aria-label="For the Culture Radio" />
       </section>
 
       {radioPlayerOpen && (
