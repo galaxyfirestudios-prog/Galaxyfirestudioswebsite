@@ -878,8 +878,6 @@ export default function App() {
           <a href="#visuals" onClick={() => setMenuOpen(false)}>VISUALS</a>
           <a href="#booking" onClick={() => setMenuOpen(false)}>BOOK</a>
           <a href="#culture" onClick={() => setMenuOpen(false)}>FOR THE CULTURE</a>
-          <a href="#radio" onClick={() => setMenuOpen(false)}>RADIO</a>
-          <a href="#blog" onClick={() => setMenuOpen(false)}>BLOG</a>
           <a href="#beats" onClick={() => setMenuOpen(false)}>BEATS</a>
           <a href="#shop" onClick={() => setMenuOpen(false)}>SHOP</a>
           <a href="#about" onClick={() => setMenuOpen(false)}>ABOUT</a>
