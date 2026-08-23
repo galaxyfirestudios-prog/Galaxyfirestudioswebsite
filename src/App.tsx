@@ -242,9 +242,11 @@ export default function App() {
     },
   });
   const cultureTabs = [
-    ["home", "HOME", "#culture-home"], ["music", "MUSIC", "#culture-music"], ["culture", "CULTURE", "#culture-culture"],
-    ["radio", "RADIO", "#culture-radio"], ["video", "VIDEO", "#culture-video"], ["events", "EVENTS", "#culture-events"],
-    ["artists", "ARTISTS", "#culture-artists"], ["community", "COMMUNITY", "#culture-community"]
+    ["home", "HOME", "#culture-home"],
+    ["stories", "STORIES", "#culture-stories"],
+    ["music", "MUSIC", "#culture-music"],
+    ["culture", "CULTURE", "#culture-culture"],
+    ["discover", "DISCOVER", "#culture-discover"]
   ] as const;
 
   const storeProducts = [
@@ -872,8 +874,6 @@ export default function App() {
           <a href="#visuals" onClick={() => setMenuOpen(false)}>VISUALS</a>
           <a href="#booking" onClick={() => setMenuOpen(false)}>BOOK</a>
           <a href="#culture" onClick={() => setMenuOpen(false)}>FOR THE CULTURE</a>
-          <a href="#radio" onClick={() => setMenuOpen(false)}>RADIO</a>
-          <a href="#blog" onClick={() => setMenuOpen(false)}>BLOG</a>
           <a href="#beats" onClick={() => setMenuOpen(false)}>BEATS</a>
           <a href="#shop" onClick={() => setMenuOpen(false)}>SHOP</a>
           <a href="#about" onClick={() => setMenuOpen(false)}>ABOUT</a>
@@ -1232,6 +1232,7 @@ export default function App() {
                   {label}
                 </a>
               ))}
+              <a href="#radio" className="culture-nav-live">OPEN RADIO <span>→</span></a>
             </nav>
 
             {cultureFeedStatus === "ready" && heroStory ? (
@@ -1264,99 +1265,115 @@ export default function App() {
               </article>
             )}
 
-            <div className="culture-content-grid">
-              <section className="culture-stories-block" id="culture-stories">
-                <div className="culture-section-head"><h3>LATEST STORIES</h3><a href="#culture-stories">VIEW ALL STORIES →</a></div>
-                {cultureFeedStatus === "ready" && editorialStories.length ? (
-                  <div className="culture-story-grid">
-                    {editorialStories.slice(0, 6).map((story: any) => (
-                      <a {...storyLinkProps(story)} className="culture-story-card culture-live-story-card" key={story.id || story.source_url}>
-                        {storyImage(story) ? <img src={storyImage(story)} alt={storyTitle(story)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} /> : <div className="culture-story-no-image">FOR THE CULTURE</div>}
-                        <div>
-                          <span>{story.category || "CULTURE"}</span>
-                          <h4>{storyTitle(story)}</h4>
-                          <p>{storyDek(story)}</p>
-                          <small>{story.source_name || "FOR THE CULTURE"} · {storyDate(story)}</small>
-                        </div>
-                      </a>
-                    ))}
-                  </div>
-                ) : (
-                  <div className={`culture-editorial-state ${cultureFeedStatus}`}>
-                    <div className="culture-editorial-state-mark">●</div>
-                    <div>
-                      <strong>{cultureFeedStatus === "loading" ? "LOADING THE CULTURE RADAR" : cultureFeedStatus === "error" ? "EDITORIAL FEED UNAVAILABLE" : "EDITORIAL RADAR INITIALIZING"}</strong>
-                      <p>{cultureFeedStatus === "loading" ? "Checking the latest stories from the editorial sources." : cultureFeedStatus === "error" ? "The live editorial feed could not be reached. The newsroom will retry automatically." : "The editorial feed is empty. Once the newsroom scan publishes stories, every FOR THE CULTURE visual will update from the live feed."}</p>
+            <section className="culture-hub" id="culture-stories">
+              <div className="culture-section-head">
+                <div><span className="culture-section-kicker">THE NEWSROOM</span><h3>LATEST STORIES</h3></div>
+                <a href="#culture-stories">VIEW ALL STORIES →</a>
+              </div>
+
+              <div className="culture-hub-grid">
+                <div className="culture-story-grid">
+                  {cultureFeedStatus === "ready" && editorialStories.length ? editorialStories.slice(0, 6).map((story: any) => (
+                    <a {...storyLinkProps(story)} className="culture-story-card culture-live-story-card" key={story.id || story.source_url}>
+                      {storyImage(story) ? <img src={storyImage(story)} alt={storyTitle(story)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} /> : <div className="culture-story-no-image">FOR THE CULTURE</div>}
+                      <div>
+                        <span>{story.category || "CULTURE"}</span>
+                        <h4>{storyTitle(story)}</h4>
+                        <p>{storyDek(story)}</p>
+                        <small>{story.source_name || "FOR THE CULTURE"} · {storyDate(story)}</small>
+                      </div>
+                    </a>
+                  )) : (
+                    <div className={`culture-editorial-state ${cultureFeedStatus}`}>
+                      <div className="culture-editorial-state-mark">●</div>
+                      <div>
+                        <strong>{cultureFeedStatus === "loading" ? "LOADING THE CULTURE RADAR" : cultureFeedStatus === "error" ? "EDITORIAL FEED UNAVAILABLE" : "EDITORIAL RADAR INITIALIZING"}</strong>
+                        <p>{cultureFeedStatus === "loading" ? "Checking the latest stories from the editorial sources." : cultureFeedStatus === "error" ? "The live editorial feed could not be reached. The newsroom will retry automatically." : "The editorial feed is empty. Once the newsroom scan publishes stories, the newsroom will update from the live feed."}</p>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </section>
-
-              <aside className="culture-radio-card" id="culture-radio">
-                <div className="culture-section-head"><h3>RADIO</h3><a href="#culture-radio">OPEN RADIO →</a></div>
-                {radioStory ? (
-                  <>
-                    {storyImage(radioStory) && <img className="culture-radio-story-image" src={storyImage(radioStory)} alt={storyTitle(radioStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} />}
-                    <div className="culture-on-air"><span>EDITORIAL UPDATE</span><small>{radioStory.source_name || "FOR THE CULTURE"}</small></div>
-                    <h4>{storyTitle(radioStory)}</h4>
-                    <p>{storyDek(radioStory)}</p>
-                    <a {...storyLinkProps(radioStory)} className="culture-radio-button">READ THE STORY <span>→</span></a>
-                  </>
-                ) : (
-                  <><div className="culture-on-air"><span>RADIO</span><small>FOR THE CULTURE</small></div><h4>THE CULTURE<br />NEVER STOPS.</h4><p>The radio experience will connect here as the station infrastructure comes online.</p><a href="#radio" className="culture-radio-button">OPEN RADIO <span>→</span></a></>
-                )}
-              </aside>
-            </div>
-
-            <div className="culture-platform-columns">
-              <section className="culture-panel music-panel" id="culture-music">
-                <div className="culture-section-head"><h3>NEW MUSIC</h3><a href="#culture-music">VIEW ALL →</a></div>
-                {newMusicStories.length ? newMusicStories.map((story: any) => (
-                  <a {...storyLinkProps(story)} className="culture-music-row" key={story.id || story.source_url}>
-                    {storyImage(story) ? <img src={storyImage(story)} alt={storyTitle(story)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} /> : <div className="culture-music-no-image">FTC</div>}
-                    <div><strong>{storyTitle(story)}</strong><small>{storyDek(story)}</small></div><span className="culture-play">→</span>
-                  </a>
-                )) : <div className="culture-panel-empty">NEW MUSIC STORIES WILL APPEAR HERE AUTOMATICALLY.</div>}
-              </section>
-
-              <section className="culture-panel culture-feature-panel" id="culture-culture">
-                <div className="culture-section-head"><h3>CULTURE</h3><a href="#culture-stories">VIEW ALL →</a></div>
-                {featureStory ? (
-                  <a {...storyLinkProps(featureStory)} className="culture-feature-link">
-                    <div className="culture-feature-image">{storyImage(featureStory) ? <img src={storyImage(featureStory)} alt={storyTitle(featureStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} /> : <div className="culture-editorial-visual-fallback"><span>CULTURE</span></div>}<span>{featureStory.category || "CULTURE"}</span></div>
-                    <h4>{storyTitle(featureStory)}</h4><p>{storyDek(featureStory)}</p>
-                  </a>
-                ) : <div className="culture-panel-empty">THE CULTURE DESK IS WAITING FOR LIVE STORIES.</div>}
-              </section>
-
-              <section className="culture-panel culture-radio-promo">
-                {storyImage(radioStory) ? <img className="culture-radio-promo-image" src={storyImage(radioStory)} alt={storyTitle(radioStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} /> : <div className="culture-editorial-visual-fallback"><span>FOR THE<br />CULTURE</span></div>}
-                <div className="culture-radio-promo-copy"><span>EDITORIAL RADAR</span><h3>WHAT'S<br />MOVING<br /><em>NOW.</em></h3><p>{radioStory ? storyDek(radioStory) : "Live culture stories, written and curated by the FOR THE CULTURE editorial engine."}</p>{radioStory ? <a {...storyLinkProps(radioStory)} className="culture-action">READ THE LATEST →</a> : <a href="#culture-stories" className="culture-action">READ THE LATEST →</a>}</div>
-              </section>
-            </div>
-
-            <div className="culture-platform-columns lower">
-              <section className="culture-panel culture-video-panel" id="culture-video">
-                <div className="culture-section-head"><h3>LATEST STORY / VIDEO</h3><a href="#culture-stories">VIEW ALL →</a></div>
-                {videoStory ? <a {...storyLinkProps(videoStory)} className="culture-video-feature">{storyImage(videoStory) ? <img src={storyImage(videoStory)} alt={storyTitle(videoStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} /> : <div className="culture-editorial-visual-fallback"><span>VIDEO<br />CULTURE</span></div>}<span>{videoStory.category || "CULTURE"}</span><div className="culture-video-copy"><strong>{storyTitle(videoStory)}</strong><small>{storyDek(videoStory)}</small></div></a> : <div className="culture-panel-empty">LATEST VIDEO COVERAGE WILL APPEAR HERE.</div>}
-              </section>
-
-              <section className="culture-panel" id="culture-events">
-                <div className="culture-section-head"><h3>EVENTS & MOMENTS</h3><a href="#culture-events">VIEW ALL →</a></div>
-                {featuredEventStories.length ? featuredEventStories.map((story: any) => <a {...storyLinkProps(story)} className="culture-event-row culture-editorial-row" key={story.id || story.source_url}><b>FTC</b><div><strong>{storyTitle(story)}</strong><small>{storyDek(story)}</small></div><span>READ →</span></a>) : <div className="culture-panel-empty">EVENT STORIES WILL APPEAR HERE AUTOMATICALLY.</div>}
-              </section>
-
-              <section className="culture-panel" id="culture-artists">
-                <div className="culture-section-head"><h3>ARTISTS / CREATORS</h3><a href="#culture-artists">DISCOVER →</a></div>
-                <div className="culture-artist-grid">
-                  {artistStories.length ? artistStories.map((story: any) => <a {...storyLinkProps(story)} key={story.id || story.source_url}>{storyImage(story) ? <img src={storyImage(story)} alt={storyTitle(story)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} /> : <div className="culture-editorial-visual-fallback"><span>FTC</span></div>}<span>{storyTitle(story)}</span></a>) : <div className="culture-panel-empty">ARTIST AND CREATOR STORIES WILL APPEAR HERE.</div>}
+                  )}
                 </div>
-              </section>
-            </div>
+
+                <aside className="culture-radio-card" id="culture-radio">
+                  <div className="culture-section-head"><div><span className="culture-section-kicker">THE STATION</span><h3>RADIO</h3></div><a href="#radio">OPEN RADIO →</a></div>
+                  {radioStory ? (
+                    <>
+                      {storyImage(radioStory) && <img className="culture-radio-story-image" src={storyImage(radioStory)} alt={storyTitle(radioStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} />}
+                      <div className="culture-on-air"><span>EDITORIAL UPDATE</span><small>{radioStory.source_name || "FOR THE CULTURE"}</small></div>
+                      <h4>{storyTitle(radioStory)}</h4>
+                      <p>{storyDek(radioStory)}</p>
+                      <a {...storyLinkProps(radioStory)} className="culture-radio-button">READ THE STORY <span>→</span></a>
+                    </>
+                  ) : (
+                    <><div className="culture-on-air"><span>RADIO</span><small>FOR THE CULTURE</small></div><h4>THE CULTURE<br />NEVER STOPS.</h4><p>The live station will connect here when the radio infrastructure comes online.</p><a href="#radio" className="culture-radio-button">OPEN RADIO <span>→</span></a></>
+                  )}
+                </aside>
+              </div>
+            </section>
+
+            <section className="culture-hub culture-culture-hub" id="culture-culture">
+              <div className="culture-section-head">
+                <div><span className="culture-section-kicker">MUSIC + IDEAS</span><h3>THE CULTURE DESK</h3></div>
+                <a href="#culture-music">EXPLORE →</a>
+              </div>
+              <div className="culture-desk-grid">
+                <div className="culture-desk-block" id="culture-music">
+                  <div className="culture-subhead"><h4>NEW MUSIC</h4><span>DISCOVER</span></div>
+                  {newMusicStories.length ? newMusicStories.map((story: any) => (
+                    <a {...storyLinkProps(story)} className="culture-music-row" key={story.id || story.source_url}>
+                      {storyImage(story) ? <img src={storyImage(story)} alt={storyTitle(story)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} /> : <div className="culture-music-no-image">FTC</div>}
+                      <div><strong>{storyTitle(story)}</strong><small>{storyDek(story)}</small></div><span className="culture-play">→</span>
+                    </a>
+                  )) : <div className="culture-panel-empty">NEW MUSIC STORIES WILL APPEAR HERE AUTOMATICALLY.</div>}
+                </div>
+
+                <div className="culture-desk-block culture-feature-panel">
+                  <div className="culture-subhead"><h4>CULTURE</h4><span>POINT OF VIEW</span></div>
+                  {featureStory ? (
+                    <a {...storyLinkProps(featureStory)} className="culture-feature-link">
+                      <div className="culture-feature-image">{storyImage(featureStory) ? <img src={storyImage(featureStory)} alt={storyTitle(featureStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} /> : <div className="culture-editorial-visual-fallback"><span>CULTURE</span></div>}<span>{featureStory.category || "CULTURE"}</span></div>
+                      <h4>{storyTitle(featureStory)}</h4><p>{storyDek(featureStory)}</p>
+                    </a>
+                  ) : <div className="culture-panel-empty">THE CULTURE DESK IS WAITING FOR LIVE STORIES.</div>}
+                </div>
+
+                <div className="culture-desk-note">
+                  <span>THE IDEA</span>
+                  <h4>STORIES.<br />SOUNDS.<br /><em>IDENTITY.</em></h4>
+                  <p>Music and culture belong in the same conversation. This desk brings releases, voices and ideas together without repeating the same story in separate panels.</p>
+                  <a href="#culture-stories" className="culture-action">READ THE NEWSROOM <span>→</span></a>
+                </div>
+              </div>
+            </section>
+
+            <section className="culture-hub culture-discover-hub" id="culture-discover">
+              <div className="culture-section-head">
+                <div><span className="culture-section-kicker">BEYOND THE HEADLINES</span><h3>WATCH · ATTEND · DISCOVER</h3></div>
+                <a href="#culture-discover">EXPLORE →</a>
+              </div>
+              <div className="culture-discover-grid">
+                <div className="culture-discover-block" id="culture-video">
+                  <div className="culture-subhead"><h4>VIDEO</h4><span>WATCH</span></div>
+                  {videoStory ? <a {...storyLinkProps(videoStory)} className="culture-video-feature">{storyImage(videoStory) ? <img src={storyImage(videoStory)} alt={storyTitle(videoStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} /> : <div className="culture-editorial-visual-fallback"><span>VIDEO<br />CULTURE</span></div>}<span>{videoStory.category || "CULTURE"}</span><div className="culture-video-copy"><strong>{storyTitle(videoStory)}</strong><small>{storyDek(videoStory)}</small></div></a> : <div className="culture-panel-empty">LATEST VIDEO COVERAGE WILL APPEAR HERE.</div>}
+                </div>
+
+                <div className="culture-discover-block" id="culture-events">
+                  <div className="culture-subhead"><h4>EVENTS</h4><span>EXPERIENCE</span></div>
+                  {featuredEventStories.length ? featuredEventStories.map((story: any) => <a {...storyLinkProps(story)} className="culture-event-row culture-editorial-row" key={story.id || story.source_url}><b>FTC</b><div><strong>{storyTitle(story)}</strong><small>{storyDek(story)}</small></div><span>READ →</span></a>) : <div className="culture-panel-empty">EVENT STORIES WILL APPEAR HERE AUTOMATICALLY.</div>}
+                </div>
+
+                <div className="culture-discover-block" id="culture-artists">
+                  <div className="culture-subhead"><h4>ARTISTS + CREATORS</h4><span>DISCOVER</span></div>
+                  <div className="culture-artist-grid">
+                    {artistStories.length ? artistStories.map((story: any) => <a {...storyLinkProps(story)} key={story.id || story.source_url}>{storyImage(story) ? <img src={storyImage(story)} alt={storyTitle(story)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} /> : <div className="culture-editorial-visual-fallback"><span>FTC</span></div>}<span>{storyTitle(story)}</span></a>) : <div className="culture-panel-empty">ARTIST AND CREATOR STORIES WILL APPEAR HERE.</div>}
+                  </div>
+                </div>
+              </div>
+            </section>
 
             <section className="culture-manifesto" id="culture-community">
               <div><span>FOR THE CULTURE</span><h3>WE ARE<br /><em>THE CULTURE.</em></h3></div>
-              <p>Every section above is now designed to consume the same live editorial feed, so the platform can evolve from a static showcase into a continuously updated cultural publication.</p>
+              <p>One newsroom. One live feed. Music, stories, ideas, artists and experiences connected without unnecessary repetition.</p>
               <a href="#culture-stories" className="culture-action">EXPLORE THE LATEST →</a>
             </section>
           </div>
@@ -2822,83 +2839,71 @@ export default function App() {
         .culture-editorial-state p { margin:7px 0 0; color:#888; font-size:13px; line-height:1.6; max-width:620px; }
         @keyframes culturePulse { 50% { transform:scale(.72); opacity:.45; } }
 
-        /* FOR THE CULTURE — editorial platform homepage */
+        /* FOR THE CULTURE — editorial platform homepage: fewer, stronger editorial zones */
         .culture-platform { background:#050505; color:#fff; overflow:hidden; border-top:1px solid #171717; }
         .culture-platform-topline { min-height:38px; padding:0 4.5%; display:flex; align-items:center; justify-content:space-between; gap:20px; border-bottom:1px solid #1d1d1d; color:#9f9f9f; font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:900; letter-spacing:1.5px; }
-        .culture-platform-live { color:#fff; }
-        .culture-platform-live::first-letter { color:#e50914; }
-        .culture-platform-shell { display:grid; grid-template-columns:250px minmax(0,1fr); max-width:1500px; margin:0 auto; }
-        .culture-brand-rail { padding:38px 26px 45px 4.5%; border-right:1px solid #222; background:linear-gradient(180deg,#090909,#050505); position:relative; }
+        .culture-platform-live { color:#fff; }.culture-platform-live::first-letter { color:#e50914; }
+        .culture-platform-shell { display:grid; grid-template-columns:210px minmax(0,1fr); max-width:1500px; margin:0 auto; }
+        .culture-brand-rail { padding:34px 22px 42px 4.5%; border-right:1px solid #222; background:linear-gradient(180deg,#090909,#050505); }
         .culture-brand-art { width:100%; aspect-ratio:1; object-fit:cover; object-position:center; display:block; filter:contrast(1.05) saturate(1.05); mix-blend-mode:screen; opacity:.92; }
         .culture-brand-kicker { margin-top:14px; color:#b66cff; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:11px; letter-spacing:1.8px; }
-        .culture-brand-rail p { color:#6d6d6d; font-size:12px; line-height:1.7; margin:15px 0 0; max-width:190px; }
-        .culture-platform-main { min-width:0; padding:0 4.5% 55px; }
-        .culture-platform-nav { height:70px; display:flex; align-items:center; gap:24px; overflow:auto; white-space:nowrap; border-bottom:1px solid #1c1c1c; scrollbar-width:none; }
+        .culture-brand-rail p { color:#6d6d6d; font-size:11px; line-height:1.7; margin:12px 0 0; max-width:180px; }
+        .culture-platform-main { min-width:0; padding:0 4.5% 48px; }
+        .culture-platform-nav { min-height:62px; display:flex; align-items:center; gap:24px; overflow:auto; white-space:nowrap; border-bottom:1px solid #1c1c1c; scrollbar-width:none; }
         .culture-platform-nav::-webkit-scrollbar { display:none; }
-        .culture-platform-nav a { color:#a2a2a2; font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:900; letter-spacing:1.2px; padding:27px 0 24px; border-bottom:2px solid transparent; transition:color .2s,border-color .2s; }
+        .culture-platform-nav a { color:#a2a2a2; font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:900; letter-spacing:1.2px; padding:23px 0 20px; border-bottom:2px solid transparent; transition:color .2s,border-color .2s; }
         .culture-platform-nav a:hover,.culture-platform-nav a.active { color:#fff; border-color:#b66cff; }
-        .culture-hero-story { position:relative; display:grid; grid-template-columns:.88fr 1.5fr; min-height:570px; border-bottom:1px solid #242424; overflow:hidden; background:#090909; }
-        .culture-hero-copy { align-self:center; padding:65px 35px 65px 0; position:relative; z-index:2; }
-        .culture-label,.culture-story-card span,.culture-feature-image span,.culture-radio-promo-copy>span,.culture-manifesto>div>span { color:#b66cff; font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:900; letter-spacing:2px; }
-        .culture-hero-copy h2 { margin:16px 0 22px; font-family:'Barlow Condensed',sans-serif; font-size:clamp(58px,6.4vw,102px); line-height:.82; letter-spacing:-2px; font-weight:900; }
+        .culture-platform-nav .culture-nav-live { margin-left:auto; color:#b66cff; border:0; padding:9px 12px; background:#171017; }
+        .culture-platform-nav .culture-nav-live:hover { background:#8f35dc; color:#fff; }
+        .culture-platform-nav .culture-nav-live span { margin-left:10px; }
+        .culture-hero-story { position:relative; display:grid; grid-template-columns:.86fr 1.5fr; min-height:540px; border-bottom:1px solid #242424; overflow:hidden; background:#090909; }
+        .culture-hero-copy { align-self:center; padding:58px 34px 58px 0; position:relative; z-index:2; }
+        .culture-label,.culture-story-card span,.culture-feature-image span,.culture-manifesto>div>span,.culture-section-kicker,.culture-subhead span { color:#b66cff; font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:900; letter-spacing:2px; }
+        .culture-hero-copy h2 { margin:16px 0 20px; font-family:'Barlow Condensed',sans-serif; font-size:clamp(56px,6vw,96px); line-height:.82; letter-spacing:-2px; font-weight:900; }
         .culture-hero-copy h2 em { color:#b66cff; font-style:normal; }
-        .culture-hero-copy p { max-width:430px; color:#999; font-size:14px; line-height:1.7; margin:0 0 27px; }
+        .culture-hero-copy p { max-width:420px; color:#999; font-size:13px; line-height:1.7; margin:0 0 25px; }
         .culture-action { display:inline-flex; align-items:center; gap:14px; padding:12px 17px; background:#8f35dc; color:#fff; font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:900; letter-spacing:1.1px; transition:transform .2s,background .2s; }
         .culture-action:hover { background:#b66cff; transform:translateY(-2px); }
+        .culture-story-byline { display:block; color:#555; font-size:9px; margin-top:16px; }
         .culture-hero-image-wrap { position:relative; min-width:0; overflow:hidden; }
-        .culture-hero-image { width:100%; height:100%; min-height:570px; object-fit:cover; object-position:center; display:block; filter:saturate(.78) contrast(1.12); transition: transform .6s ease, filter .4s ease; }
-        .culture-hero-story:hover .culture-hero-image { transform: scale(1.018); filter:saturate(.9) contrast(1.08); }
-        .culture-hero-image-wrap::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg,#090909 0%,rgba(9,9,9,.12) 38%,rgba(10,4,16,.08) 100%),linear-gradient(0deg,rgba(0,0,0,.45),transparent 45%); }
+        .culture-hero-image { width:100%; height:100%; min-height:540px; object-fit:cover; object-position:center; display:block; filter:saturate(.78) contrast(1.12); transition:transform .6s ease,filter .4s ease; }
+        .culture-hero-story:hover .culture-hero-image { transform:scale(1.018); filter:saturate(.9) contrast(1.08); }
+        .culture-hero-image-wrap::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg,#090909 0%,rgba(9,9,9,.1) 38%,rgba(10,4,16,.08) 100%),linear-gradient(0deg,rgba(0,0,0,.45),transparent 45%); }
         .culture-hero-stamp { position:absolute; z-index:2; right:25px; bottom:27px; color:#b66cff; font-family:'Barlow Condensed',sans-serif; font-size:27px; line-height:.83; font-weight:900; font-style:italic; letter-spacing:-1px; transform:rotate(-7deg); text-align:right; text-shadow:0 4px 20px #000; }
-        .culture-hero-controls { position:absolute; z-index:3; bottom:22px; left:0; display:flex; gap:7px; }
-        .culture-hero-controls span { width:24px; height:2px; background:#555; }
-        .culture-hero-controls span.active { background:#b66cff; width:44px; }
-        .culture-content-grid { display:grid; grid-template-columns:minmax(0,2fr) minmax(280px,1fr); gap:18px; padding-top:20px; }
-        .culture-stories-block,.culture-radio-card,.culture-panel { border:1px solid #242424; background:#090909; }
-        .culture-stories-block { padding:18px; }
-        .culture-section-head { display:flex; align-items:center; justify-content:space-between; gap:15px; margin-bottom:16px; }
-        .culture-section-head h3 { margin:0; font-family:'Barlow Condensed',sans-serif; font-size:17px; letter-spacing:1px; font-weight:900; }
+        .culture-hero-controls { position:absolute; z-index:3; bottom:22px; left:0; display:flex; gap:7px; }.culture-hero-controls span { width:24px; height:2px; background:#555; }.culture-hero-controls span.active { background:#b66cff; width:44px; }
+
+        /* Three editorial hubs replace the previous collection of repeating cards. */
+        .culture-hub { margin-top:18px; border:1px solid #242424; background:#090909; padding:18px; }
+        .culture-section-head { display:flex; align-items:flex-end; justify-content:space-between; gap:15px; margin-bottom:16px; }
+        .culture-section-head>div { display:flex; align-items:baseline; gap:12px; }.culture-section-kicker { color:#555; font-size:8px; letter-spacing:1.5px; }
+        .culture-section-head h3 { margin:0; font-family:'Barlow Condensed',sans-serif; font-size:19px; letter-spacing:1px; font-weight:900; }
         .culture-section-head a { color:#b66cff; font-family:'Barlow Condensed',sans-serif; font-size:8px; font-weight:900; letter-spacing:1.4px; }
+        .culture-hub-grid { display:grid; grid-template-columns:minmax(0,1.85fr) minmax(250px,.75fr); gap:20px; }
         .culture-story-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
-        .culture-story-card { background:#101010; border:1px solid #1e1e1e; min-width:0; transition:transform .2s,border-color .2s; }
-        .culture-story-card:hover { transform:translateY(-3px); border-color:#6e3c90; }
-        .culture-story-card img { width:100%; aspect-ratio:1.25/1; object-fit:cover; display:block; filter:saturate(.75) contrast(1.05); }
-        .culture-story-card div { position:relative; z-index:1; padding:12px; background:linear-gradient(180deg, rgba(16,16,16,.94), #101010); }
-        .culture-story-card h4 { margin:7px 0 12px; font-family:'Barlow Condensed',sans-serif; font-size:18px; line-height:.95; letter-spacing:.2px; }
-        .culture-story-card small { color:#555; font-size:9px; }
-        .culture-radio-card { padding:18px; background:radial-gradient(circle at 85% 10%,rgba(143,53,220,.18),transparent 35%),#090909; }
-        .culture-on-air { display:flex; align-items:center; justify-content:space-between; padding:9px 10px; margin:4px 0 25px; background:#151515; border-left:2px solid #e50914; }
-        .culture-on-air span { color:#ff4a52; font-family:'Barlow Condensed',sans-serif; font-size:8px; font-weight:900; letter-spacing:1.4px; }
-        .culture-on-air small { color:#555; font-size:8px; }
-        .culture-radio-card h4 { margin:0 0 12px; font-family:'Barlow Condensed',sans-serif; font-size:40px; line-height:.82; }
-        .culture-radio-card p { color:#777; font-size:12px; line-height:1.6; }
-        .culture-waveform { height:48px; display:flex; align-items:center; justify-content:center; gap:4px; margin:20px 0; }
-        .culture-waveform i { display:block; width:3px; height:20px; background:#9d4edd; opacity:.8; animation:culturePulse 1.1s ease-in-out infinite alternate; }
-        .culture-waveform i:nth-child(2n){height:34px;animation-delay:.12s}.culture-waveform i:nth-child(3n){height:12px;animation-delay:.22s}.culture-waveform i:nth-child(5n){height:43px;animation-delay:.3s}
-        @keyframes culturePulse { from{transform:scaleY(.55);opacity:.35} to{transform:scaleY(1);opacity:1} }
-        .culture-radio-button { display:flex; align-items:center; justify-content:space-between; padding:13px 15px; background:#8f35dc; color:#fff; font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:900; letter-spacing:1.2px; }
-        .culture-next { margin-top:18px; border-top:1px solid #202020; padding-top:15px; display:grid; gap:4px; }
-        .culture-next span { color:#555; font-family:'Barlow Condensed',sans-serif; font-size:8px; letter-spacing:1.5px; }
-        .culture-next strong { font-size:11px; }.culture-next small{color:#555;font-size:9px}
-        .culture-platform-columns { display:grid; grid-template-columns:1fr 1.35fr 1fr; gap:18px; margin-top:18px; }
-        .culture-platform-columns.lower { grid-template-columns:1.15fr 1fr 1.1fr; }
-        .culture-panel { padding:18px; min-width:0; }
-        .culture-music-row { display:grid; grid-template-columns:52px 1fr 28px; align-items:center; gap:11px; padding:10px 0; border-bottom:1px solid #1b1b1b; }
-        .culture-music-row img { width:52px; height:52px; object-fit:cover; }.culture-music-row strong{display:block;font-size:11px;line-height:1.15}.culture-music-row small{display:block;color:#555;font-size:8px;margin-top:5px}.culture-play{width:27px;height:27px;border:1px solid #393939;border-radius:50%;display:grid;place-items:center;font-size:8px;color:#b66cff}
-        .culture-panel-link { display:block; margin-top:16px; color:#b66cff; font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:900; letter-spacing:1.4px; }
-        .culture-feature-image { position:relative; margin-bottom:13px; }.culture-feature-image img{width:100%;height:190px;object-fit:cover;display:block;filter:saturate(.72)}.culture-feature-image span{position:absolute;left:10px;bottom:9px;background:#8f35dc;color:#fff;padding:5px 7px}
-        .culture-feature-panel h4 { font-family:'Barlow Condensed',sans-serif; font-size:25px; line-height:.9; margin:0 0 10px; }.culture-feature-panel p{color:#777;font-size:11px;line-height:1.55;margin:0}
-        .culture-radio-promo { padding:0; min-height:330px; position:relative; overflow:hidden; background:#0b0b0b; }.culture-radio-promo-art{position:absolute;inset:0}.culture-radio-promo-art img{width:100%;height:100%;object-fit:cover;opacity:.25;filter:contrast(1.2) saturate(1.2)}.culture-radio-promo-art::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#0a0710 5%,rgba(10,7,16,.55),rgba(10,7,16,.2))}.culture-radio-promo-copy{position:relative;z-index:1;padding:22px;display:flex;flex-direction:column;justify-content:flex-end;height:100%;box-sizing:border-box}.culture-radio-promo-copy h3{font-family:'Barlow Condensed',sans-serif;font-size:49px;line-height:.78;margin:15px 0 22px}.culture-radio-promo-copy em{color:#b66cff;font-style:normal}.culture-radio-promo-copy .culture-action{align-self:flex-start}
-        .culture-video-feature { position:relative; overflow:hidden; }.culture-video-feature img{width:100%;height:260px;object-fit:cover;filter:saturate(.75)}.culture-video-feature button{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:54px;height:54px;border-radius:50%;border:1px solid #fff;background:rgba(0,0,0,.45);color:#fff;cursor:pointer}.culture-video-feature span{position:absolute;left:12px;bottom:12px;color:#b66cff;font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:900;letter-spacing:1.5px}
-        .culture-event-row { display:grid; grid-template-columns:48px 1fr auto; gap:10px; align-items:center; padding:15px 0; border-bottom:1px solid #1d1d1d; }.culture-event-row>b{color:#b66cff;font-family:'Barlow Condensed',sans-serif;font-size:9px;line-height:1}.culture-event-row>b strong{font-size:23px}.culture-event-row div strong,.culture-event-row div small{display:block}.culture-event-row div strong{font-size:11px}.culture-event-row div small{color:#555;font-size:8px;margin-top:4px}.culture-event-row>a{color:#b66cff;font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:900}
-        .culture-artist-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }.culture-artist-grid a{position:relative;overflow:hidden;aspect-ratio:1/1}.culture-artist-grid img{width:100%;height:100%;object-fit:cover;filter:saturate(.65);transition:transform .3s}.culture-artist-grid a:hover img{transform:scale(1.06)}.culture-artist-grid span{position:absolute;left:6px;bottom:6px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:7px;font-weight:900;letter-spacing:.8px;text-shadow:0 2px 8px #000}
-        .culture-manifesto { margin-top:18px; padding:35px; display:grid; grid-template-columns:1fr 1.2fr auto; gap:35px; align-items:center; background:linear-gradient(105deg,#140d1a,#080808); border:1px solid #30243a; position:relative; overflow:hidden; }.culture-manifesto::before{content:"";position:absolute;right:-100px;top:-100px;width:300px;height:300px;border-radius:50%;background:rgba(143,53,220,.13);filter:blur(10px)}.culture-manifesto>div,.culture-manifesto>p,.culture-manifesto>a{position:relative;z-index:1}.culture-manifesto h3{font-family:'Barlow Condensed',sans-serif;font-size:52px;line-height:.8;margin:12px 0 0}.culture-manifesto h3 em{color:#b66cff;font-style:normal}.culture-manifesto p{color:#777;font-size:12px;line-height:1.7;margin:0}
-        /* Performance: keep below-the-fold editorial work out of the initial paint. */
-        .culture-platform-columns,.culture-platform-columns.lower,.culture-manifesto { content-visibility:auto; contain-intrinsic-size:420px; }
-        .culture-story-card img,.culture-music-row img,.culture-feature-image img,.culture-video-feature img,.culture-artist-grid img { content-visibility:auto; }
-        @media (max-width:1100px){.culture-platform-shell{grid-template-columns:190px minmax(0,1fr)}.culture-brand-rail{padding-left:25px}.culture-platform-columns{grid-template-columns:1fr 1fr}.culture-radio-promo{grid-column:1/-1;min-height:260px}.culture-platform-columns.lower{grid-template-columns:1fr 1fr}.culture-artist-grid{grid-template-columns:repeat(4,1fr)}.culture-manifesto{grid-template-columns:1fr 1fr}.culture-manifesto .culture-action{justify-self:start}}
-        @media (max-width:800px){.culture-platform-topline{padding:0 5%;font-size:8px}.culture-platform-live{display:none}.culture-platform-shell{display:block}.culture-brand-rail{padding:20px 5%;border-right:0;border-bottom:1px solid #222;display:grid;grid-template-columns:85px 1fr;column-gap:16px;align-items:center}.culture-brand-art{width:85px;height:85px}.culture-brand-kicker{margin:0}.culture-brand-rail p{grid-column:2;margin:7px 0 0}.culture-platform-main{padding:0 5% 45px}.culture-platform-nav{height:56px;gap:20px}.culture-platform-nav a{padding:20px 0 17px}.culture-hero-story{grid-template-columns:1fr;min-height:0}.culture-hero-copy{padding:40px 0 20px;order:2}.culture-hero-image-wrap{order:1}.culture-hero-image{height:390px;min-height:390px}.culture-hero-copy h2{font-size:clamp(52px,15vw,82px)}.culture-hero-controls{left:0;bottom:auto;top:365px}.culture-content-grid,.culture-platform-columns,.culture-platform-columns.lower{grid-template-columns:1fr}.culture-story-grid{grid-template-columns:1fr 1fr}.culture-radio-promo{grid-column:auto}.culture-manifesto{grid-template-columns:1fr;gap:20px;padding:25px}.culture-manifesto h3{font-size:45px}}
-        @media (max-width:520px){.culture-story-grid{grid-template-columns:1fr}.culture-story-card{display:grid;grid-template-columns:105px 1fr}.culture-story-card img{height:100%;min-height:130px}.culture-story-card h4{font-size:16px}.culture-story-card div{padding:10px}.culture-platform-nav{gap:17px}.culture-platform-nav a{font-size:10px}.culture-hero-image{height:320px;min-height:320px}.culture-hero-controls{top:295px}.culture-hero-stamp{font-size:20px}.culture-event-row{grid-template-columns:42px 1fr}.culture-event-row>a{display:none}.culture-artist-grid{grid-template-columns:repeat(2,1fr)}.culture-radio-promo-copy h3{font-size:43px}}
+        .culture-story-card { background:#101010; border:1px solid #1e1e1e; min-width:0; transition:transform .2s,border-color .2s; }.culture-story-card:hover { transform:translateY(-3px); border-color:#6e3c90; }
+        .culture-story-card img { width:100%; aspect-ratio:1.28/1; object-fit:cover; display:block; filter:saturate(.75) contrast(1.05); }.culture-story-card div { padding:11px; background:#101010; }
+        .culture-story-card h4 { margin:7px 0 9px; font-family:'Barlow Condensed',sans-serif; font-size:17px; line-height:.95; letter-spacing:.2px; }.culture-story-card p { color:#666; font-size:9px; line-height:1.45; margin:0 0 9px; }.culture-story-card small { color:#555; font-size:8px; }
+        .culture-editorial-state { min-height:250px; border:1px dashed #2b2030; display:flex; align-items:center; justify-content:center; gap:18px; padding:25px; }.culture-editorial-state-mark { color:#b66cff; font-size:20px; }.culture-editorial-state strong{font-family:'Barlow Condensed',sans-serif;font-size:15px;letter-spacing:1px}.culture-editorial-state p{color:#666;font-size:11px;line-height:1.6;max-width:430px;margin:7px 0 0}
+        .culture-radio-card { padding:18px; background:radial-gradient(circle at 85% 10%,rgba(143,53,220,.18),transparent 35%),#090909; border-left:1px solid #242424; }
+        .culture-radio-story-image { width:100%; height:135px; object-fit:cover; display:block; margin-bottom:12px; filter:saturate(.7); }.culture-on-air { display:flex; align-items:center; justify-content:space-between; padding:9px 10px; margin:4px 0 20px; background:#151515; border-left:2px solid #e50914; }.culture-on-air span { color:#ff4a52; font-family:'Barlow Condensed',sans-serif; font-size:8px; font-weight:900; letter-spacing:1.4px; }.culture-on-air small { color:#555; font-size:8px; }
+        .culture-radio-card h4 { margin:0 0 10px; font-family:'Barlow Condensed',sans-serif; font-size:34px; line-height:.82; }.culture-radio-card p { color:#777; font-size:11px; line-height:1.6; }.culture-radio-button { display:flex; align-items:center; justify-content:space-between; padding:12px 14px; margin-top:17px; background:#8f35dc; color:#fff; font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:900; letter-spacing:1.2px; }
+
+        .culture-culture-hub { padding-bottom:20px; }.culture-desk-grid { display:grid; grid-template-columns:1fr 1.25fr .8fr; gap:0; border-top:1px solid #202020; border-bottom:1px solid #202020; }.culture-desk-block,.culture-desk-note { padding:18px; min-width:0; }.culture-desk-block + .culture-desk-block,.culture-desk-note { border-left:1px solid #202020; }.culture-subhead { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:13px; }.culture-subhead h4 { margin:0; font-family:'Barlow Condensed',sans-serif; font-size:15px; letter-spacing:1px; }.culture-subhead span { color:#555; font-size:8px; }
+        .culture-music-row { display:grid; grid-template-columns:48px 1fr 24px; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #1b1b1b; }.culture-music-row img { width:48px; height:48px; object-fit:cover; }.culture-music-row strong{display:block;font-size:10px;line-height:1.15}.culture-music-row small{display:block;color:#555;font-size:8px;margin-top:5px}.culture-play{width:24px;height:24px;border:1px solid #393939;border-radius:50%;display:grid;place-items:center;font-size:8px;color:#b66cff}
+        .culture-feature-image { position:relative; margin-bottom:12px; }.culture-feature-image img{width:100%;height:185px;object-fit:cover;display:block;filter:saturate(.72)}.culture-feature-image span{position:absolute;left:10px;bottom:9px;background:#8f35dc;color:#fff;padding:5px 7px}.culture-feature-panel h4 { font-family:'Barlow Condensed',sans-serif; font-size:24px; line-height:.9; margin:0 0 9px; }.culture-feature-panel p{color:#777;font-size:10px;line-height:1.55;margin:0}
+        .culture-desk-note { background:linear-gradient(145deg,#130c18,#090909); display:flex; flex-direction:column; justify-content:center; }.culture-desk-note>span { color:#555; font-family:'Barlow Condensed',sans-serif; font-size:8px; font-weight:900; letter-spacing:1.6px; }.culture-desk-note h4 { font-family:'Barlow Condensed',sans-serif; font-size:44px; line-height:.8; margin:14px 0 16px; }.culture-desk-note h4 em { color:#b66cff; font-style:normal; }.culture-desk-note p { color:#777; font-size:10px; line-height:1.6; margin:0 0 18px; }.culture-desk-note .culture-action { align-self:flex-start; }
+
+        .culture-discover-grid { display:grid; grid-template-columns:1.15fr 1fr 1fr; gap:0; border-top:1px solid #202020; border-bottom:1px solid #202020; }.culture-discover-block { padding:18px; min-width:0; }.culture-discover-block + .culture-discover-block { border-left:1px solid #202020; }
+        .culture-video-feature { position:relative; overflow:hidden; display:block; }.culture-video-feature img{width:100%;height:220px;object-fit:cover;filter:saturate(.75)}.culture-video-feature>span{position:absolute;left:12px;top:12px;color:#fff;background:#8f35dc;padding:5px 7px;font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:900;letter-spacing:1.2px}.culture-video-copy{padding-top:11px}.culture-video-copy strong{display:block;font-family:'Barlow Condensed',sans-serif;font-size:20px;line-height:.92}.culture-video-copy small{display:block;color:#666;font-size:9px;line-height:1.5;margin-top:7px}
+        .culture-event-row { display:grid; grid-template-columns:40px 1fr auto; gap:10px; align-items:center; padding:13px 0; border-bottom:1px solid #1d1d1d; }.culture-event-row>b{color:#b66cff;font-family:'Barlow Condensed',sans-serif;font-size:9px;line-height:1}.culture-event-row div strong,.culture-event-row div small{display:block}.culture-event-row div strong{font-size:10px}.culture-event-row div small{color:#555;font-size:8px;margin-top:4px}.culture-event-row>a,.culture-event-row>span{color:#b66cff;font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:900}
+        .culture-artist-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }.culture-artist-grid a{position:relative;overflow:hidden;aspect-ratio:1/1}.culture-artist-grid img{width:100%;height:100%;object-fit:cover;filter:saturate(.65);transition:transform .3s}.culture-artist-grid a:hover img{transform:scale(1.06)}.culture-artist-grid span{position:absolute;left:6px;bottom:6px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:7px;font-weight:900;letter-spacing:.8px;text-shadow:0 2px 8px #000}
+        .culture-panel-empty { min-height:130px; display:grid; place-items:center; text-align:center; border:1px dashed #2b2030; color:#555; font-size:9px; line-height:1.5; padding:18px; }
+        .culture-manifesto { margin-top:18px; padding:28px; display:grid; grid-template-columns:1fr 1.2fr auto; gap:30px; align-items:center; background:linear-gradient(105deg,#140d1a,#080808); border:1px solid #30243a; position:relative; overflow:hidden; }.culture-manifesto::before{content:"";position:absolute;right:-100px;top:-100px;width:300px;height:300px;border-radius:50%;background:rgba(143,53,220,.13);filter:blur(10px)}.culture-manifesto>div,.culture-manifesto>p,.culture-manifesto>a{position:relative;z-index:1}.culture-manifesto h3{font-family:'Barlow Condensed',sans-serif;font-size:48px;line-height:.8;margin:12px 0 0}.culture-manifesto h3 em{color:#b66cff;font-style:normal}.culture-manifesto p{color:#777;font-size:11px;line-height:1.7;margin:0}
+        .culture-hub,.culture-manifesto { content-visibility:auto; contain-intrinsic-size:420px; }.culture-story-card img,.culture-music-row img,.culture-feature-image img,.culture-video-feature img,.culture-artist-grid img { content-visibility:auto; }
+        @media (max-width:1100px){.culture-platform-shell{grid-template-columns:170px minmax(0,1fr)}.culture-brand-rail{padding-left:20px}.culture-hub-grid{grid-template-columns:1fr}.culture-radio-card{border-left:0;border-top:1px solid #242424}.culture-desk-grid,.culture-discover-grid{grid-template-columns:1fr 1fr}.culture-desk-note{grid-column:1/-1;border-left:0;border-top:1px solid #202020}.culture-discover-block:last-child{grid-column:1/-1;border-left:0;border-top:1px solid #202020}.culture-manifesto{grid-template-columns:1fr 1fr}.culture-manifesto .culture-action{justify-self:start}}
+        @media (max-width:800px){.culture-platform-topline{padding:0 5%;font-size:8px}.culture-platform-live{display:none}.culture-platform-shell{display:block}.culture-brand-rail{padding:20px 5%;border-right:0;border-bottom:1px solid #222;display:grid;grid-template-columns:85px 1fr;column-gap:16px;align-items:center}.culture-brand-art{width:85px;height:85px}.culture-brand-kicker{margin:0}.culture-brand-rail p{grid-column:2;margin:7px 0 0}.culture-platform-main{padding:0 5% 45px}.culture-platform-nav{min-height:56px;gap:19px}.culture-platform-nav a{padding:20px 0 17px}.culture-platform-nav .culture-nav-live{padding:8px 10px}.culture-hero-story{grid-template-columns:1fr;min-height:0}.culture-hero-copy{padding:38px 0 22px;order:2}.culture-hero-image-wrap{order:1}.culture-hero-image{height:360px;min-height:360px}.culture-hero-copy h2{font-size:clamp(52px,15vw,82px)}.culture-hero-controls{left:0;bottom:auto;top:335px}.culture-story-grid{grid-template-columns:1fr 1fr}.culture-desk-grid,.culture-discover-grid{grid-template-columns:1fr}.culture-desk-block + .culture-desk-block,.culture-desk-note,.culture-discover-block + .culture-discover-block{border-left:0;border-top:1px solid #202020}.culture-desk-note{grid-column:auto}.culture-discover-block:last-child{grid-column:auto}.culture-manifesto{grid-template-columns:1fr;gap:20px;padding:25px}.culture-manifesto h3{font-size:45px}.culture-section-head>div{display:block}.culture-section-kicker{display:block;margin-bottom:4px}}
+        @media (max-width:520px){.culture-story-grid{grid-template-columns:1fr}.culture-story-card{display:grid;grid-template-columns:105px 1fr}.culture-story-card img{height:100%;min-height:125px}.culture-story-card h4{font-size:16px}.culture-story-card div{padding:10px}.culture-platform-nav{gap:15px}.culture-platform-nav a{font-size:10px}.culture-platform-nav .culture-nav-live{display:none}.culture-hero-image{height:310px;min-height:310px}.culture-hero-controls{top:285px}.culture-hero-stamp{font-size:20px}.culture-event-row{grid-template-columns:38px 1fr}.culture-event-row>span{display:none}.culture-video-feature img{height:200px}}
+
       `}</style>
     </div>
   );
