@@ -12,8 +12,11 @@ permissions:
   id-token: write
 
 concurrency:
-  group: for-the-culture-editorial
-  cancel-in-progress: true
+  # Share the Pages deployment lane with the normal site deploy so two
+  # workflows can never try to create the same GitHub Pages deployment
+  # at the same time.
+  group: pages
+  cancel-in-progress: false
 
 jobs:
   scan-build-deploy:
@@ -152,12 +155,50 @@ jobs:
         with:
           path: ./dist
 
-      - name: Deploy editorial update to GitHub Pages
-        id: deployment
+      # GitHub Pages can occasionally return a transient HTTP 5xx /
+      # "other side closed" response after accepting the artifact. The
+      # artifact is already valid at this point, so retry the deployment
+      # action instead of failing the entire editorial run on a transient
+      # Pages API connection.
+      - name: Deploy editorial update to GitHub Pages (attempt 1)
+        id: deployment_1
+        continue-on-error: true
         uses: actions/deploy-pages@v4
+
+      - name: Wait before GitHub Pages retry
+        if: steps.deployment_1.outcome == 'failure'
+        run: sleep 10
+
+      - name: Deploy editorial update to GitHub Pages (attempt 2)
+        id: deployment_2
+        if: steps.deployment_1.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: Wait before final GitHub Pages retry
+        if: steps.deployment_1.outcome == 'failure' && steps.deployment_2.outcome == 'failure'
+        run: sleep 15
+
+      - name: Deploy editorial update to GitHub Pages (attempt 3)
+        id: deployment_3
+        if: steps.deployment_1.outcome == 'failure' && steps.deployment_2.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: Fail if GitHub Pages deployment did not succeed
+        if: steps.deployment_1.outcome == 'failure' && steps.deployment_2.outcome == 'failure' && steps.deployment_3.outcome == 'failure'
+        run: |
+          echo "GitHub Pages deployment failed after three attempts."
+          exit 1
 
       - name: Verify editorial deployment handoff
         run: |
           echo "FOR THE CULTURE editorial deployment completed."
           echo "Published feed stories: $(node -e "const fs=require('fs'); const f=JSON.parse(fs.readFileSync('public/editorial-feed.json','utf8')); process.stdout.write(String(f.stories.length))")"
-          echo "GitHub Pages URL: ${{ steps.deployment.outputs.page_url }}"
+          if [ "${{ steps.deployment_1.outcome }}" = "success" ]; then
+            echo "GitHub Pages deployment succeeded on attempt 1."
+          elif [ "${{ steps.deployment_2.outcome }}" = "success" ]; then
+            echo "GitHub Pages deployment succeeded on attempt 2."
+          else
+            echo "GitHub Pages deployment succeeded on attempt 3."
+          fi

@@ -12,8 +12,10 @@ permissions:
   id-token: write
 
 concurrency:
+  # Keep normal site deploys in the same queue as the editorial deployment
+  # so GitHub Pages never receives two deployment requests simultaneously.
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
