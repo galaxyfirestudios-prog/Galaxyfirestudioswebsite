@@ -74,6 +74,12 @@ export default function App() {
     try { return Number(localStorage.getItem("gfs-radio-track-index") || "0"); } catch { return 0; }
   });
   const [radioHistory, setRadioHistory] = useState<any[]>([]);
+  const [radioPlayedKeys, setRadioPlayedKeys] = useState<string[]>(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("gfs-radio-played-keys") || "[]");
+      return Array.isArray(stored) ? stored : [];
+    } catch { return []; }
+  });
   const radioTrack = radioPlaylist[radioTrackIndex] || { artist: "FOR THE CULTURE RADIO", title: "DJ NEBULAE TEST ROTATION", show: "FOR THE CULTURE LIVE", host: "DJ NEBULAE", src: "" };
   const radioRecentlyPlayed = radioHistory.length ? radioHistory : [
     { artist: "FOR THE CULTURE RADIO", title: "Waiting for the first track…" },
@@ -184,7 +190,15 @@ export default function App() {
       .then((response) => response.ok ? response.json() : null)
       .then((playlist) => {
         if (cancelled || !Array.isArray(playlist?.tracks)) return;
-        setRadioPlaylist(playlist.tracks.filter((track: any) => typeof track?.src === "string" && track.src));
+        const tracks = playlist.tracks.filter((track: any) => typeof track?.src === "string" && track.src);
+        if (!tracks.length) return;
+
+        // Start a fresh visit at a random point in the library so the station
+        // does not feel like it always begins with the same record.
+        const randomIndex = Math.floor(Math.random() * tracks.length);
+        setRadioPlaylist(tracks);
+        setRadioTrackIndex(randomIndex);
+        try { localStorage.setItem("gfs-radio-track-index", String(randomIndex)); } catch {}
       })
       .catch(() => {});
     return () => { cancelled = true; };
@@ -198,6 +212,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    try { localStorage.setItem("gfs-radio-played-keys", JSON.stringify(radioPlayedKeys.slice(-200))); } catch {}
+  }, [radioPlayedKeys]);
+
+  useEffect(() => {
     const audio = radioAudioRef.current;
     if (!audio) return;
     audio.volume = radioVolume;
@@ -205,12 +223,49 @@ export default function App() {
 
   const advanceRadioTrack = () => {
     if (!radioPlaylist.length) return;
-    const nextIndex = (radioTrackIndex + 1) % radioPlaylist.length;
-    const historyEntry = { artist: radioTrack.artist, title: radioTrack.title };
-    const nextHistory = [historyEntry, ...radioHistory.filter((item) => `${item.artist}-${item.title}` !== `${historyEntry.artist}-${historyEntry.title}`)].slice(0, 8);
+
+    const current = radioTrack;
+    const currentKey = current.src || `${current.artist}-${current.title}`;
+    const historyEntry = { artist: current.artist, title: current.title };
+    const nextHistory = [
+      historyEntry,
+      ...radioHistory.filter((item) => `${item.artist}-${item.title}` !== `${historyEntry.artist}-${historyEntry.title}`)
+    ].slice(0, 8);
     setRadioHistory(nextHistory);
     try { localStorage.setItem("gfs-radio-history", JSON.stringify(nextHistory)); } catch {}
-    playRadioTrack(nextIndex, false);
+
+    // Smart shuffle:
+    // 1) never immediately repeat the same track;
+    // 2) use unplayed tracks before replaying the library;
+    // 3) avoid the most recently heard artist where possible;
+    // 4) add a little randomness so the sequence cannot be predicted.
+    const artistKey = (track: any) => String(track?.artist || "").toLowerCase().trim();
+    let played = [...radioPlayedKeys, currentKey].filter(Boolean);
+    let candidates = radioPlaylist
+      .map((track, index) => ({ track, index, key: track.src || `${track.artist}-${track.title}` }))
+      .filter(({ key }) => key !== currentKey && !played.includes(key));
+
+    if (!candidates.length) {
+      // A full-library pass is complete. Start a new pass, but keep the current
+      // track excluded so the same song cannot repeat immediately.
+      played = [currentKey];
+      setRadioPlayedKeys([currentKey]);
+      candidates = radioPlaylist
+        .map((track, index) => ({ track, index, key: track.src || `${track.artist}-${track.title}` }))
+        .filter(({ key }) => key !== currentKey);
+    }
+
+    const recentArtists = new Set(
+      [current, ...radioHistory.slice(0, 2)]
+        .map(artistKey)
+        .filter(Boolean)
+    );
+    const differentArtist = candidates.filter(({ track }) => !recentArtists.has(artistKey(track)));
+    const pool = differentArtist.length ? differentArtist : candidates;
+    const next = pool[Math.floor(Math.random() * pool.length)];
+
+    setRadioPlayedKeys([...played, next.key].slice(-200));
+    playRadioTrack(next.index, false);
   };
 
   useEffect(() => {
