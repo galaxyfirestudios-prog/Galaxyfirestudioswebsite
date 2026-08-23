@@ -46,7 +46,8 @@ jobs:
       - name: Run FOR THE CULTURE editorial radar
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          EDITORIAL_MODEL: gemini-3.7-flash
+          EDITORIAL_MODEL: gemini-3.5-flash-lite
+          EDITORIAL_GENERATION_MODE: single-batch
           EDITORIAL_MAX_STORIES_PER_SCAN: 4
           EDITORIAL_GEMINI_ATTEMPTS: 1
           EDITORIAL_MAX_AGE_HOURS: 96
@@ -54,7 +55,10 @@ jobs:
           EDITORIAL_IMAGE_FETCH_TIMEOUT_MS: 5000
           EDITORIAL_GEMINI_TIMEOUT_MS: 20000
           EDITORIAL_SOURCE_ITEMS: 24
-        run: node scripts/editorial-radar.mjs
+        run: |
+          echo "FOR THE CULTURE editorial generation model: $EDITORIAL_MODEL"
+          echo "FOR THE CULTURE editorial generation mode: $EDITORIAL_GENERATION_MODE"
+          node scripts/editorial-radar.mjs
 
       - name: Check editorial run status
         if: always()

@@ -1,5 +1,5 @@
 const { createClient } = require('@supabase/supabase-js')
-const { draftStoryWithGemini, DEFAULT_MODEL } = require('../lib/gemini-editorial.cjs')
+const { draftStoriesWithGemini, DEFAULT_MODEL } = require('../lib/gemini-editorial.cjs')
 
 const SOURCES = [
   { name: 'The NATIVE', url: process.env.EDITORIAL_NATIVE_FEED || 'https://thenativemag.com/feed/', weight: 12 },
@@ -164,74 +164,114 @@ async function enrichImage(item) {
   return fetchArticleImage(item.source_url)
 }
 
-async function draftStory(item) {
-  const prompt = `You are the editorial desk for FOR THE CULTURE, an African music, culture and entertainment platform by Galaxy Fire Studios.
-Create an ORIGINAL editorial news story from the supplied source metadata. Do not copy phrases, sentence structures or distinctive wording from the source. Do not invent facts, quotes, dates or details that are not supported by the supplied metadata. The result should feel like a confident human FOR THE CULTURE newsroom story, not a generic AI summary.
-Return strict JSON with: headline, dek, body, category.
-The headline should be punchy but factual. The dek should be one sentence. The body should be 4-6 short paragraphs, roughly 300-450 words, with useful context and clear attribution to the named source where appropriate. Keep paragraphs mobile-friendly and culturally aware.
-Source: ${item.source_name}
-Original headline: ${item.title}
-Original URL: ${item.source_url}
-Source excerpt: ${item.excerpt}
-Suggested category: ${category(item)}`
+function buildBatchPrompt(items) {
+  const packet = items.map((item, index) => [
+    `STORY ${index + 1}`,
+    `source_index: ${index}`,
+    `source_name: ${item.source_name}`,
+    `original_headline: ${item.title}`,
+    `original_url: ${item.source_url}`,
+    `source_published_at: ${item.published_at || ''}`,
+    `source_excerpt: ${item.excerpt}`,
+    `suggested_category: ${category(item)}`,
+  ].join('\n')).join('\n\n')
 
-  let lastError
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      return await draftStoryWithGemini({
-        apiKey: process.env.GEMINI_API_KEY,
-        model: process.env.EDITORIAL_MODEL || DEFAULT_MODEL,
-        prompt,
-        timeoutMs: GEMINI_TIMEOUT_MS,
-      })
-    } catch (error) {
-      lastError = error
-      const message = String(error?.message || error)
-      const retryable = /Gemini returned (429|500|502|503|504)|timed out|aborted|fetch failed/i.test(message)
-      if (!retryable || attempt === 2) break
-      await new Promise(resolve => setTimeout(resolve, 1200 * attempt))
-    }
-  }
-  throw lastError
+  return `You are the editorial desk for FOR THE CULTURE, an African music, culture and entertainment platform by Galaxy Fire Studios.
+
+Create ORIGINAL editorial news stories for every supplied candidate that is suitable for publication. Return one JSON object containing a "stories" array. Each story MUST include the exact source_index supplied for its candidate so the newsroom can match it to the correct source.
+
+Do not copy phrases, sentence structures or distinctive wording from the source. Do not invent facts, quotes, dates, names, numbers or details that are not supported by the supplied metadata. You may add context only when it is directly supported by the supplied material. Do not pretend to have read the full source article beyond the metadata provided here.
+
+Each story should feel like a confident human FOR THE CULTURE newsroom story rather than a generic AI summary:
+- headline: punchy, factual and original.
+- dek: one clear sentence that adds useful context.
+- body: 4–6 mobile-friendly paragraphs, approximately 300–450 words.
+- Give the story enough context to feel substantial while staying strictly within the supplied facts.
+- Attribute the source naturally where appropriate.
+- category: MUSIC, CULTURE, STYLE, FILM, ART or EVENTS.
+- Return a story for every candidate unless its metadata is genuinely insufficient. Never invent missing information to fill a gap.
+
+SOURCE CANDIDATES:
+
+${packet}`
 }
 
-async function processCandidate(supabase, item) {
-  const { data: existingUrl } = await supabase
-    .from('editorial_stories')
-    .select('id')
-    .eq('source_url', item.source_url)
-    .limit(1)
-  if (existingUrl?.length) return { skipped: true, reason: 'duplicate' }
+async function draftBatch(items) {
+  return await draftStoriesWithGemini({
+    apiKey: process.env.GEMINI_API_KEY,
+    model: process.env.EDITORIAL_MODEL || DEFAULT_MODEL,
+    prompt: buildBatchPrompt(items),
+    timeoutMs: GEMINI_TIMEOUT_MS,
+  })
+}
 
-  const { data: existingTitle } = await supabase
-    .from('editorial_stories')
-    .select('id')
-    .eq('source_title', item.title)
-    .limit(1)
-  if (existingTitle?.length) return { skipped: true, reason: 'duplicate' }
+async function publishBatch(supabase, items, drafts) {
+  const draftByIndex = new Map()
+  for (const draft of drafts || []) {
+    const sourceIndex = Number(draft?.source_index)
+    if (Number.isInteger(sourceIndex) && sourceIndex >= 0 && sourceIndex < items.length && !draftByIndex.has(sourceIndex)) {
+      draftByIndex.set(sourceIndex, draft)
+    }
+  }
 
-  const [draft, enrichedImage] = await Promise.all([draftStory(item), enrichImage(item)])
-  const row = {
-    source_name: item.source_name,
-    source_url: item.source_url,
-    source_title: item.title,
-    source_excerpt: item.excerpt,
-    image_url: enrichedImage || null,
-    source_published_at: item.published_at,
-    relevance_score: relevance(item),
-    headline: draft.headline,
-    dek: draft.dek,
-    body: draft.body,
-    category: draft.category || category(item),
-    status: 'published',
-    published_at: new Date().toISOString()
+  const results = []
+  const errors = []
+  const images = await Promise.all(items.map(enrichImage))
+
+  for (let index = 0; index < items.length; index++) {
+    const item = items[index]
+    const draft = draftByIndex.get(index)
+    if (!draft) {
+      errors.push({ source: item.source_name, title: item.title, error: `Gemini did not return a story for source_index ${index}.` })
+      continue
+    }
+
+    const { data: existingUrl } = await supabase
+      .from('editorial_stories')
+      .select('id')
+      .eq('source_url', item.source_url)
+      .limit(1)
+    if (existingUrl?.length) continue
+
+    const { data: existingTitle } = await supabase
+      .from('editorial_stories')
+      .select('id')
+      .eq('source_title', item.title)
+      .limit(1)
+    if (existingTitle?.length) continue
+
+    const allowedCategories = new Set(['MUSIC', 'CULTURE', 'STYLE', 'FILM', 'ART', 'EVENTS'])
+    const row = {
+      source_name: item.source_name,
+      source_url: item.source_url,
+      source_title: item.title,
+      source_excerpt: item.excerpt,
+      image_url: images[index] || null,
+      source_published_at: item.published_at,
+      relevance_score: relevance(item),
+      headline: String(draft.headline || '').trim(),
+      dek: String(draft.dek || '').trim(),
+      body: String(draft.body || '').trim(),
+      category: allowedCategories.has(String(draft.category || '').toUpperCase()) ? String(draft.category).toUpperCase() : category(item),
+      status: 'published',
+      published_at: new Date().toISOString()
+    }
+
+    if (!row.headline || !row.dek || !row.body) {
+      errors.push({ source: item.source_name, title: item.title, error: 'Gemini returned an incomplete story.' })
+      continue
+    }
+
+    const { error } = await supabase.from('editorial_stories').insert(row)
+    if (error) {
+      if (String(error.message || '').toLowerCase().includes('duplicate')) continue
+      errors.push({ source: item.source_name, title: item.title, error: error.message })
+      continue
+    }
+    results.push({ published: true, title: row.headline, source: item.source_name })
   }
-  const { error } = await supabase.from('editorial_stories').insert(row)
-  if (error) {
-    if (String(error.message || '').toLowerCase().includes('duplicate')) return { skipped: true, reason: 'duplicate' }
-    throw error
-  }
-  return { published: true, title: row.headline, source: item.source_name }
+
+  return { results, errors }
 }
 
 module.exports = async (req, res) => {
@@ -278,13 +318,16 @@ module.exports = async (req, res) => {
       return relevance(item) >= 10
     }).sort((a, b) => relevance(b) - relevance(a))
 
-    for (const item of candidates) {
-      if (results.filter(x => x.published).length >= MAX_STORIES) break
+    const selected = candidates.slice(0, MAX_STORIES)
+    if (selected.length) {
       try {
-        const result = await processCandidate(supabase, item)
-        if (result.published) results.push(result)
+        const drafts = await draftBatch(selected)
+        const published = await publishBatch(supabase, selected, drafts)
+        results.push(...published.results)
+        errors.push(...published.errors)
       } catch (error) {
-        errors.push({ source: item.source_name, title: item.title, error: error.message })
+        // Do not retry 429 quota errors. One batch request is the intended quota-safe path.
+        errors.push({ source: 'Gemini batch', error: error.message })
       }
     }
 
@@ -292,6 +335,9 @@ module.exports = async (req, res) => {
       ok: true,
       published: results.filter(x => x.published).length,
       candidates: candidates.length,
+      selectedForGemini: selected.length,
+      geminiRequests: selected.length ? 1 : 0,
+      generationMode: 'single-batch',
       results,
       errors,
       checkedAt: new Date().toISOString()

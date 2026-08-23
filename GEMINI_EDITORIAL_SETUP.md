@@ -20,7 +20,7 @@ Do not put the key in the website code, any `VITE_` variable, `.env` committed t
 
 The workflow uses:
 
-`gemini-3.7-flash`
+`gemini-3.5-flash-lite`
 
 The Gemini Developer API currently lists Gemini 3.7 Flash as available on its Free Tier with free input/output tokens, subject to Google's rate limits. See Google's official pricing and rate-limit documentation before increasing scan frequency.
 

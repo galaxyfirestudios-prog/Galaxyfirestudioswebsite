@@ -27,7 +27,7 @@ Do not create a second Supabase project.
 
 - GEMINI_API_KEY
 - EDITORIAL_CRON_SECRET (or CRON_SECRET)
-- EDITORIAL_MODEL (defaults to gemini-3.7-flash)
+- EDITORIAL_MODEL (defaults to gemini-3.5-flash-lite)
 - Optional: EDITORIAL_NATIVE_FEED
 - Optional: EDITORIAL_GUARDIAN_FEED
 

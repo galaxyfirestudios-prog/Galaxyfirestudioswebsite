@@ -44,7 +44,7 @@ module.exports = async (req, res) => {
       supabase: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY),
       gemini: Boolean(process.env.GEMINI_API_KEY),
       cronSecret: Boolean(process.env.CRON_SECRET || process.env.EDITORIAL_CRON_SECRET),
-      model: process.env.EDITORIAL_MODEL || 'gemini-3.7-flash'
+      model: process.env.EDITORIAL_MODEL || 'gemini-3.5-flash-lite'
     },
     database: { connected: false, tableReady: false, publishedStories: 0 },
     sources: []
