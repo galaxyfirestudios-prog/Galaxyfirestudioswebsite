@@ -21,6 +21,10 @@ jobs:
   scan-build-deploy:
     runs-on: ubuntu-latest
 
+    environment:
+      name: github-pages
+      url: ${{ steps.editorial_deployment.outputs.page_url }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -155,10 +159,44 @@ jobs:
           echo "Unable to push the editorial feed after 3 synchronization attempts."
           exit 1
 
-      - name: Report deployment handoff
+      - name: Build website with the published editorial feed
+        if: steps.feed_commit.outputs.changed == 'true'
         run: |
-          if [ "${{ steps.feed_commit.outputs.changed }}" = "true" ]; then
-            echo "Editorial feed committed to main. The Deploy Galaxy Fire Studios Website workflow will build and deploy the updated feed from the remote main branch."
-          else
-            echo "No editorial feed commit was required. Existing deployed content is left untouched."
-          fi
+          set -euo pipefail
+          echo "Building the site from the same checkout that contains the newly published editorial feed."
+          pnpm run build
+          test -f dist/editorial-feed.json
+          node - <<'NODE'
+          const fs = require('fs')
+          const feed = JSON.parse(fs.readFileSync('dist/editorial-feed.json', 'utf8'))
+          if (!Array.isArray(feed.stories) || feed.stories.length === 0) {
+            throw new Error('The built GitHub Pages artifact does not contain the published editorial stories.')
+          }
+          console.log(`Pages artifact contains ${feed.stories.length} editorial stories.`)
+          NODE
+
+      - name: Configure GitHub Pages for editorial deployment
+        if: steps.feed_commit.outputs.changed == 'true'
+        uses: actions/configure-pages@v5
+
+      - name: Upload editorial Pages artifact
+        if: steps.feed_commit.outputs.changed == 'true'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./dist
+
+      - name: Deploy editorial update to GitHub Pages
+        if: steps.feed_commit.outputs.changed == 'true'
+        id: editorial_deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Verify editorial deployment handoff
+        if: steps.feed_commit.outputs.changed == 'true'
+        run: |
+          echo "Editorial feed committed to main and deployed directly by this workflow."
+          echo "GitHub Pages deployment URL: ${{ steps.editorial_deployment.outputs.page_url }}"
+
+      - name: Report no-change run
+        if: steps.feed_commit.outputs.changed != 'true'
+        run: |
+          echo "No editorial feed commit was required. Existing deployed content is left untouched."
