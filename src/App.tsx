@@ -59,6 +59,98 @@ export default function App() {
   const [cultureFeedStatus, setCultureFeedStatus] = useState("loading");
   const [cultureActiveTab, setCultureActiveTab] = useState("home");
   const [cultureReaderStory, setCultureReaderStory] = useState<any | null>(null);
+  const radioAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [radioPlaying, setRadioPlaying] = useState(false);
+  const [radioVolume, setRadioVolume] = useState(0.85);
+  const [radioPlayerOpen, setRadioPlayerOpen] = useState(false);
+  const [radioStreamReady, setRadioStreamReady] = useState(false);
+  const [radioPausedByUser, setRadioPausedByUser] = useState(() => {
+    try { return localStorage.getItem("gfs-radio-paused") === "1"; } catch { return false; }
+  });
+  const [radioStreamUrl, setRadioStreamUrl] = useState((import.meta.env.VITE_RADIO_STREAM_URL || "").trim());
+  const radioTrack = { artist: "FOR THE CULTURE RADIO", title: "The Culture Soundtrack", show: "FOR THE CULTURE LIVE", host: "DJ NEBULAE" };
+  const radioRecentlyPlayed = [
+    ["Ayra Starr", "Rush"], ["Rema", "Charm"], ["Wande Coal", "Kpe Paso"], ["Tems", "Love Me JeJe"], ["Asake", "Lonely At The Top"]
+  ];
+  const radioSchedule = [
+    ["00:00 – 04:00", "SOUND OF THE DIASPORA", "DJ NEBULAE", "Diaspora sounds. Global connection."],
+    ["04:00 – 07:00", "THE CULTURE DRIVE", "DJ NEBULAE", "Music. Culture. Conversation."],
+    ["07:00 – 10:00", "AFRICA NOW", "DJ NEBULAE", "The best African sounds and stories."],
+    ["10:00 – 13:00", "THE NIGHT SHIFT", "DJ NEBULAE", "Deep vibes. Late-night records."],
+    ["13:00 – 16:00", "BEATS & RHYMES", "DJ NEBULAE", "Hip hop. Bars. Classics. New school."],
+  ];
+
+  const startRadio = async (fromUser = false) => {
+    const audio = radioAudioRef.current;
+    if (!audio || !radioStreamUrl) { setRadioPlayerOpen(true); return false; }
+    audio.src = radioStreamUrl;
+    audio.volume = radioVolume;
+    if (fromUser) {
+      try { localStorage.removeItem("gfs-radio-paused"); } catch {}
+      setRadioPausedByUser(false);
+    }
+    try {
+      await audio.play();
+      setRadioPlaying(true);
+      setRadioStreamReady(true);
+      setRadioPlayerOpen(true);
+      return true;
+    } catch (error) {
+      console.info("FOR THE CULTURE RADIO autoplay was blocked until the browser receives a user gesture.", error);
+      setRadioPlayerOpen(true);
+      return false;
+    }
+  };
+
+  const pauseRadio = () => {
+    const audio = radioAudioRef.current;
+    audio?.pause();
+    setRadioPlaying(false);
+    setRadioPausedByUser(true);
+    try { localStorage.setItem("gfs-radio-paused", "1"); } catch {}
+  };
+
+  const toggleRadio = () => {
+    if (radioPlaying) pauseRadio();
+    else startRadio(true);
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    const base = import.meta.env.BASE_URL || "./";
+    const configUrl = `${base.replace(/\/$/, "")}/radio-config.json?ts=${Date.now()}`;
+    fetch(configUrl, { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((config) => {
+        if (cancelled || !config) return;
+        if (typeof config.streamUrl === "string") setRadioStreamUrl(config.streamUrl.trim());
+      })
+      .catch(() => { /* Environment configuration remains the fallback. */ });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    const audio = radioAudioRef.current;
+    if (!audio) return;
+    audio.volume = radioVolume;
+  }, [radioVolume]);
+
+  useEffect(() => {
+    if (!radioStreamUrl || radioPausedByUser) return;
+    const tryStart = () => { startRadio(false); };
+    tryStart();
+    const onFirstGesture = () => {
+      if (!radioPausedByUser && !radioPlaying) startRadio(false);
+      window.removeEventListener("pointerdown", onFirstGesture);
+      window.removeEventListener("keydown", onFirstGesture);
+    };
+    window.addEventListener("pointerdown", onFirstGesture, { once: true });
+    window.addEventListener("keydown", onFirstGesture, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", onFirstGesture);
+      window.removeEventListener("keydown", onFirstGesture);
+    };
+  }, [radioStreamUrl, radioPausedByUser]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1353,24 +1445,98 @@ export default function App() {
         </div>
       </section>
 
-      {/* ECOSYSTEM COMING SOON */}
-      <section className="ecosystem-preview" id="radio">
-        <div className="ecosystem-preview-inner">
-          <div>
+      {/* FOR THE CULTURE RADIO */}
+      <section className="radio-station" id="radio">
+        <div className="radio-station-topline">
+          <span>FOR THE CULTURE RADIO</span>
+          <span className="radio-live-line">● LIVE INTERNET RADIO</span>
+          <span className="radio-topline-right">LIVE · GLOBAL · ALWAYS CULTURE</span>
+        </div>
+
+        <div className="radio-hero-grid">
+          <div className="radio-intro">
             <div className="section-number">09 / RADIO</div>
-            <h2>FOR THE<br /><span>CULTURE RADIO.</span></h2>
-            <p>
-              The live station is coming. This space will become the home for the FOR THE CULTURE
-              stream, now-playing information, guest mixes, artist spotlights and original shows.
-            </p>
+            <h2>FOR THE<br /><span>CULTURE.</span><br />LIVE<span>.</span></h2>
+            <p>The soundtrack of the culture. Music, conversation, new voices and sounds from Africa and the diaspora.</p>
+            <div className="radio-actions">
+              <button type="button" className="button red" onClick={toggleRadio}>{radioPlaying ? "PAUSE STREAM" : "PLAY RADIO →"}</button>
+              <button type="button" className="button outline" onClick={() => setRadioPlayerOpen(true)}>OPEN PLAYER</button>
+            </div>
+            <div className="radio-status-note">
+              <span className={radioPlaying ? "radio-dot live" : "radio-dot"}></span>
+              {radioPlaying ? "ON AIR · STREAM LIVE" : radioStreamUrl ? "READY TO BROADCAST" : "RADIO ENGINE READY · STREAM URL TO BE CONNECTED"}
+            </div>
           </div>
-          <div className="ecosystem-status">
-            <span>STATUS</span>
-            <strong>COMING SOON</strong>
-            <small>LIVE INTERNET RADIO WILL BE CONNECTED HERE.</small>
+
+          <div className="radio-main-player">
+            <div className="radio-player-glow"></div>
+            <div className="radio-player-badge">{radioPlaying ? "LIVE ON AIR" : "FOR THE CULTURE RADIO"}</div>
+            <div className="radio-player-body">
+              <div className="radio-art-wrap">
+                <img src={cultureArt} alt="For the Culture Radio artwork" />
+                <div className="radio-art-overlay">{radioPlaying ? "LIVE" : "FTC"}</div>
+              </div>
+              <div className="radio-now-playing">
+                <span>NOW PLAYING</span>
+                <h3>{radioTrack.artist}</h3>
+                <strong>{radioTrack.title}</strong>
+                <div className="radio-waveform" aria-hidden="true">{Array.from({ length: 48 }, (_, i) => <i key={i} style={{ height: `${18 + ((i * 17) % 44)}%` }} />)}</div>
+                <div className="radio-meta"><span>{radioPlaying ? "LIVE" : "STANDBY"} <b>●</b></span><span>128 KBPS</span></div>
+              </div>
+              <button type="button" className={`radio-big-play ${radioPlaying ? "playing" : ""}`} onClick={toggleRadio} aria-label={radioPlaying ? "Pause radio" : "Play radio"}>{radioPlaying ? "Ⅱ" : "▶"}</button>
+            </div>
+            <div className="radio-player-footer">
+              <div><span>HOST</span><strong>{radioTrack.host}</strong></div>
+              <div><span>CURRENT SHOW</span><strong>{radioTrack.show}</strong><small>LIVE · FOR THE CULTURE</small></div>
+              <div><span>NEXT</span><strong>AFRICA NOW</strong><small>UP NEXT</small></div>
+              <div className="radio-volume"><span>VOLUME</span><input type="range" min="0" max="1" step="0.01" value={radioVolume} onChange={(e) => setRadioVolume(Number(e.target.value))} /></div>
+            </div>
           </div>
         </div>
+
+        <div className="radio-content-grid">
+          <section className="radio-panel recently-played">
+            <div className="radio-panel-head"><h3>RECENTLY PLAYED</h3><span>VIEW ALL</span></div>
+            {radioRecentlyPlayed.map(([artist, title], index) => (
+              <div className="radio-track-row" key={`${artist}-${title}`}>
+                <img src={cultureArt} alt="" />
+                <div><strong>{artist}</strong><small>{title}</small></div>
+                <span>{index === 0 && radioPlaying ? "NOW" : `${4 + index}:${String(32 - index * 2).padStart(2, "0")} PM`}</span>
+              </div>
+            ))}
+            <button type="button" className="radio-panel-button">VIEW FULL PLAYLIST →</button>
+          </section>
+
+          <section className="radio-panel radio-schedule">
+            <div className="radio-panel-head"><h3>PROGRAM SCHEDULE</h3><span>VIEW FULL SCHEDULE</span></div>
+            {radioSchedule.map(([time, show, host, desc], index) => (
+              <div className={`radio-schedule-row ${index === 1 ? "current" : ""}`} key={show}>
+                <span className="schedule-time">{time}</span><div><strong>{show}</strong><small>{host}</small></div><p>{desc}</p><span className="schedule-state">{index === 1 && radioPlaying ? "ON AIR" : "○"}</span>
+              </div>
+            ))}
+          </section>
+
+          <aside className="radio-panel radio-connect">
+            <div className="radio-panel-head"><h3>THE STATION</h3><span>DJ NEBULAE</span></div>
+            <h4>MUSIC.<br />CULTURE.<br /><em>CONNECTION.</em></h4>
+            <p>FOR THE CULTURE RADIO is the live audio layer of the Galaxy Fire ecosystem — built for records, stories, artists, conversations and the sounds moving the culture.</p>
+            <div className="radio-source-note"><span>RADIO ENGINE</span><strong>{radioStreamUrl ? "STREAM CONFIGURED" : "AWAITING STREAM SOURCE"}</strong></div>
+          </aside>
+        </div>
+
+        <audio ref={radioAudioRef} preload="none" onPlaying={() => setRadioPlaying(true)} onPause={() => setRadioPlaying(false)} onCanPlay={() => setRadioStreamReady(true)} onError={() => setRadioStreamReady(false)} aria-label="For the Culture Radio" />
       </section>
+
+      {radioPlayerOpen && (
+        <div className="radio-player-drawer">
+          <div className="radio-drawer-art"><img src={cultureArt} alt="For the Culture Radio" /></div>
+          <div className="radio-drawer-track"><span>{radioPlaying ? "● LIVE" : "FOR THE CULTURE RADIO"}</span><strong>{radioTrack.artist}</strong><small>{radioTrack.title} · {radioTrack.host}</small></div>
+          <button type="button" className="radio-drawer-control" onClick={toggleRadio}>{radioPlaying ? "Ⅱ" : "▶"}</button>
+          <input type="range" min="0" max="1" step="0.01" value={radioVolume} onChange={(e) => setRadioVolume(Number(e.target.value))} aria-label="Radio volume" />
+          <span className="radio-drawer-quality">128 KBPS</span>
+          <button type="button" className="radio-drawer-close" onClick={() => setRadioPlayerOpen(false)} aria-label="Close radio player">×</button>
+        </div>
+      )}
 
       <section className="ecosystem-preview dark" id="culture-blog-preview">
         <div className="ecosystem-preview-inner">
@@ -2923,6 +3089,86 @@ export default function App() {
         @media (max-width:1100px){.culture-story-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.culture-desk-grid{grid-template-columns:1fr 1fr}.culture-idea-panel{grid-column:1/-1;min-height:240px}.culture-more-grid{grid-template-columns:1fr 1fr}}
         @media (max-width:800px){.culture-story-grid{grid-template-columns:1fr 1fr}.culture-desk-grid{grid-template-columns:1fr}.culture-idea-panel{grid-column:auto}.culture-more-grid{grid-template-columns:1fr}.culture-more-card{grid-template-columns:95px 1fr}.culture-more-card img{width:95px;min-height:125px}}
         @media (max-width:520px){.culture-story-grid{grid-template-columns:1fr}.culture-story-card{display:grid;grid-template-columns:105px 1fr}.culture-story-card img{height:100%;min-height:130px}.culture-story-card h4{font-size:16px}.culture-story-card div{padding:10px}.culture-idea-panel h3{font-size:39px}}
+
+        /* FOR THE CULTURE RADIO — live station interface */
+        .radio-station { background:#050505; color:#fff; padding:0 5% 105px; border-top:1px solid #171717; position:relative; overflow:hidden; }
+        .radio-station::before { content:""; position:absolute; width:760px; height:520px; right:-260px; top:80px; background:radial-gradient(circle,rgba(229,9,20,.17),transparent 65%); pointer-events:none; }
+        .radio-station-topline { min-height:58px; border-bottom:1px solid #1b1b1b; display:grid; grid-template-columns:auto auto 1fr; align-items:center; gap:18px; font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:900; letter-spacing:1.7px; position:relative; z-index:1; }
+        .radio-live-line { color:#e50914; }
+        .radio-topline-right { text-align:right; color:#777; }
+        .radio-hero-grid { max-width:1440px; margin:0 auto; padding:54px 0 30px; display:grid; grid-template-columns:minmax(260px,.58fr) minmax(620px,1.42fr); gap:55px; align-items:center; position:relative; z-index:1; }
+        .radio-intro .section-number { color:#e50914; }
+        .radio-intro h2 { font-family:'Barlow Condensed',sans-serif; font-size:clamp(72px,7vw,118px); line-height:.78; letter-spacing:-2px; margin:22px 0 26px; }
+        .radio-intro h2 span { color:#e50914; }
+        .radio-intro p { max-width:430px; color:#8a8a8a; font-size:15px; line-height:1.7; margin:0; }
+        .radio-actions { display:flex; gap:12px; margin-top:28px; flex-wrap:wrap; }
+        .radio-actions .button { cursor:pointer; }
+        .radio-status-note { margin-top:18px; color:#555; font-family:'Barlow Condensed',sans-serif; font-size:8px; font-weight:900; letter-spacing:1.5px; }
+        .radio-dot { display:inline-block; width:6px; height:6px; margin-right:8px; border-radius:50%; background:#555; }
+        .radio-dot.live { background:#e50914; box-shadow:0 0 10px rgba(229,9,20,.7); }
+        .radio-main-player { position:relative; overflow:hidden; border:1px solid #252525; border-radius:13px; background:linear-gradient(145deg,#161616,#090909 62%); box-shadow:0 25px 80px rgba(0,0,0,.42); }
+        .radio-player-glow { position:absolute; width:500px; height:240px; left:35%; top:-140px; background:radial-gradient(circle,rgba(229,9,20,.32),transparent 68%); filter:blur(8px); pointer-events:none; }
+        .radio-player-badge { position:relative; z-index:1; display:inline-block; margin:25px 25px 0; padding:7px 10px; background:#e50914; color:#fff; font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:900; letter-spacing:1.4px; }
+        .radio-player-body { position:relative; z-index:1; display:grid; grid-template-columns:245px 1fr 112px; gap:24px; align-items:center; padding:16px 25px 25px; }
+        .radio-art-wrap { position:relative; aspect-ratio:1/1; overflow:hidden; background:#111; border:1px solid #282828; }
+        .radio-art-wrap img { width:100%; height:100%; object-fit:cover; filter:saturate(.8) contrast(1.15); }
+        .radio-art-overlay { position:absolute; left:12px; bottom:12px; padding:6px 8px; background:#e50914; font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:900; letter-spacing:1px; }
+        .radio-now-playing > span,.radio-player-footer span,.radio-panel-head span,.radio-source-note span { display:block; color:#e50914; font-family:'Barlow Condensed',sans-serif; font-size:8px; font-weight:900; letter-spacing:1.6px; }
+        .radio-now-playing h3 { margin:12px 0 4px; font-family:'Barlow Condensed',sans-serif; font-size:45px; line-height:.9; letter-spacing:.5px; }
+        .radio-now-playing > strong { color:#888; font-size:20px; font-weight:500; }
+        .radio-waveform { height:55px; display:flex; align-items:center; gap:3px; margin:28px 0 12px; overflow:hidden; }
+        .radio-waveform i { display:block; width:3px; min-height:7px; background:#e50914; opacity:.8; animation:radioWave 1.05s ease-in-out infinite alternate; transform-origin:center; }
+        .radio-waveform i:nth-child(2n){animation-delay:.09s}.radio-waveform i:nth-child(3n){animation-delay:.18s}.radio-waveform i:nth-child(5n){animation-delay:.3s}
+        .radio-waveform i:nth-child(4n){opacity:.45}
+        @keyframes radioWave { from{transform:scaleY(.55)} to{transform:scaleY(1)} }
+        .radio-meta { display:flex; gap:22px; color:#666; font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:900; letter-spacing:1.4px; }
+        .radio-meta b { color:#e50914; }
+        .radio-big-play { width:112px; height:112px; border-radius:50%; border:1px solid #e50914; background:transparent; color:#fff; font-size:31px; cursor:pointer; transition:transform .2s,background .2s,box-shadow .2s; }
+        .radio-big-play:hover { transform:scale(1.04); background:rgba(229,9,20,.08); box-shadow:0 0 35px rgba(229,9,20,.12); }
+        .radio-player-footer { border-top:1px solid #282828; display:grid; grid-template-columns:1fr 1.35fr 1fr 1fr; gap:20px; padding:18px 25px; background:rgba(0,0,0,.22); }
+        .radio-player-footer strong,.radio-player-footer small { display:block; }
+        .radio-player-footer strong { margin-top:6px; font-family:'Barlow Condensed',sans-serif; font-size:16px; letter-spacing:.5px; }
+        .radio-player-footer small { margin-top:2px; color:#666; font-size:9px; }
+        .radio-volume { display:flex; align-items:center; gap:10px; justify-content:flex-end; }
+        .radio-volume input { width:100px; accent-color:#e50914; }
+        .radio-content-grid { max-width:1440px; margin:0 auto; display:grid; grid-template-columns:1fr 1.45fr 1fr; gap:12px; position:relative; z-index:1; }
+        .radio-panel { min-width:0; border:1px solid #232323; background:#0b0b0b; padding:18px; }
+        .radio-panel-head { display:flex; justify-content:space-between; align-items:center; gap:12px; padding-bottom:14px; border-bottom:1px solid #222; }
+        .radio-panel-head h3 { margin:0; font-family:'Barlow Condensed',sans-serif; font-size:18px; letter-spacing:.7px; }
+        .radio-track-row { display:grid; grid-template-columns:45px 1fr auto; gap:10px; align-items:center; padding:10px 0; border-bottom:1px solid #1d1d1d; }
+        .radio-track-row img { width:45px; height:45px; object-fit:cover; filter:saturate(.7); }
+        .radio-track-row strong,.radio-track-row small { display:block; }
+        .radio-track-row strong { font-family:'Barlow Condensed',sans-serif; font-size:13px; }
+        .radio-track-row small { color:#666; margin-top:3px; font-size:10px; }
+        .radio-track-row > span { color:#555; font-family:'Barlow Condensed',sans-serif; font-size:8px; font-weight:900; letter-spacing:1px; }
+        .radio-panel-button { width:100%; margin-top:14px; padding:12px; background:transparent; color:#fff; border:1px solid #2b2b2b; cursor:pointer; font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:900; letter-spacing:1.3px; }
+        .radio-schedule-row { display:grid; grid-template-columns:95px 1fr 1.2fr 42px; gap:12px; align-items:center; padding:14px 0; border-bottom:1px solid #1d1d1d; }
+        .radio-schedule-row.current { margin:0 -8px; padding-left:8px; padding-right:8px; border:1px solid #651016; background:rgba(229,9,20,.04); }
+        .schedule-time { color:#aaa; font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:900; }
+        .radio-schedule-row strong,.radio-schedule-row small { display:block; }
+        .radio-schedule-row strong { font-family:'Barlow Condensed',sans-serif; font-size:13px; }
+        .radio-schedule-row small,.radio-schedule-row p { color:#666; font-size:8px; margin:3px 0 0; line-height:1.35; }
+        .schedule-state { color:#555; font-family:'Barlow Condensed',sans-serif; font-size:8px; font-weight:900; }
+        .radio-schedule-row.current .schedule-state { color:#e50914; }
+        .radio-connect { background:radial-gradient(circle at 85% 15%,rgba(229,9,20,.13),transparent 40%),#0b0b0b; }
+        .radio-connect h4 { margin:28px 0 18px; font-family:'Barlow Condensed',sans-serif; font-size:43px; line-height:.8; }
+        .radio-connect h4 em { color:#e50914; font-style:normal; }
+        .radio-connect p { color:#777; font-size:11px; line-height:1.7; }
+        .radio-source-note { margin-top:25px; padding-top:15px; border-top:1px solid #222; }
+        .radio-source-note strong { display:block; margin-top:6px; font-family:'Barlow Condensed',sans-serif; font-size:12px; letter-spacing:.7px; }
+        .radio-player-drawer { position:fixed; z-index:9998; left:0; right:0; bottom:0; min-height:72px; display:grid; grid-template-columns:58px minmax(170px,1fr) 52px minmax(120px,260px) 85px 34px; gap:15px; align-items:center; padding:8px 24px; border-top:1px solid #2b2b2b; background:rgba(7,7,7,.97); box-shadow:0 -10px 35px rgba(0,0,0,.35); backdrop-filter:blur(12px); }
+        .radio-drawer-art img { width:55px; height:55px; object-fit:cover; }
+        .radio-drawer-track span,.radio-drawer-track strong,.radio-drawer-track small { display:block; }
+        .radio-drawer-track span { color:#e50914; font-family:'Barlow Condensed',sans-serif; font-size:7px; font-weight:900; letter-spacing:1.2px; }
+        .radio-drawer-track strong { font-family:'Barlow Condensed',sans-serif; font-size:14px; margin-top:2px; }
+        .radio-drawer-track small { color:#666; font-size:9px; margin-top:2px; }
+        .radio-drawer-control { width:42px; height:42px; border-radius:50%; border:1px solid #e50914; background:transparent; color:#fff; cursor:pointer; }
+        .radio-player-drawer input { width:100%; accent-color:#e50914; }
+        .radio-drawer-quality { color:#666; font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:900; letter-spacing:1px; }
+        .radio-drawer-close { border:0; background:transparent; color:#666; font-size:25px; cursor:pointer; }
+        @media (max-width:1100px){.radio-hero-grid{grid-template-columns:1fr;gap:30px}.radio-content-grid{grid-template-columns:1fr 1fr}.radio-connect{grid-column:1/-1}.radio-player-body{grid-template-columns:190px 1fr 90px}.radio-big-play{width:90px;height:90px}.radio-schedule-row{grid-template-columns:82px 1fr 1fr 40px}.radio-player-drawer{grid-template-columns:50px 1fr 45px 180px 70px 30px}}
+        @media (max-width:800px){.radio-station{padding:0 5% 95px}.radio-station-topline{grid-template-columns:1fr auto}.radio-topline-right{display:none}.radio-hero-grid{padding-top:38px}.radio-intro h2{font-size:clamp(64px,16vw,100px)}.radio-player-body{grid-template-columns:145px 1fr;gap:18px}.radio-big-play{position:absolute;right:18px;top:18px;width:62px;height:62px;font-size:21px}.radio-now-playing{padding-right:55px}.radio-now-playing h3{font-size:34px}.radio-player-footer{grid-template-columns:1fr 1fr;gap:15px}.radio-volume{justify-content:flex-start}.radio-content-grid{grid-template-columns:1fr}.radio-connect{grid-column:auto}.radio-schedule-row{grid-template-columns:80px 1fr 42px}.radio-schedule-row p{display:none}.radio-player-drawer{grid-template-columns:45px 1fr 44px 100px 28px;gap:10px;padding:8px 12px}.radio-drawer-quality{display:none}.radio-drawer-art img{width:44px;height:44px}.radio-drawer-close{display:none}}
+        @media (max-width:520px){.radio-station-topline{font-size:8px}.radio-player-body{grid-template-columns:1fr}.radio-art-wrap{max-width:260px}.radio-now-playing{padding-right:0}.radio-big-play{top:auto;bottom:20px;right:20px}.radio-player-footer{grid-template-columns:1fr}.radio-schedule-row{grid-template-columns:1fr 42px}.schedule-time{grid-column:1/-1}.radio-actions{flex-direction:column}.radio-actions .button{width:100%;text-align:center}.radio-player-drawer{grid-template-columns:42px 1fr 42px;padding:7px 10px}.radio-player-drawer input{display:none}}
       `}</style>
     </div>
   );
