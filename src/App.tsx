@@ -66,8 +66,14 @@ export default function App() {
 
     async function loadCultureStories(showLoading = false) {
       if (showLoading) setCultureFeedStatus("loading");
+      const base = import.meta.env.BASE_URL || "./";
+      const staticFeedCandidates = Array.from(new Set([
+        `${base.replace(/\/$/, "")}/editorial-feed.json?ts=${Date.now()}`,
+        `./editorial-feed.json?ts=${Date.now()}`,
+        `editorial-feed.json?ts=${Date.now()}`,
+      ]));
       const endpoints = [
-        `${import.meta.env.BASE_URL}editorial-feed.json?ts=${Date.now()}`,
+        ...staticFeedCandidates,
         "/api/editorial-feed?limit=12",
       ];
 

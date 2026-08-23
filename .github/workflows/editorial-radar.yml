@@ -110,6 +110,16 @@ jobs:
             exit 0
           fi
 
+          echo "Editorial radar generated $PUBLISHED new stories."
+          node - <<'NODE'
+          const fs = require('fs')
+          const feed = JSON.parse(fs.readFileSync('public/editorial-feed.json', 'utf8'))
+          if (!Array.isArray(feed.stories) || feed.stories.length === 0) {
+            throw new Error('The radar reported published stories but public/editorial-feed.json is empty.')
+          }
+          console.log(`Publishing ${feed.stories.length} stories to the static GitHub Pages feed.`)
+          NODE
+
           if git diff --quiet -- public/editorial-feed.json; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "No new published editorial feed content."
