@@ -65,9 +65,9 @@ export default function App() {
   const [radioVolume, setRadioVolume] = useState(0.85);
   const [radioPlayerOpen, setRadioPlayerOpen] = useState(false);
   const [radioStreamReady, setRadioStreamReady] = useState(false);
-  const [radioPausedByUser, setRadioPausedByUser] = useState(() => {
-    try { return localStorage.getItem("gfs-radio-paused") === "1"; } catch { return false; }
-  });
+  // A user pause only affects the current page session. A fresh visit should
+  // attempt to start the station again, just like entering a traditional radio site.
+  const [radioPausedByUser, setRadioPausedByUser] = useState(false);
   const [radioStreamUrl, setRadioStreamUrl] = useState((import.meta.env.VITE_RADIO_STREAM_URL || "").trim());
   const [radioPlaylist, setRadioPlaylist] = useState<any[]>([]);
   const [radioTrackIndex, setRadioTrackIndex] = useState(() => {
@@ -97,7 +97,6 @@ export default function App() {
     audio.volume = radioVolume;
     if (track.poster) audio.dataset.poster = track.poster;
     if (fromUser) {
-      try { localStorage.removeItem("gfs-radio-paused"); } catch {}
       setRadioPausedByUser(false);
     }
 
@@ -129,7 +128,6 @@ export default function App() {
     if (!audio || !radioStreamUrl) { setRadioPlayerOpen(true); return false; }
     audio.volume = radioVolume;
     if (fromUser) {
-      try { localStorage.removeItem("gfs-radio-paused"); } catch {}
       setRadioPausedByUser(false);
     }
     // Preserve the position of a real stream when toggling pause/play.
@@ -154,8 +152,9 @@ export default function App() {
     const audio = radioAudioRef.current;
     audio?.pause();
     setRadioPlaying(false);
+    // Keep the station paused for the current visit only. Reloading the site
+    // should make a fresh autoplay attempt rather than permanently muting radio.
     setRadioPausedByUser(true);
-    try { localStorage.setItem("gfs-radio-paused", "1"); } catch {}
   };
 
   const toggleRadio = () => {
