@@ -7,6 +7,9 @@ const { draftStoriesWithGemini, DEFAULT_MODEL } = require('../lib/gemini-editori
 const SOURCES = [
   { name: 'The NATIVE', url: process.env.EDITORIAL_NATIVE_FEED || 'https://thenativemag.com/feed/', weight: 12 },
   { name: 'The NATIVE Music', url: process.env.EDITORIAL_NATIVE_MUSIC_FEED || 'https://thenativemag.com/category/music/feed/', weight: 14 },
+  { name: 'NotJustOk', url: process.env.EDITORIAL_NOTJUSTOK_FEED || 'https://notjustok.com/feed/', weight: 13 },
+  { name: 'tooXclusive', url: process.env.EDITORIAL_TOOXCLUSIVE_FEED || 'https://tooxclusive.com/feed/', weight: 11 },
+  { name: 'Naijaloaded', url: process.env.EDITORIAL_NAIJALOADED_FEED || 'https://www.naijaloaded.com.ng/feed/', weight: 9 },
   { name: 'PUNCH Entertainment', url: 'https://rss.punchng.com/v1/category/entertainment', weight: 8 },
   { name: 'PUNCH Interviews', url: 'https://rss.punchng.com/v1/category/interview', weight: 8 },
   { name: 'PUNCH Special Features', url: 'https://rss.punchng.com/v1/category/special_feature', weight: 7 },
@@ -133,6 +136,7 @@ function category(item) {
   return 'CULTURE'
 }
 function normalizeTitle(title) { return title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() }
+function normalizeUrl(url) { try { const parsed = new URL(url); parsed.hash = ''; parsed.search = ''; return parsed.toString().replace(/\/$/, '') } catch { return String(url || '').trim() } }
 function titleTokens(title) { return new Set(normalizeTitle(title).split(/\s+/).filter(token => token.length > 2)) }
 function similarity(a, b) { const A = titleTokens(a), B = titleTokens(b); if (!A.size || !B.size) return 0; let intersection = 0; for (const token of A) if (B.has(token)) intersection++; return intersection / (A.size + B.size - intersection) }
 
@@ -217,13 +221,13 @@ async function main() {
   const sourceReport = fetched.map((result, index) => ({ source: SOURCES[index].name, ok: result.status === 'fulfilled', items: result.status === 'fulfilled' ? result.value.items.length : 0, error: result.status === 'rejected' ? String(result.reason?.message || result.reason) : null }))
   const candidates = fetched.filter(r => r.status === 'fulfilled').flatMap(r => r.value.items).map(item => ({ ...item, relevance_score: relevance(item) })).filter(item => item.relevance_score >= 10).sort((a,b) => b.relevance_score - a.relevance_score)
   const uniqueCandidates = []
-  for (const item of candidates) { if (uniqueCandidates.some(existing => existing.source_url === item.source_url || similarity(existing.title, item.title) >= 0.72)) continue; uniqueCandidates.push(item) }
+  for (const item of candidates) { if (uniqueCandidates.some(existing => normalizeUrl(existing.source_url) === normalizeUrl(item.source_url) || similarity(existing.title, item.title) >= 0.68)) continue; uniqueCandidates.push(item) }
 
   let prior = []
   try { prior = JSON.parse(await fs.readFile('public/editorial-feed.json', 'utf8')).stories || [] } catch {}
-  const priorUrls = new Set(prior.map(s => s.source_url).filter(Boolean))
+  const priorUrls = new Set(prior.map(s => normalizeUrl(s.source_url)).filter(Boolean))
   const priorTitles = new Set(prior.map(s => s.source_title || s.headline).filter(Boolean).map(normalizeTitle))
-  const newCandidates = uniqueCandidates.filter(item => !priorUrls.has(item.source_url) && !priorTitles.has(normalizeTitle(item.title)))
+  const newCandidates = uniqueCandidates.filter(item => !priorUrls.has(normalizeUrl(item.source_url)) && !priorTitles.has(normalizeTitle(item.title)))
 
   const newStories = []
   const failures = []
