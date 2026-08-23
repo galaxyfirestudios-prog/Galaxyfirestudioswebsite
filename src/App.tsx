@@ -60,6 +60,7 @@ export default function App() {
   const [cultureActiveTab, setCultureActiveTab] = useState("home");
   const [cultureReaderStory, setCultureReaderStory] = useState<any | null>(null);
   const radioAudioRef = useRef<HTMLAudioElement | null>(null);
+  const radioLoadedSrcRef = useRef<string>("");
   const [radioPlaying, setRadioPlaying] = useState(false);
   const [radioVolume, setRadioVolume] = useState(0.85);
   const [radioPlayerOpen, setRadioPlayerOpen] = useState(false);
@@ -92,13 +93,23 @@ export default function App() {
     setRadioTrackIndex(index);
     try { localStorage.setItem("gfs-radio-track-index", String(index)); } catch {}
     const base = import.meta.env.BASE_URL || "/";
-    audio.src = `${base.replace(/\/$/, "")}/${String(track.src).replace(/^\//, "")}`;
+    const src = `${base.replace(/\/$/, "")}/${String(track.src).replace(/^\//, "")}`;
     audio.volume = radioVolume;
     if (track.poster) audio.dataset.poster = track.poster;
     if (fromUser) {
       try { localStorage.removeItem("gfs-radio-paused"); } catch {}
       setRadioPausedByUser(false);
     }
+
+    // A radio pause/resume must behave like a real broadcast: do not reload the
+    // current track when the listener presses PLAY again. Reloading audio.src
+    // resets currentTime to 0, which made PAUSE → PLAY restart the song.
+    const sameTrackLoaded = radioLoadedSrcRef.current === src && audio.src === new URL(src, window.location.href).href;
+    if (!sameTrackLoaded) {
+      audio.src = src;
+      radioLoadedSrcRef.current = src;
+    }
+
     try {
       await audio.play();
       setRadioPlaying(true);
@@ -116,11 +127,15 @@ export default function App() {
     if (radioPlaylist.length) return playRadioTrack(radioTrackIndex, fromUser);
     const audio = radioAudioRef.current;
     if (!audio || !radioStreamUrl) { setRadioPlayerOpen(true); return false; }
-    audio.src = radioStreamUrl;
     audio.volume = radioVolume;
     if (fromUser) {
       try { localStorage.removeItem("gfs-radio-paused"); } catch {}
       setRadioPausedByUser(false);
+    }
+    // Preserve the position of a real stream when toggling pause/play.
+    if (radioLoadedSrcRef.current !== radioStreamUrl || !audio.src) {
+      audio.src = radioStreamUrl;
+      radioLoadedSrcRef.current = radioStreamUrl;
     }
     try {
       await audio.play();
