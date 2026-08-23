@@ -72,7 +72,12 @@ export default function App() {
       ];
 
       let validEmptyFeedSeen = false;
+      const collectedStories: any[] = [];
 
+      // Read every available feed instead of stopping at the first successful
+      // endpoint. GitHub Pages normally serves the static feed, while a
+      // connected backend may have fresher stories. Merge both safely and let
+      // the static feed remain the reliable fallback.
       for (const endpoint of endpoints) {
         try {
           const response = await fetch(endpoint, {
@@ -83,23 +88,36 @@ export default function App() {
           const data = await response.json();
           if (!Array.isArray(data.stories)) continue;
 
-          // A static GitHub Pages feed can briefly be empty while a backend
-          // endpoint already has published stories. Do not stop at the first
-          // valid-but-empty response; try the next endpoint before declaring
-          // the newsroom empty.
           if (data.stories.length === 0) {
             validEmptyFeedSeen = true;
             continue;
           }
 
-          if (!cancelled) {
-            setCultureStories(data.stories);
-            setCultureFeedStatus("ready");
-          }
-          return;
+          collectedStories.push(...data.stories);
         } catch (error) {
           console.warn("FOR THE CULTURE editorial feed endpoint unavailable:", endpoint, error);
         }
+      }
+
+      const mergedStories = Array.from(
+        new Map(
+          collectedStories.map((story: any, index: number) => [
+            story?.source_url || story?.id || `story-${index}`,
+            story,
+          ])
+        ).values()
+      )
+        .sort((a: any, b: any) => {
+          const aTime = Date.parse(a?.published_at || a?.source_published_at || "") || 0;
+          const bTime = Date.parse(b?.published_at || b?.source_published_at || "") || 0;
+          return bTime - aTime;
+        })
+        .slice(0, 12);
+
+      if (!cancelled && mergedStories.length) {
+        setCultureStories(mergedStories);
+        setCultureFeedStatus("ready");
+        return;
       }
 
       if (!cancelled) {
@@ -1307,7 +1325,7 @@ export default function App() {
 
               <section className="culture-panel culture-radio-promo">
                 {storyImage(radioStory) ? <img className="culture-radio-promo-image" src={storyImage(radioStory)} alt={storyTitle(radioStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} /> : <div className="culture-editorial-visual-fallback"><span>FOR THE<br />CULTURE</span></div>}
-                <div className="culture-radio-promo-copy"><span>EDITORIAL RADAR</span><h3>WHAT'S<br />MOVING<br /><em>NOW.</em></h3><p>{radioStory ? storyDek(radioStory) : "Live culture stories, written and curated by the FOR THE CULTURE editorial engine."}</p><a href={radioStory ? storyUrl(radioStory) : "#culture-stories"} className="culture-action">READ THE LATEST →</a></div>
+                <div className="culture-radio-promo-copy"><span>EDITORIAL RADAR</span><h3>WHAT'S<br />MOVING<br /><em>NOW.</em></h3><p>{radioStory ? storyDek(radioStory) : "Live culture stories, written and curated by the FOR THE CULTURE editorial engine."}</p>{radioStory ? <a {...storyLinkProps(radioStory)} className="culture-action">READ THE LATEST →</a> : <a href="#culture-stories" className="culture-action">READ THE LATEST →</a>}</div>
               </section>
             </div>
 
@@ -2763,6 +2781,9 @@ export default function App() {
           .store-grid { grid-template-columns: repeat(5,1fr); }
         }
         .culture-live-story-card { min-height: 100%; }
+        .culture-live-story-card { position:relative; overflow:hidden; }
+        .culture-live-story-card::after { content:""; position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg, transparent 44%, rgba(8,5,12,.22) 72%, rgba(8,5,12,.72) 100%); opacity:.72; transition:opacity .35s ease; }
+        .culture-live-story-card:hover::after { opacity:.48; }
         .culture-live-story-card img { width:100%; aspect-ratio: 16 / 10; object-fit:cover; display:block; background:#111; }
         .culture-live-story-card img { mask-image: linear-gradient(to bottom, #000 76%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, #000 76%, transparent 100%); transition: transform .35s ease, filter .35s ease, opacity .35s ease; }
         .culture-live-story-card:hover img { transform: scale(1.025); filter: saturate(.92) contrast(1.08); }
@@ -2836,7 +2857,7 @@ export default function App() {
         .culture-story-card { background:#101010; border:1px solid #1e1e1e; min-width:0; transition:transform .2s,border-color .2s; }
         .culture-story-card:hover { transform:translateY(-3px); border-color:#6e3c90; }
         .culture-story-card img { width:100%; aspect-ratio:1.25/1; object-fit:cover; display:block; filter:saturate(.75) contrast(1.05); }
-        .culture-story-card div { padding:12px; }
+        .culture-story-card div { position:relative; z-index:1; padding:12px; background:linear-gradient(180deg, rgba(16,16,16,.94), #101010); }
         .culture-story-card h4 { margin:7px 0 12px; font-family:'Barlow Condensed',sans-serif; font-size:18px; line-height:.95; letter-spacing:.2px; }
         .culture-story-card small { color:#555; font-size:9px; }
         .culture-radio-card { padding:18px; background:radial-gradient(circle at 85% 10%,rgba(143,53,220,.18),transparent 35%),#090909; }
