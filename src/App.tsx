@@ -204,12 +204,17 @@ export default function App() {
   const storyKey = (story: any) => story?.source_url || story?.id || story?.headline || story?.source_title;
   const storiesBy = (term: RegExp) => editorialStories.filter((story: any) => term.test(`${story.category || ""} ${story.headline || ""} ${story.dek || ""}`));
   const heroStory = storyAt(0);
-  const latestStories = editorialStories.slice(0, 4);
+  const heroKey = heroStory ? storyKey(heroStory) : null;
+  // The hero already owns the newest story. Every lower module explicitly
+  // excludes content already used above, so one source item can only appear
+  // once on the FOR THE CULTURE landing page.
+  const latestStories = editorialStories.slice(1, 4);
   const latestKeys = new Set(latestStories.map(storyKey));
-  const musicStories = storiesBy(/music|artist|album|single|afrobeats|hip-hop|ep|song/i).filter((story: any) => !latestKeys.has(storyKey(story)));
-  const cultureStoriesOnly = storiesBy(/culture|art|style|film|visual|creative|entertainment|media/i).filter((story: any) => !latestKeys.has(storyKey(story)));
-  const deskMusicStories = musicStories.slice(0, 3);
-  const usedDeskKeys = new Set([...latestStories, ...deskMusicStories].map(storyKey));
+  const heroAndLatestKeys = new Set([heroKey, ...latestKeys].filter(Boolean));
+  const musicStories = storiesBy(/music|artist|album|single|afrobeats|hip-hop|ep|song/i).filter((story: any) => !heroAndLatestKeys.has(storyKey(story)));
+  const cultureStoriesOnly = storiesBy(/culture|art|style|film|visual|creative|entertainment|media/i).filter((story: any) => !heroAndLatestKeys.has(storyKey(story)));
+  const deskMusicStories = musicStories.slice(0, 2);
+  const usedDeskKeys = new Set([heroKey, ...latestKeys, ...deskMusicStories.map(storyKey)].filter(Boolean));
   const deskCultureStory = cultureStoriesOnly.find((story: any) => !usedDeskKeys.has(storyKey(story))) || editorialStories.find((story: any) => !usedDeskKeys.has(storyKey(story)));
   const usedKeys = new Set([...usedDeskKeys, ...(deskCultureStory ? [storyKey(deskCultureStory)] : [])]);
   const moreStories = editorialStories.filter((story: any) => !usedKeys.has(storyKey(story))).slice(0, 3);
@@ -245,7 +250,7 @@ export default function App() {
   });
   const cultureTabs = [
     ["home", "HOME", "#culture-home"], ["stories", "STORIES", "#culture-stories"],
-    ["music", "MUSIC", "#culture-music"], ["culture", "CULTURE", "#culture-culture"]
+    ["discover", "DISCOVER", "#culture-discover"]
   ] as const;
 
   const storeProducts = [
@@ -1294,7 +1299,7 @@ export default function App() {
               </section>
             </div>
 
-            <div className="culture-platform-columns culture-desk-grid">
+            <div className="culture-platform-columns culture-desk-grid" id="culture-discover">
               <section className="culture-panel music-panel" id="culture-music">
                 <div className="culture-section-head"><h3>NEW MUSIC</h3><span>ONLY STORIES NOT SHOWN ABOVE</span></div>
                 {deskMusicStories.length ? deskMusicStories.map((story: any) => (
@@ -1305,15 +1310,15 @@ export default function App() {
                 )) : <div className="culture-panel-empty">NO ADDITIONAL MUSIC STORIES YET. THE DESK WILL FILL THIS SPACE AS NEW REPORTS ARRIVE.</div>}
               </section>
 
-              <section className="culture-panel culture-feature-panel" id="culture-culture">
-                <div className="culture-section-head"><h3>CULTURE DESK</h3><span>POINT OF VIEW</span></div>
-                {deskCultureStory ? (
+              {deskCultureStory && (
+                <section className="culture-panel culture-feature-panel" id="culture-culture">
+                  <div className="culture-section-head"><h3>CULTURE DESK</h3><span>POINT OF VIEW</span></div>
                   <a {...storyLinkProps(deskCultureStory)} className="culture-feature-link">
                     <div className="culture-feature-image">{storyImage(deskCultureStory) ? <img src={storyImage(deskCultureStory)} alt={storyTitle(deskCultureStory)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} /> : <div className="culture-editorial-visual-fallback"><span>CULTURE</span></div>}<span>{deskCultureStory.category || "CULTURE"}</span></div>
                     <h4>{storyTitle(deskCultureStory)}</h4><p>{storyDek(deskCultureStory)}</p><small>{deskCultureStory.source_name || "FOR THE CULTURE"} · {storyDate(deskCultureStory)}</small>
                   </a>
-                ) : <div className="culture-panel-empty">THE CULTURE DESK WILL SURFACE A DISTINCT STORY HERE — NEVER A REPEAT OF THE LATEST STORIES.</div>}
-              </section>
+                </section>
+              )}
 
               <aside className="culture-panel culture-idea-panel">
                 <span>THE IDEA</span>
@@ -1321,7 +1326,7 @@ export default function App() {
                 <p>Music and culture belong in the same conversation. FOR THE CULTURE brings releases, voices, scenes and ideas together without forcing the same story into every panel.</p>
                 <div className="culture-source-strip">
                   <small>EDITORIAL RADAR</small>
-                  <strong>THE NATIVE · NOTJUSTOK · TOO XCLUSIVE · NAIJALOADed</strong>
+                  <strong>THE NATIVE · NOTJUSTOK · TOO XCLUSIVE · NAIJALOADED</strong>
                 </div>
               </aside>
             </div>
@@ -1342,7 +1347,7 @@ export default function App() {
 
             <section className="culture-manifesto" id="culture-community">
               <div><span>FOR THE CULTURE</span><h3>WE ARE<br /><em>THE CULTURE.</em></h3></div>
-              <p>One newsroom. One live feed. Music, stories, ideas and people connected without unnecessary repetition. When there is nothing new to say, the platform stays quiet rather than filling space for the sake of filling space.</p>
+              <p>One newsroom. One live feed. Music, stories, ideas and people connected without unnecessary repetition. When there is nothing new to say, the platform stays quiet rather than filling space for the sake of filling it.</p>
               <a href="#culture-stories" className="culture-action">EXPLORE THE LATEST →</a>
             </section>
           </div>
@@ -2888,7 +2893,7 @@ export default function App() {
         /* FOR THE CULTURE — reduced, non-repetitive editorial layout */
         .culture-stories-block-wide { grid-column:1 / -1; }
         .culture-stories-block-wide .culture-section-head span, .culture-section-head > span { color:#555; font-family:'Barlow Condensed',sans-serif; font-size:8px; font-weight:900; letter-spacing:1.4px; }
-        .culture-story-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
+        .culture-story-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
         .culture-story-card h4 { font-size:20px; }
         .culture-story-card p { min-height:44px; }
         .culture-desk-grid { grid-template-columns:1fr 1.35fr 1fr; align-items:stretch; }

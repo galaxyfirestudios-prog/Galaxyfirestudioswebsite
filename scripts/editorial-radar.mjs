@@ -240,10 +240,17 @@ async function main() {
     sourceBuckets.set(item.source_name, bucket)
   }
   const bucketNames = [...sourceBuckets.keys()]
+  // Rotate the starting source on each six-hour radar window so the same
+  // publication does not repeatedly occupy the first editorial slot.
+  const rotationWindow = 6 * 60 * 60 * 1000
+  const rotation = bucketNames.length ? Math.floor(Date.now() / rotationWindow) % bucketNames.length : 0
+  const rotatedBucketNames = bucketNames.length
+    ? bucketNames.slice(rotation).concat(bucketNames.slice(0, rotation))
+    : bucketNames
   let round = 0
-  while (sourceBalancedCandidates.length < Math.max(MAX_STORIES * 3, 12) && bucketNames.length) {
+  while (sourceBalancedCandidates.length < Math.max(MAX_STORIES * 3, 12) && rotatedBucketNames.length) {
     let added = false
-    for (const name of bucketNames) {
+    for (const name of rotatedBucketNames) {
       const bucket = sourceBuckets.get(name) || []
       if (bucket[round]) {
         sourceBalancedCandidates.push(bucket[round])
