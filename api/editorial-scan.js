@@ -9,6 +9,9 @@ const SOURCES = [
   { name: 'PUNCH Special Features', url: 'https://rss.punchng.com/v1/category/special_feature', weight: 7 },
   { name: 'PUNCH Videos', url: 'https://rss.punchng.com/v1/category/videos', weight: 5 },
   { name: 'The Guardian Nigeria', url: process.env.EDITORIAL_GUARDIAN_FEED || 'https://guardian.ng/feed/', weight: 8 },
+  { name: 'NotJustOk', url: process.env.EDITORIAL_NOTJUSTOK_FEED || 'https://notjustok.com/feed/', weight: 13 },
+  { name: 'tooXclusive', url: process.env.EDITORIAL_TOOXCLUSIVE_FEED || 'https://tooxclusive.com/feed/', weight: 11 },
+  { name: 'Naijaloaded', url: process.env.EDITORIAL_NAIJALOADED_FEED || 'https://www.naijaloaded.com.ng/feed/', weight: 9 },
 ]
 
 const RELEVANCE_TERMS = [
