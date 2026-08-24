@@ -63,6 +63,12 @@ const getPaystackPublicKey = async () => {
   const buildKey = String(import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || '').trim();
   if (buildKey) return buildKey;
 
+  // Paystack public keys are safe to expose in browser code. This fallback keeps
+  // checkout working on static deployments where server environment variables
+  // are not available at runtime. The secret key remains server-side only.
+  const existingPublicKey = 'pk_test_f350611c4c768b941d8725e73b122d3d37c9e5d7';
+  if (existingPublicKey) return existingPublicKey;
+
   throw new Error('Paystack is not configured for this website. Please contact Galaxy Fire Studios.');
 };
 
