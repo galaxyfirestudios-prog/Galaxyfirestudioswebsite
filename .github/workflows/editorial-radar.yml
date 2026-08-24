@@ -1,7 +1,15 @@
 name: FOR THE CULTURE Editorial Radar
 
 on:
-  # The newsroom scans every six hours. It can also be started manually.
+  # Run immediately when the site changes, while ignoring the generated feed
+  # commit itself so the editorial workflow cannot trigger itself in a loop.
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - public/editorial-feed.json
+      - editorial-run-status.json
+  # The newsroom also scans every six hours and can be started manually.
   schedule:
     - cron: "0 */6 * * *"
   workflow_dispatch:

@@ -4,7 +4,7 @@ The live site is hosted on GitHub Pages, so `/api/*.js` files cannot execute the
 
 ## What is different in this corrected build
 
-- The editorial radar runs on every push to `main`, every 15 minutes, and manually from Actions.
+- The editorial radar runs automatically when site code is pushed to `main` (while ignoring its own generated feed commit), every six hours, and manually from Actions.
 - It fetches all configured sources in parallel.
 - It ranks stories by relevance and freshness and removes duplicates.
 - It uses Gemini server-side inside GitHub Actions to create the FOR THE CULTURE write-up.

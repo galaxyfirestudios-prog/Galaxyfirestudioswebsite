@@ -171,8 +171,8 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
     const base = import.meta.env.BASE_URL || "./";
-    const configUrl = `${base.replace(/\/$/, "")}/radio-config.json?ts=${Date.now()}`;
-    fetch(configUrl, { cache: "no-store" })
+    const configUrl = `${base.replace(/\/$/, "")}/radio-config.json`;
+    fetch(configUrl, { cache: "force-cache" })
       .then((response) => response.ok ? response.json() : null)
       .then((config) => {
         if (cancelled || !config) return;
@@ -185,8 +185,8 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
     const base = import.meta.env.BASE_URL || "./";
-    const playlistUrl = `${base.replace(/\/$/, "")}/radio-playlist.json?ts=${Date.now()}`;
-    fetch(playlistUrl, { cache: "no-store" })
+    const playlistUrl = `${base.replace(/\/$/, "")}/radio-playlist.json`;
+    fetch(playlistUrl, { cache: "force-cache" })
       .then((response) => response.ok ? response.json() : null)
       .then((playlist) => {
         if (cancelled || !Array.isArray(playlist?.tracks)) return;
@@ -1869,6 +1869,7 @@ export default function App() {
                     alt={product.name}
                     className="product-image"
                     loading="lazy"
+                    decoding="async"
                     referrerPolicy="no-referrer"
                     onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = deskImg; }}
                   />

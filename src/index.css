@@ -1,2 +1,23 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;800;900&family=Barlow:wght@400;500;600&display=swap');
 @import 'tailwindcss';
+
+:root {
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+/* Defer off-screen sections so mobile browsers do less work during first paint. */
+.services,
+.gallery,
+.culture-platform,
+.radio-station,
+.ecosystem-preview,
+.store-section,
+.promo-section,
+.booking {
+  content-visibility: auto;
+  contain-intrinsic-size: 800px;
+}
+
+img {
+  max-width: 100%;
+}
