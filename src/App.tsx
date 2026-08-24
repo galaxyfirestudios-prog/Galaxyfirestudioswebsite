@@ -787,11 +787,14 @@ export default function App() {
           return;
         }
       } catch (error) {
-        console.error("Availability check failed:", error);
-        setPaymentError(
-          "We could not check availability right now. Please try again."
+        // Availability is a scheduling aid, not the payment gateway.
+        // If the optional Supabase availability check is temporarily unavailable,
+        // do not prevent a customer from reaching Paystack. A confirmed payment
+        // is still verified server-side before the booking is recorded.
+        console.warn(
+          "Availability check unavailable; continuing to Paystack:",
+          error
         );
-        return;
       }
     }
 
