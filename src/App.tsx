@@ -49,14 +49,21 @@ import cultureArt from "@/imports/for-the-culture.webp";
 let paystackLoaderPromise: Promise<any> | null = null;
 
 const getPaystackPublicKey = async () => {
+  // Prefer the current server-side configuration so a stale build-time key
+  // cannot override the Paystack key configured for the live website.
+  try {
+    const response = await fetch('/api/paystack-config', { cache: 'no-store' });
+    const data = await response.json().catch(() => ({}));
+    const serverKey = String(data?.publicKey || '').trim();
+    if (response.ok && serverKey) return serverKey;
+  } catch (error) {
+    console.warn('Paystack runtime configuration unavailable; using build-time fallback.', error);
+  }
+
   const buildKey = String(import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || '').trim();
   if (buildKey) return buildKey;
 
-  const response = await fetch('/api/paystack-config', { cache: 'no-store' });
-  const data = await response.json().catch(() => ({}));
-  const key = String(data?.publicKey || '').trim();
-  if (!response.ok || !key) throw new Error('Paystack is not configured for this website. Please contact Galaxy Fire Studios.');
-  return key;
+  throw new Error('Paystack is not configured for this website. Please contact Galaxy Fire Studios.');
 };
 
 const loadPaystack = async () => {
