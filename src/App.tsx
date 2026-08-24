@@ -46,6 +46,53 @@ import visual28 from "@/imports/visuals/visual_28.webp";
 import visual29 from "@/imports/visuals/visual_29.webp";
 import cultureArt from "@/imports/for-the-culture.webp";
 
+let paystackLoaderPromise: Promise<any> | null = null;
+
+const getPaystackPublicKey = async () => {
+  const buildKey = String(import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || '').trim();
+  if (buildKey) return buildKey;
+
+  const response = await fetch('/api/paystack-config', { cache: 'no-store' });
+  const data = await response.json().catch(() => ({}));
+  const key = String(data?.publicKey || '').trim();
+  if (!response.ok || !key) throw new Error('Paystack is not configured for this website. Please contact Galaxy Fire Studios.');
+  return key;
+};
+
+const loadPaystack = async () => {
+  if (typeof window !== 'undefined' && (window as any).PaystackPop) return (window as any).PaystackPop;
+  if (paystackLoaderPromise) return paystackLoaderPromise;
+
+  paystackLoaderPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-paystack-inline="true"]') as HTMLScriptElement | null;
+    if (existing) {
+      existing.addEventListener('load', () => resolve((window as any).PaystackPop));
+      existing.addEventListener('error', () => reject(new Error('Paystack could not load. Please check your internet connection and try again.')));
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://js.paystack.co/v2/inline.js';
+    script.async = true;
+    script.dataset.paystackInline = 'true';
+    script.onload = () => {
+      const PaystackPop = (window as any).PaystackPop;
+      if (!PaystackPop) reject(new Error('Paystack loaded but the payment library is unavailable.'));
+      else resolve(PaystackPop);
+    };
+    script.onerror = () => reject(new Error('Paystack could not load. Please check your internet connection and try again.'));
+    document.head.appendChild(script);
+  });
+
+  try {
+    return await paystackLoaderPromise;
+  } catch (error) {
+    paystackLoaderPromise = null;
+    throw error;
+  }
+};
+
+
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [visualSlide, setVisualSlide] = useState(0);
@@ -611,20 +658,23 @@ export default function App() {
     setCart((current) => current.map((item) => item.product.id === id ? { ...item, quantity: Math.max(0, Math.min(item.quantity + delta, item.product.stock)) } : item).filter((item) => item.quantity > 0));
   };
   const productImage = (query: string) => `https://tse1.mm.bing.net/th?q=${encodeURIComponent(query + " product")}&w=700&h=700`;
-  const checkoutStore = () => {
+  const checkoutStore = async () => {
     setStoreError("");
     if (!storeCustomer.name || !storeCustomer.email || !storeCustomer.phone || !storeCustomer.address) {
       setStoreError("Please complete your name, email, phone and delivery address.");
       return;
     }
+    if (!cart.length || cartTotal <= 0) {
+      setStoreError("Your cart is empty.");
+      return;
+    }
+
     setStoreProcessing(true);
-    const reference = `GFS-SHOP-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
-    const PaystackPop = (window as any).PaystackPop;
-    const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_f350611c4c768b941d8725e73b122d3d37c9e5d7";
-    const launch = () => {
-      const PS = (window as any).PaystackPop;
-      if (!PS) { setStoreProcessing(false); setStoreError("Paystack could not load. Please refresh and try again."); return; }
-      const paystack = new PS();
+    try {
+      const publicKey = await getPaystackPublicKey();
+      const PaystackPop = await loadPaystack();
+      const reference = `GFS-SHOP-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+      const paystack = new PaystackPop();
       paystack.newTransaction({
         key: publicKey,
         email: storeCustomer.email,
@@ -659,12 +709,16 @@ export default function App() {
           } finally { setStoreProcessing(false); }
         },
         onCancel: () => setStoreProcessing(false),
+        onError: (error: any) => {
+          console.error("Paystack store error:", error);
+          setStoreProcessing(false);
+          setStoreError(error?.message || "Paystack could not start the payment. Please try again.");
+        },
       });
-    };
-    if (PaystackPop) launch();
-    else {
-      const timer = window.setInterval(() => { if ((window as any).PaystackPop) { window.clearInterval(timer); launch(); } }, 150);
-      window.setTimeout(() => { window.clearInterval(timer); if (!(window as any).PaystackPop) { setStoreProcessing(false); setStoreError("Paystack could not load. Please refresh and try again."); } }, 8000);
+    } catch (error) {
+      console.error("Paystack store launch error:", error);
+      setStoreProcessing(false);
+      setStoreError(error instanceof Error ? error.message : "Paystack could not load. Please try again.");
     }
   };
 
@@ -683,15 +737,6 @@ export default function App() {
   const updateBooking = (field: string, value: string) => {
     setBooking((current) => ({ ...current, [field]: value }));
   };
-
-  useEffect(() => {
-    const existing = document.querySelector('script[src="https://js.paystack.co/v2/inline.js"]');
-    if (existing) return;
-    const script = document.createElement("script");
-    script.src = "https://js.paystack.co/v2/inline.js";
-    script.async = true;
-    document.body.appendChild(script);
-  }, []);
 
   const submitBooking = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -752,16 +797,10 @@ export default function App() {
 
     setPaymentProcessing(true);
 
-    const reference = `GFS-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-    const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_f350611c4c768b941d8725e73b122d3d37c9e5d7";
-
-    const openPaystack = () => {
-      const PaystackPop = (window as any).PaystackPop;
-      if (!PaystackPop) {
-        setPaymentProcessing(false);
-        setPaymentError("Paystack could not load. Please check your internet connection and try again.");
-        return;
-      }
+    try {
+      const publicKey = await getPaystackPublicKey();
+      const PaystackPop = await loadPaystack();
+      const reference = `GFS-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
 
       const paystack = new PaystackPop();
       paystack.newTransaction({
@@ -811,25 +850,16 @@ export default function App() {
         onCancel: () => {
           setPaymentProcessing(false);
         },
-      });
-    };
-
-    if ((window as any).PaystackPop) {
-      openPaystack();
-    } else {
-      const waitForPaystack = window.setInterval(() => {
-        if ((window as any).PaystackPop) {
-          window.clearInterval(waitForPaystack);
-          openPaystack();
-        }
-      }, 150);
-      window.setTimeout(() => {
-        window.clearInterval(waitForPaystack);
-        if (!(window as any).PaystackPop) {
+        onError: (error: any) => {
+          console.error("Paystack booking error:", error);
           setPaymentProcessing(false);
-          setPaymentError("Paystack could not load. Please refresh the page and try again.");
-        }
-      }, 8000);
+          setPaymentError(error?.message || "Paystack could not start the payment. Please try again.");
+        },
+      });
+    } catch (error) {
+      console.error("Paystack booking launch error:", error);
+      setPaymentProcessing(false);
+      setPaymentError(error instanceof Error ? error.message : "Paystack could not load. Please try again.");
     }
   };
 
@@ -911,7 +941,22 @@ export default function App() {
   };
 
   useEffect(() => {
-    loadBeatAvailability();
+    const section = document.getElementById("beats");
+    if (!section || typeof IntersectionObserver === "undefined") {
+      const timer = window.setTimeout(() => loadBeatAvailability(), 1200);
+      return () => window.clearTimeout(timer);
+    }
+
+    let loaded = false;
+    const observer = new IntersectionObserver((entries) => {
+      if (loaded || !entries.some((entry) => entry.isIntersecting)) return;
+      loaded = true;
+      observer.disconnect();
+      loadBeatAvailability();
+    }, { rootMargin: "500px 0px" });
+
+    observer.observe(section);
+    return () => observer.disconnect();
   }, []);
 
   const openBeatCheckout = (license: typeof licenseOptions[number]) => {
@@ -932,7 +977,7 @@ export default function App() {
     document.body.style.overflow = "";
   };
 
-  const checkoutBeat = () => {
+  const checkoutBeat = async () => {
     setBeatPurchaseError("");
     setBeatPurchaseSuccess("");
     if (!beatCustomer.name || !beatCustomer.email || !beatCustomer.phone) {
@@ -945,16 +990,10 @@ export default function App() {
     }
     const license = licenseOptions.find((item) => item.name === selectedLicense)!;
     setBeatPurchaseProcessing(true);
-    const reference = `GFS-BEAT-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-    const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_f350611c4c768b941d8725e73b122d3d37c9e5d7";
-
-    const launch = () => {
-      const PaystackPop = (window as any).PaystackPop;
-      if (!PaystackPop) {
-        setBeatPurchaseProcessing(false);
-        setBeatPurchaseError("Paystack could not load. Please refresh and try again.");
-        return;
-      }
+    try {
+      const publicKey = await getPaystackPublicKey();
+      const PaystackPop = await loadPaystack();
+      const reference = `GFS-BEAT-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
       const paystack = new PaystackPop();
       paystack.newTransaction({
         key: publicKey,
@@ -1000,24 +1039,16 @@ export default function App() {
           }
         },
         onCancel: () => setBeatPurchaseProcessing(false),
-      });
-    };
-
-    if ((window as any).PaystackPop) launch();
-    else {
-      const timer = window.setInterval(() => {
-        if ((window as any).PaystackPop) {
-          window.clearInterval(timer);
-          launch();
-        }
-      }, 150);
-      window.setTimeout(() => {
-        window.clearInterval(timer);
-        if (!(window as any).PaystackPop) {
+        onError: (error: any) => {
+          console.error("Paystack beat error:", error);
           setBeatPurchaseProcessing(false);
-          setBeatPurchaseError("Paystack could not load. Please refresh and try again.");
-        }
-      }, 8000);
+          setBeatPurchaseError(error?.message || "Paystack could not start the payment. Please try again.");
+        },
+      });
+    } catch (error) {
+      console.error("Paystack beat launch error:", error);
+      setBeatPurchaseProcessing(false);
+      setBeatPurchaseError(error instanceof Error ? error.message : "Paystack could not load. Please try again.");
     }
   };
 
