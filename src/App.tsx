@@ -392,6 +392,7 @@ export default function App() {
   });
   const [artistAudio, setArtistAudio] = useState<File | null>(null);
   const [artistArtwork, setArtistArtwork] = useState<File | null>(null);
+  const [artistPortalOpen, setArtistPortalOpen] = useState(false);
   const [artistSubmitState, setArtistSubmitState] = useState<"idle" | "sending" | "success" | "error">("idle");
   const [artistSubmitMessage, setArtistSubmitMessage] = useState("");
 
@@ -1547,7 +1548,7 @@ export default function App() {
                 <div className="culture-hero-copy">
                   <span className="culture-label">FOR THE CULTURE EDITORIAL DESK</span>
                   <h2>THE CULTURE<br /><em>IS MOVING.</em></h2>
-                  <p>The newsroom is waiting for its first published stories. Once the editorial engine connects, every image, headline and write-up on this platform will be driven by the live culture radar.</p>
+                  <p>The newsroom is connected to the live culture radar. Fresh stories appear here as the editorial desk publishes them.</p>
                 </div>
                 <div className="culture-hero-image-wrap"><div className="culture-editorial-visual-fallback"><span>EDITORIAL<br />RADAR</span></div></div>
               </article>
@@ -1628,18 +1629,21 @@ export default function App() {
               </section>
             )}
 
-            <section className="culture-artist-portal" id="culture-artist-submissions">
+            <section className={`culture-artist-portal ${artistPortalOpen ? "is-open" : "is-closed"}`} id="culture-artist-submissions">
               <div className="culture-artist-portal-copy">
                 <span>ARTIST SUBMISSIONS</span>
                 <h3>YOUR MUSIC.<br /><em>YOUR VOICE.</em></h3>
-                <p>Submit your music to FOR THE CULTURE for consideration for radio play, editorial coverage, or both. Every submission is reviewed by the music/editorial team.</p>
+                <p>Submit music for FOR THE CULTURE Radio, editorial coverage, or both. Every submission is reviewed by the music/editorial team.</p>
                 <div className="culture-artist-review-note">
-                  <strong>WHAT HAPPENS NEXT</strong>
-                  <span>SUBMIT → REVIEW → RADIO / EDITORIAL CONSIDERATION</span>
+                  <strong>CURATED BY THE CULTURE DESK</strong>
+                  <span>No automatic radio play or publication.</span>
                 </div>
+                <button type="button" className="culture-artist-toggle" onClick={() => setArtistPortalOpen((open) => !open)} aria-expanded={artistPortalOpen}>
+                  {artistPortalOpen ? "CLOSE SUBMISSION FORM ↑" : "SUBMIT YOUR MUSIC →"}
+                </button>
               </div>
 
-              <form id="culture-artist-submission-form" className="culture-artist-form" onSubmit={submitArtistMusic}>
+              {artistPortalOpen && <form id="culture-artist-submission-form" className="culture-artist-form" onSubmit={submitArtistMusic}>
                 <div className="culture-form-grid">
                   <label>Artist / Stage Name<input value={artistSubmission.artistName} onChange={(e) => setArtistSubmission({ ...artistSubmission, artistName: e.target.value })} required /></label>
                   <label>Email<input type="email" value={artistSubmission.email} onChange={(e) => setArtistSubmission({ ...artistSubmission, email: e.target.value })} required /></label>
@@ -1675,7 +1679,7 @@ export default function App() {
                 </button>
                 {artistSubmitState !== "idle" && <div className={`culture-submit-status ${artistSubmitState}`} role="status">{artistSubmitMessage}</div>}
                 <small className="culture-form-disclaimer">Submission does not guarantee radio play, editorial coverage or publication. All material is reviewed by FOR THE CULTURE.</small>
-              </form>
+              </form>}
             </section>
 
             <section className="culture-manifesto" id="culture-community">
@@ -3295,7 +3299,12 @@ export default function App() {
         .culture-manifesto { margin-top:18px; padding:35px; display:grid; grid-template-columns:1fr 1.2fr auto; gap:35px; align-items:center; background:linear-gradient(105deg,#140d1a,#080808); border:1px solid #30243a; position:relative; overflow:hidden; }.culture-manifesto::before{content:"";position:absolute;right:-100px;top:-100px;width:300px;height:300px;border-radius:50%;background:rgba(143,53,220,.13);filter:blur(10px)}.culture-manifesto>div,.culture-manifesto>p,.culture-manifesto>a{position:relative;z-index:1}.culture-manifesto h3{font-family:'Barlow Condensed',sans-serif;font-size:52px;line-height:.8;margin:12px 0 0}.culture-manifesto h3 em{color:#b66cff;font-style:normal}.culture-manifesto p{color:#777;font-size:12px;line-height:1.7;margin:0}
 
         /* FOR THE CULTURE artist submission portal */
-        .culture-artist-portal{display:grid;grid-template-columns:.8fr 1.35fr;gap:44px;margin-top:34px;padding:42px 0;border-top:1px solid #242424;border-bottom:1px solid #242424}
+        .culture-artist-portal{display:grid;grid-template-columns:1fr;gap:18px;margin-top:28px;padding:24px 0;border-top:1px solid #242424;border-bottom:1px solid #242424}
+        .culture-artist-portal.is-closed{grid-template-columns:minmax(0,760px);}
+        .culture-artist-portal-copy{display:flex;flex-direction:column;align-items:flex-start}
+        .culture-artist-portal-copy p{max-width:650px}
+        .culture-artist-toggle{margin-top:18px;border:1px solid #8f35dc;background:transparent;color:#fff;padding:12px 16px;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:900;letter-spacing:1.2px;cursor:pointer}
+        .culture-artist-toggle:hover{background:#8f35dc}
         .culture-artist-portal-copy>span{color:#b66cff;font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:900;letter-spacing:2px}
         .culture-artist-portal-copy h3{font-family:'Barlow Condensed',sans-serif;font-size:clamp(48px,5vw,78px);line-height:.82;margin:13px 0 20px}
         .culture-artist-portal-copy h3 em{color:#b66cff;font-style:normal}
@@ -3323,7 +3332,7 @@ export default function App() {
         .culture-platform-columns,.culture-platform-columns.lower,.culture-manifesto { content-visibility:auto; contain-intrinsic-size:420px; }
         .culture-story-card img,.culture-music-row img,.culture-feature-image img,.culture-video-feature img,.culture-artist-grid img { content-visibility:auto; }
         @media (max-width:1100px){.culture-platform-shell{grid-template-columns:190px minmax(0,1fr)}.culture-brand-rail{padding-left:25px}.culture-platform-columns{grid-template-columns:1fr 1fr}.culture-radio-promo{grid-column:1/-1;min-height:260px}.culture-platform-columns.lower{grid-template-columns:1fr 1fr}.culture-artist-grid{grid-template-columns:repeat(4,1fr)}.culture-manifesto{grid-template-columns:1fr 1fr}.culture-manifesto .culture-action{justify-self:start}}
-        @media (max-width:800px){.culture-platform-nav{display:flex}.culture-artist-portal{grid-template-columns:1fr;gap:28px}.culture-form-grid{grid-template-columns:1fr}.culture-platform-topline{padding:0 5%;font-size:8px}.culture-platform-live{display:none}.culture-platform-shell{display:block}.culture-brand-rail{padding:20px 5%;border-right:0;border-bottom:1px solid #222;display:grid;grid-template-columns:85px 1fr;column-gap:16px;align-items:center}.culture-brand-art{width:85px;height:85px}.culture-brand-kicker{margin:0}.culture-brand-rail p{grid-column:2;margin:7px 0 0}.culture-platform-main{padding:0 5% 45px}.culture-platform-nav{height:56px;gap:20px}.culture-platform-nav a{padding:20px 0 17px}.culture-hero-story{grid-template-columns:1fr;min-height:0}.culture-hero-copy{padding:40px 0 20px;order:2}.culture-hero-image-wrap{order:1}.culture-hero-image{height:390px;min-height:390px}.culture-hero-copy h2{font-size:clamp(52px,15vw,82px)}.culture-hero-controls{left:0;bottom:auto;top:365px}.culture-content-grid,.culture-platform-columns,.culture-platform-columns.lower{grid-template-columns:1fr}.culture-story-grid{grid-template-columns:1fr 1fr}.culture-radio-promo{grid-column:auto}.culture-manifesto{grid-template-columns:1fr;gap:20px;padding:25px}.culture-manifesto h3{font-size:45px}}
+        @media (max-width:800px){.culture-platform-nav{display:flex}.culture-artist-portal{grid-template-columns:1fr;gap:22px}.culture-form-grid{grid-template-columns:1fr}.culture-platform-topline{padding:0 5%;font-size:8px}.culture-platform-live{display:none}.culture-platform-shell{display:block}.culture-brand-rail{padding:20px 5%;border-right:0;border-bottom:1px solid #222;display:grid;grid-template-columns:85px 1fr;column-gap:16px;align-items:center}.culture-brand-art{width:85px;height:85px}.culture-brand-kicker{margin:0}.culture-brand-rail p{grid-column:2;margin:7px 0 0}.culture-platform-main{padding:0 5% 45px}.culture-platform-nav{height:56px;gap:20px}.culture-platform-nav a{padding:20px 0 17px}.culture-hero-story{grid-template-columns:1fr;min-height:0}.culture-hero-copy{padding:40px 0 20px;order:2}.culture-hero-image-wrap{order:1}.culture-hero-image{height:390px;min-height:390px}.culture-hero-copy h2{font-size:clamp(52px,15vw,82px)}.culture-hero-controls{left:0;bottom:auto;top:365px}.culture-content-grid,.culture-platform-columns,.culture-platform-columns.lower{grid-template-columns:1fr}.culture-story-grid{grid-template-columns:1fr 1fr}.culture-radio-promo{grid-column:auto}.culture-manifesto{grid-template-columns:1fr;gap:20px;padding:25px}.culture-manifesto h3{font-size:45px}}
         @media (max-width:520px){.culture-story-grid{grid-template-columns:1fr}.culture-story-card{display:grid;grid-template-columns:105px 1fr}.culture-story-card img{height:100%;min-height:130px}.culture-story-card h4{font-size:16px}.culture-story-card div{padding:10px}.culture-platform-nav{gap:17px}.culture-platform-nav a{font-size:10px}.culture-hero-image{height:320px;min-height:320px}.culture-hero-controls{top:295px}.culture-hero-stamp{font-size:20px}.culture-event-row{grid-template-columns:42px 1fr}.culture-event-row>a{display:none}.culture-artist-grid{grid-template-columns:repeat(2,1fr)}.culture-radio-promo-copy h3{font-size:43px}}
         /* FOR THE CULTURE — reduced, non-repetitive editorial layout */
         .culture-stories-block-wide { grid-column:1 / -1; }
