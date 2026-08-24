@@ -292,44 +292,28 @@ export default function App() {
     async function loadCultureStories(showLoading = false) {
       if (showLoading) setCultureFeedStatus("loading");
       const base = import.meta.env.BASE_URL || "./";
-      const staticFeedCandidates = Array.from(new Set([
-        `${base.replace(/\/$/, "")}/editorial-feed.json?ts=${Date.now()}`,
-        `./editorial-feed.json?ts=${Date.now()}`,
-        `editorial-feed.json?ts=${Date.now()}`,
-      ]));
-      const endpoints = [
-        ...staticFeedCandidates,
-        "/api/editorial-feed?limit=12",
-      ];
-
+      const staticEndpoint = `${base.replace(/\/$/, "")}/editorial-feed.json`;
+      const endpoints = [staticEndpoint, "/api/editorial-feed?limit=12"];
       let validEmptyFeedSeen = false;
-      const collectedStories: any[] = [];
 
-      // Read every available feed instead of stopping at the first successful
-      // endpoint. GitHub Pages normally serves the static feed, while a
-      // connected backend may have fresher stories. Merge both safely and let
-      // the static feed remain the reliable fallback.
-      for (const endpoint of endpoints) {
+      const results = await Promise.all(endpoints.map(async (endpoint) => {
         try {
           const response = await fetch(endpoint, {
             headers: { Accept: "application/json" },
-            cache: "no-store",
+            cache: "default",
           });
-          if (!response.ok) continue;
+          if (!response.ok) return [];
           const data = await response.json();
-          if (!Array.isArray(data.stories)) continue;
-
-          if (data.stories.length === 0) {
-            validEmptyFeedSeen = true;
-            continue;
-          }
-
-          collectedStories.push(...data.stories);
+          if (!Array.isArray(data.stories)) return [];
+          if (data.stories.length === 0) validEmptyFeedSeen = true;
+          return data.stories;
         } catch (error) {
           console.warn("FOR THE CULTURE editorial feed endpoint unavailable:", endpoint, error);
+          return [];
         }
-      }
+      }));
 
+      const collectedStories = results.flat();
       const mergedStories = Array.from(
         new Map(
           collectedStories.map((story: any, index: number) => [
@@ -351,9 +335,7 @@ export default function App() {
         return;
       }
 
-      if (!cancelled) {
-        setCultureFeedStatus(validEmptyFeedSeen ? "empty" : "error");
-      }
+      if (!cancelled) setCultureFeedStatus(validEmptyFeedSeen ? "empty" : "error");
     }
 
     const refresh = () => {
@@ -392,6 +374,80 @@ export default function App() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [cultureReaderStory]);
+
+  const [artistSubmission, setArtistSubmission] = useState({
+    artistName: "",
+    email: "",
+    phone: "",
+    country: "",
+    city: "",
+    genre: "",
+    songTitle: "",
+    releaseDate: "",
+    socialLinks: "",
+    purpose: "both",
+    bio: "",
+    songDescription: "",
+    songUrl: "",
+  });
+  const [artistAudio, setArtistAudio] = useState<File | null>(null);
+  const [artistArtwork, setArtistArtwork] = useState<File | null>(null);
+  const [artistSubmitState, setArtistSubmitState] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [artistSubmitMessage, setArtistSubmitMessage] = useState("");
+
+  const encodeSmallFile = (file: File | null, maxBytes: number) =>
+    new Promise<{ name: string; type: string; data: string } | null>((resolve, reject) => {
+      if (!file) return resolve(null);
+      if (file.size > maxBytes) return reject(new Error(`${file.name} is larger than the ${Math.round(maxBytes / 1024 / 1024)} MB direct-upload limit. Please use the song link field for larger files.`));
+      const reader = new FileReader();
+      reader.onload = () => resolve({
+        name: file.name,
+        type: file.type || "application/octet-stream",
+        data: String(reader.result).split(",")[1] || "",
+      });
+      reader.onerror = () => reject(new Error(`Could not read ${file.name}. Please try again.`));
+      reader.readAsDataURL(file);
+    });
+
+  const submitArtistMusic = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!artistSubmission.artistName || !artistSubmission.email || !artistSubmission.songTitle || (!artistAudio && !artistSubmission.songUrl)) {
+      setArtistSubmitState("error");
+      setArtistSubmitMessage("Please provide your artist name, email, song title, and either an audio upload or a streaming/download link.");
+      return;
+    }
+
+    setArtistSubmitState("sending");
+    setArtistSubmitMessage("");
+    try {
+      const [audio, artwork] = await Promise.all([
+        encodeSmallFile(artistAudio, 2 * 1024 * 1024),
+        encodeSmallFile(artistArtwork, 700 * 1024),
+      ]);
+
+      const response = await fetch("/api/artist-submission", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          ...artistSubmission,
+          audio,
+          artwork,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.error || "Submission could not be sent.");
+      setArtistSubmitState("success");
+      setArtistSubmitMessage("Submission received. The FOR THE CULTURE music/editorial team will review it for radio and/or editorial consideration.");
+      setArtistSubmission({ artistName: "", email: "", phone: "", country: "", city: "", genre: "", songTitle: "", releaseDate: "", socialLinks: "", purpose: "both", bio: "", songDescription: "", songUrl: "" });
+      setArtistAudio(null);
+      setArtistArtwork(null);
+      const form = document.getElementById("culture-artist-submission-form") as HTMLFormElement | null;
+      form?.reset();
+    } catch (error) {
+      setArtistSubmitState("error");
+      setArtistSubmitMessage(error instanceof Error ? error.message : "Something went wrong. Please try again.");
+    }
+  };
 
   const [booking, setBooking] = useState({
     service: "The Fire Session",
@@ -438,6 +494,9 @@ export default function App() {
   const heroAndLatestKeys = new Set([heroKey, ...latestKeys].filter(Boolean));
   const musicStories = storiesBy(/music|artist|album|single|afrobeats|hip-hop|ep|song/i).filter((story: any) => !heroAndLatestKeys.has(storyKey(story)));
   const cultureStoriesOnly = storiesBy(/culture|art|style|film|visual|creative|entertainment|media/i).filter((story: any) => !heroAndLatestKeys.has(storyKey(story)));
+  // NEW MUSIC must contain only stories that have NOT already appeared in
+  // the hero or latest-stories modules. If there are no distinct music stories,
+  // keep the panel empty rather than repeating an article the visitor has seen.
   const deskMusicStories = musicStories.slice(0, 2);
   const usedDeskKeys = new Set([heroKey, ...latestKeys, ...deskMusicStories.map(storyKey)].filter(Boolean));
   const deskCultureStory = cultureStoriesOnly.find((story: any) => !usedDeskKeys.has(storyKey(story))) || editorialStories.find((story: any) => !usedDeskKeys.has(storyKey(story)));
@@ -1525,7 +1584,7 @@ export default function App() {
 
             <div className="culture-platform-columns culture-desk-grid" id="culture-discover">
               <section className="culture-panel music-panel" id="culture-music">
-                <div className="culture-section-head"><h3>NEW MUSIC</h3><span>ONLY STORIES NOT SHOWN ABOVE</span></div>
+                <div className="culture-section-head"><h3>NEW MUSIC</h3><span>MUSIC FROM THE CULTURE RADAR</span></div>
                 {deskMusicStories.length ? deskMusicStories.map((story: any) => (
                   <a {...storyLinkProps(story)} className="culture-music-row" key={storyKey(story)}>
                     {storyImage(story) ? <img src={storyImage(story)} alt={storyTitle(story)} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={handleStoryImageError} /> : <div className="culture-music-no-image">FTC</div>}
@@ -1568,6 +1627,56 @@ export default function App() {
                 </div>
               </section>
             )}
+
+            <section className="culture-artist-portal" id="culture-artist-submissions">
+              <div className="culture-artist-portal-copy">
+                <span>ARTIST SUBMISSIONS</span>
+                <h3>YOUR MUSIC.<br /><em>YOUR VOICE.</em></h3>
+                <p>Submit your music to FOR THE CULTURE for consideration for radio play, editorial coverage, or both. Every submission is reviewed by the music/editorial team.</p>
+                <div className="culture-artist-review-note">
+                  <strong>WHAT HAPPENS NEXT</strong>
+                  <span>SUBMIT → REVIEW → RADIO / EDITORIAL CONSIDERATION</span>
+                </div>
+              </div>
+
+              <form id="culture-artist-submission-form" className="culture-artist-form" onSubmit={submitArtistMusic}>
+                <div className="culture-form-grid">
+                  <label>Artist / Stage Name<input value={artistSubmission.artistName} onChange={(e) => setArtistSubmission({ ...artistSubmission, artistName: e.target.value })} required /></label>
+                  <label>Email<input type="email" value={artistSubmission.email} onChange={(e) => setArtistSubmission({ ...artistSubmission, email: e.target.value })} required /></label>
+                  <label>Phone / WhatsApp<input value={artistSubmission.phone} onChange={(e) => setArtistSubmission({ ...artistSubmission, phone: e.target.value })} /></label>
+                  <label>Genre<input value={artistSubmission.genre} onChange={(e) => setArtistSubmission({ ...artistSubmission, genre: e.target.value })} placeholder="Afrobeats, Hip-Hop, R&B..." /></label>
+                  <label>Country<input value={artistSubmission.country} onChange={(e) => setArtistSubmission({ ...artistSubmission, country: e.target.value })} /></label>
+                  <label>City<input value={artistSubmission.city} onChange={(e) => setArtistSubmission({ ...artistSubmission, city: e.target.value })} /></label>
+                  <label>Song Title<input value={artistSubmission.songTitle} onChange={(e) => setArtistSubmission({ ...artistSubmission, songTitle: e.target.value })} required /></label>
+                  <label>Release Date<input type="date" value={artistSubmission.releaseDate} onChange={(e) => setArtistSubmission({ ...artistSubmission, releaseDate: e.target.value })} /></label>
+                </div>
+
+                <label>Submit For
+                  <select value={artistSubmission.purpose} onChange={(e) => setArtistSubmission({ ...artistSubmission, purpose: e.target.value })}>
+                    <option value="both">RADIO + BLOG / EDITORIAL</option>
+                    <option value="radio">RADIO CONSIDERATION</option>
+                    <option value="editorial">BLOG / EDITORIAL CONSIDERATION</option>
+                  </select>
+                </label>
+
+                <label>Song Link <span className="culture-form-hint">(recommended for full-quality audio)</span><input type="url" value={artistSubmission.songUrl} onChange={(e) => setArtistSubmission({ ...artistSubmission, songUrl: e.target.value })} placeholder="Spotify, Audiomack, SoundCloud, Drive, Dropbox, etc." /></label>
+
+                <div className="culture-form-grid culture-upload-grid">
+                  <label>Audio Upload <span className="culture-form-hint">MP3/WAV · max 2 MB direct upload</span><input type="file" accept=".mp3,.wav,.m4a,.aac,.ogg,.webm,audio/*" onChange={(e) => setArtistAudio(e.target.files?.[0] || null)} /></label>
+                  <label>Artwork <span className="culture-form-hint">JPG/PNG/WebP · max 700 KB</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setArtistArtwork(e.target.files?.[0] || null)} /></label>
+                </div>
+
+                <label>Artist Bio<textarea rows={3} value={artistSubmission.bio} onChange={(e) => setArtistSubmission({ ...artistSubmission, bio: e.target.value })} placeholder="Tell the culture desk who you are." /></label>
+                <label>Song Description<textarea rows={3} value={artistSubmission.songDescription} onChange={(e) => setArtistSubmission({ ...artistSubmission, songDescription: e.target.value })} placeholder="What should listeners know about this record?" /></label>
+                <label>Social Links<input value={artistSubmission.socialLinks} onChange={(e) => setArtistSubmission({ ...artistSubmission, socialLinks: e.target.value })} placeholder="@handle or profile links" /></label>
+
+                <button type="submit" className="culture-artist-submit" disabled={artistSubmitState === "sending"}>
+                  {artistSubmitState === "sending" ? "SENDING SUBMISSION…" : "SUBMIT MUSIC →"}
+                </button>
+                {artistSubmitState !== "idle" && <div className={`culture-submit-status ${artistSubmitState}`} role="status">{artistSubmitMessage}</div>}
+                <small className="culture-form-disclaimer">Submission does not guarantee radio play, editorial coverage or publication. All material is reviewed by FOR THE CULTURE.</small>
+              </form>
+            </section>
 
             <section className="culture-manifesto" id="culture-community">
               <div><span>FOR THE CULTURE</span><h3>WE ARE<br /><em>THE CULTURE.</em></h3></div>
@@ -3124,7 +3233,7 @@ export default function App() {
         .culture-brand-kicker { margin-top:14px; color:#b66cff; font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:11px; letter-spacing:1.8px; }
         .culture-brand-rail p { color:#6d6d6d; font-size:12px; line-height:1.7; margin:15px 0 0; max-width:190px; }
         .culture-platform-main { min-width:0; padding:0 4.5% 55px; }
-        .culture-platform-nav { height:70px; display:flex; align-items:center; gap:24px; overflow:auto; white-space:nowrap; border-bottom:1px solid #1c1c1c; scrollbar-width:none; }
+        .culture-platform-nav { display:none; height:70px; align-items:center; gap:24px; overflow:auto; white-space:nowrap; border-bottom:1px solid #1c1c1c; scrollbar-width:none; }
         .culture-platform-nav::-webkit-scrollbar { display:none; }
         .culture-platform-nav a { color:#a2a2a2; font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:900; letter-spacing:1.2px; padding:27px 0 24px; border-bottom:2px solid transparent; transition:color .2s,border-color .2s; }
         .culture-platform-nav a:hover,.culture-platform-nav a.active { color:#fff; border-color:#b66cff; }
@@ -3184,11 +3293,37 @@ export default function App() {
         .culture-event-row { display:grid; grid-template-columns:48px 1fr auto; gap:10px; align-items:center; padding:15px 0; border-bottom:1px solid #1d1d1d; }.culture-event-row>b{color:#b66cff;font-family:'Barlow Condensed',sans-serif;font-size:9px;line-height:1}.culture-event-row>b strong{font-size:23px}.culture-event-row div strong,.culture-event-row div small{display:block}.culture-event-row div strong{font-size:11px}.culture-event-row div small{color:#555;font-size:8px;margin-top:4px}.culture-event-row>a{color:#b66cff;font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:900}
         .culture-artist-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }.culture-artist-grid a{position:relative;overflow:hidden;aspect-ratio:1/1}.culture-artist-grid img{width:100%;height:100%;object-fit:cover;filter:saturate(.65);transition:transform .3s}.culture-artist-grid a:hover img{transform:scale(1.06)}.culture-artist-grid span{position:absolute;left:6px;bottom:6px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:7px;font-weight:900;letter-spacing:.8px;text-shadow:0 2px 8px #000}
         .culture-manifesto { margin-top:18px; padding:35px; display:grid; grid-template-columns:1fr 1.2fr auto; gap:35px; align-items:center; background:linear-gradient(105deg,#140d1a,#080808); border:1px solid #30243a; position:relative; overflow:hidden; }.culture-manifesto::before{content:"";position:absolute;right:-100px;top:-100px;width:300px;height:300px;border-radius:50%;background:rgba(143,53,220,.13);filter:blur(10px)}.culture-manifesto>div,.culture-manifesto>p,.culture-manifesto>a{position:relative;z-index:1}.culture-manifesto h3{font-family:'Barlow Condensed',sans-serif;font-size:52px;line-height:.8;margin:12px 0 0}.culture-manifesto h3 em{color:#b66cff;font-style:normal}.culture-manifesto p{color:#777;font-size:12px;line-height:1.7;margin:0}
+
+        /* FOR THE CULTURE artist submission portal */
+        .culture-artist-portal{display:grid;grid-template-columns:.8fr 1.35fr;gap:44px;margin-top:34px;padding:42px 0;border-top:1px solid #242424;border-bottom:1px solid #242424}
+        .culture-artist-portal-copy>span{color:#b66cff;font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:900;letter-spacing:2px}
+        .culture-artist-portal-copy h3{font-family:'Barlow Condensed',sans-serif;font-size:clamp(48px,5vw,78px);line-height:.82;margin:13px 0 20px}
+        .culture-artist-portal-copy h3 em{color:#b66cff;font-style:normal}
+        .culture-artist-portal-copy p{max-width:430px;color:#777;font-size:13px;line-height:1.75}
+        .culture-artist-review-note{display:flex;flex-direction:column;gap:6px;margin-top:28px;padding-left:14px;border-left:2px solid #b66cff}
+        .culture-artist-review-note strong{font-family:'Barlow Condensed',sans-serif;font-size:10px;letter-spacing:1.5px}
+        .culture-artist-review-note span{color:#777;font-size:10px;letter-spacing:1px}
+        .culture-artist-form{display:flex;flex-direction:column;gap:13px}
+        .culture-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+        .culture-artist-form label{display:flex;flex-direction:column;gap:6px;color:#999;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:900;letter-spacing:1px}
+        .culture-artist-form input,.culture-artist-form select,.culture-artist-form textarea{width:100%;box-sizing:border-box;border:1px solid #2b2b2b;background:#0b0b0b;color:#eee;border-radius:0;padding:11px 12px;font-family:inherit;font-size:13px;outline:none}
+        .culture-artist-form textarea{resize:vertical;line-height:1.55}
+        .culture-artist-form input:focus,.culture-artist-form select:focus,.culture-artist-form textarea:focus{border-color:#b66cff}
+        .culture-artist-form input[type=file]{padding:8px;color:#777}
+        .culture-form-hint{color:#555;font-weight:400;letter-spacing:.3px}
+        .culture-upload-grid{margin-top:2px}
+        .culture-artist-submit{align-self:flex-start;border:0;background:#8f35dc;color:#fff;padding:13px 18px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:900;letter-spacing:1.2px;cursor:pointer}
+        .culture-artist-submit:hover{background:#b66cff}
+        .culture-artist-submit:disabled{opacity:.55;cursor:wait}
+        .culture-submit-status{padding:12px 14px;border-left:3px solid #b66cff;background:#101010;color:#aaa;font-size:12px;line-height:1.5}
+        .culture-submit-status.success{border-color:#55c27a;color:#c8ead2}
+        .culture-submit-status.error{border-color:#e50914;color:#f0b0b0}
+        .culture-form-disclaimer{color:#555;font-size:10px;line-height:1.5}
         /* Performance: keep below-the-fold editorial work out of the initial paint. */
         .culture-platform-columns,.culture-platform-columns.lower,.culture-manifesto { content-visibility:auto; contain-intrinsic-size:420px; }
         .culture-story-card img,.culture-music-row img,.culture-feature-image img,.culture-video-feature img,.culture-artist-grid img { content-visibility:auto; }
         @media (max-width:1100px){.culture-platform-shell{grid-template-columns:190px minmax(0,1fr)}.culture-brand-rail{padding-left:25px}.culture-platform-columns{grid-template-columns:1fr 1fr}.culture-radio-promo{grid-column:1/-1;min-height:260px}.culture-platform-columns.lower{grid-template-columns:1fr 1fr}.culture-artist-grid{grid-template-columns:repeat(4,1fr)}.culture-manifesto{grid-template-columns:1fr 1fr}.culture-manifesto .culture-action{justify-self:start}}
-        @media (max-width:800px){.culture-platform-topline{padding:0 5%;font-size:8px}.culture-platform-live{display:none}.culture-platform-shell{display:block}.culture-brand-rail{padding:20px 5%;border-right:0;border-bottom:1px solid #222;display:grid;grid-template-columns:85px 1fr;column-gap:16px;align-items:center}.culture-brand-art{width:85px;height:85px}.culture-brand-kicker{margin:0}.culture-brand-rail p{grid-column:2;margin:7px 0 0}.culture-platform-main{padding:0 5% 45px}.culture-platform-nav{height:56px;gap:20px}.culture-platform-nav a{padding:20px 0 17px}.culture-hero-story{grid-template-columns:1fr;min-height:0}.culture-hero-copy{padding:40px 0 20px;order:2}.culture-hero-image-wrap{order:1}.culture-hero-image{height:390px;min-height:390px}.culture-hero-copy h2{font-size:clamp(52px,15vw,82px)}.culture-hero-controls{left:0;bottom:auto;top:365px}.culture-content-grid,.culture-platform-columns,.culture-platform-columns.lower{grid-template-columns:1fr}.culture-story-grid{grid-template-columns:1fr 1fr}.culture-radio-promo{grid-column:auto}.culture-manifesto{grid-template-columns:1fr;gap:20px;padding:25px}.culture-manifesto h3{font-size:45px}}
+        @media (max-width:800px){.culture-platform-nav{display:flex}.culture-artist-portal{grid-template-columns:1fr;gap:28px}.culture-form-grid{grid-template-columns:1fr}.culture-platform-topline{padding:0 5%;font-size:8px}.culture-platform-live{display:none}.culture-platform-shell{display:block}.culture-brand-rail{padding:20px 5%;border-right:0;border-bottom:1px solid #222;display:grid;grid-template-columns:85px 1fr;column-gap:16px;align-items:center}.culture-brand-art{width:85px;height:85px}.culture-brand-kicker{margin:0}.culture-brand-rail p{grid-column:2;margin:7px 0 0}.culture-platform-main{padding:0 5% 45px}.culture-platform-nav{height:56px;gap:20px}.culture-platform-nav a{padding:20px 0 17px}.culture-hero-story{grid-template-columns:1fr;min-height:0}.culture-hero-copy{padding:40px 0 20px;order:2}.culture-hero-image-wrap{order:1}.culture-hero-image{height:390px;min-height:390px}.culture-hero-copy h2{font-size:clamp(52px,15vw,82px)}.culture-hero-controls{left:0;bottom:auto;top:365px}.culture-content-grid,.culture-platform-columns,.culture-platform-columns.lower{grid-template-columns:1fr}.culture-story-grid{grid-template-columns:1fr 1fr}.culture-radio-promo{grid-column:auto}.culture-manifesto{grid-template-columns:1fr;gap:20px;padding:25px}.culture-manifesto h3{font-size:45px}}
         @media (max-width:520px){.culture-story-grid{grid-template-columns:1fr}.culture-story-card{display:grid;grid-template-columns:105px 1fr}.culture-story-card img{height:100%;min-height:130px}.culture-story-card h4{font-size:16px}.culture-story-card div{padding:10px}.culture-platform-nav{gap:17px}.culture-platform-nav a{font-size:10px}.culture-hero-image{height:320px;min-height:320px}.culture-hero-controls{top:295px}.culture-hero-stamp{font-size:20px}.culture-event-row{grid-template-columns:42px 1fr}.culture-event-row>a{display:none}.culture-artist-grid{grid-template-columns:repeat(2,1fr)}.culture-radio-promo-copy h3{font-size:43px}}
         /* FOR THE CULTURE — reduced, non-repetitive editorial layout */
         .culture-stories-block-wide { grid-column:1 / -1; }

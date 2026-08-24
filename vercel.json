@@ -20,6 +20,9 @@
     },
     "api/editorial-scan.js": {
       "maxDuration": 30
+    },
+    "api/artist-submission.js": {
+      "maxDuration": 15
     }
   },
   "rewrites": [
