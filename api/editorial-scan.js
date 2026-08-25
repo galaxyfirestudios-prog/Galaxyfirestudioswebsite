@@ -280,11 +280,11 @@ async function publishBatch(supabase, items, drafts) {
 module.exports = async (req, res) => {
   // Cron-job.org should send X-Cron-Secret: <CRON_SECRET>. Authorization: Bearer
   // remains supported for manual tests and other schedulers.
-  const cronSecret = String(process.env.CRON_SECRET || '').trim()
-  const editorialSecret = String(process.env.EDITORIAL_CRON_SECRET || '').trim()
-  const auth = String(req.headers.authorization || '').trim()
-  const bearer = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : '';
-  const supplied = String(req.headers['x-cron-secret'] || req.headers['x-editorial-secret'] || bearer || req.query?.secret || '').trim()
+  const cronSecret = process.env.CRON_SECRET || ''
+  const editorialSecret = process.env.EDITORIAL_CRON_SECRET || ''
+  const auth = req.headers.authorization || ''
+  const bearer = auth.startsWith('Bearer ') ? auth.slice(7) : ''
+  const supplied = req.headers['x-cron-secret'] || req.headers['x-editorial-secret'] || bearer || req.query?.secret
   const authorized = Boolean(supplied) && [cronSecret, editorialSecret].filter(Boolean).includes(supplied)
   if (!authorized) return res.status(401).json({ error: 'Unauthorized' })
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
