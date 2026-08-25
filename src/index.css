@@ -1159,12 +1159,15 @@ img {
         .radio-meta b { color:#e50914; }
         .radio-big-play { width:112px; height:112px; border-radius:50%; border:1px solid #e50914; background:transparent; color:#fff; font-size:31px; cursor:pointer; transition:transform .2s,background .2s,box-shadow .2s; }
         .radio-big-play:hover { transform:scale(1.04); background:rgba(229,9,20,.08); box-shadow:0 0 35px rgba(229,9,20,.12); }
-        .radio-player-footer { border-top:1px solid #282828; display:grid; grid-template-columns:1fr 1.35fr 1fr 1fr; gap:20px; padding:18px 25px; background:rgba(0,0,0,.22); }
+        .radio-player-footer { border-top:1px solid #282828; display:grid; grid-template-columns:1fr 1.35fr 1fr auto 1fr; gap:20px; padding:18px 25px; background:rgba(0,0,0,.22); }
         .radio-player-footer strong,.radio-player-footer small { display:block; }
         .radio-player-footer strong { margin-top:6px; font-family:'Barlow Condensed',sans-serif; font-size:16px; letter-spacing:.5px; }
         .radio-player-footer small { margin-top:2px; color:#666; font-size:9px; }
         .radio-volume { display:flex; align-items:center; gap:10px; justify-content:flex-end; }
         .radio-volume input { width:100px; accent-color:#e50914; }
+        .radio-loudness-toggle { border:1px solid #3a3a3a; background:transparent; color:#777; padding:8px 10px; font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:900; letter-spacing:1px; cursor:pointer; white-space:nowrap; transition:all .2s ease; }
+        .radio-loudness-toggle.active { border-color:#e50914; color:#fff; box-shadow:0 0 0 1px rgba(229,9,20,.12) inset; }
+        .radio-loudness-toggle:hover { color:#fff; border-color:#666; }
         .radio-content-grid { max-width:1440px; margin:0 auto; display:grid; grid-template-columns:1fr 1.45fr 1fr; gap:12px; position:relative; z-index:1; }
         .radio-panel { min-width:0; border:1px solid #232323; background:#0b0b0b; padding:18px; }
         .radio-panel-head { display:flex; justify-content:space-between; align-items:center; gap:12px; padding-bottom:14px; border-bottom:1px solid #222; }

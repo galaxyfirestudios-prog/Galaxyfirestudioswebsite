@@ -107,10 +107,19 @@ export default function App() {
   const [cultureActiveTab, setCultureActiveTab] = useState("home");
   const [cultureReaderStory, setCultureReaderStory] = useState<any | null>(null);
   const radioAudioRef = useRef<HTMLAudioElement | null>(null);
+  const radioAudioContextRef = useRef<AudioContext | null>(null);
+  const radioSourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const radioNormalizationGainRef = useRef<GainNode | null>(null);
+  const radioLimiterRef = useRef<DynamicsCompressorNode | null>(null);
+  const radioAnalyserRef = useRef<AnalyserNode | null>(null);
+  const radioLoudnessFrameRef = useRef<number | null>(null);
+  const radioCurrentNormalizationRef = useRef(1);
   const radioLoadedSrcRef = useRef<string>("");
   const radioRecoveryTimerRef = useRef<number | null>(null);
   const [radioPlaying, setRadioPlaying] = useState(false);
   const [radioVolume, setRadioVolume] = useState(0.85);
+  // Spotify-style adaptive loudness normalization is enabled by default.
+  const [radioLoudnessNormalization, setRadioLoudnessNormalization] = useState(true);
   const [radioPlayerOpen, setRadioPlayerOpen] = useState(false);
   const [radioStreamReady, setRadioStreamReady] = useState(false);
   // A user pause only affects the current page session. A fresh visit should
@@ -132,6 +141,100 @@ export default function App() {
   const radioRecentlyPlayed = radioHistory.length ? radioHistory : [
     { artist: "FOR THE CULTURE RADIO", title: "Waiting for the first track…" },
   ];
+  const ensureRadioAudioGraph = () => {
+    const audio = radioAudioRef.current;
+    if (!audio || !radioPlaylist.length) return false;
+
+    try {
+      const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AudioContextClass) return false;
+      if (!radioAudioContextRef.current) radioAudioContextRef.current = new AudioContextClass();
+      const context = radioAudioContextRef.current;
+
+      if (!radioSourceNodeRef.current) {
+        const source = context.createMediaElementSource(audio);
+        const gain = context.createGain();
+        const analyser = context.createAnalyser();
+        const limiter = context.createDynamicsCompressor();
+
+        analyser.fftSize = 1024;
+        analyser.smoothingTimeConstant = 0.82;
+        limiter.threshold.value = -1;
+        limiter.knee.value = 8;
+        limiter.ratio.value = 8;
+        limiter.attack.value = 0.003;
+        limiter.release.value = 0.15;
+
+        source.connect(gain);
+        gain.connect(analyser);
+        analyser.connect(limiter);
+        limiter.connect(context.destination);
+
+        radioSourceNodeRef.current = source;
+        radioNormalizationGainRef.current = gain;
+        radioAnalyserRef.current = analyser;
+        radioLimiterRef.current = limiter;
+      }
+
+      if (context.state === "suspended") void context.resume();
+      return true;
+    } catch (error) {
+      // If a future external stream cannot be routed through Web Audio because
+      // of CORS, fall back to native HTML audio rather than breaking playback.
+      console.info("FOR THE CULTURE RADIO loudness normalization unavailable; using native playback.", error);
+      return false;
+    }
+  };
+
+  const stopRadioLoudnessMeter = () => {
+    if (radioLoudnessFrameRef.current !== null) {
+      window.cancelAnimationFrame(radioLoudnessFrameRef.current);
+      radioLoudnessFrameRef.current = null;
+    }
+  };
+
+  const updateRadioLoudness = () => {
+    const analyser = radioAnalyserRef.current;
+    const gainNode = radioNormalizationGainRef.current;
+    if (!analyser || !gainNode || !radioLoudnessNormalization) {
+      if (gainNode) gainNode.gain.value = radioVolume;
+      stopRadioLoudnessMeter();
+      return;
+    }
+
+    const samples = new Uint8Array(analyser.fftSize);
+    analyser.getByteTimeDomainData(samples);
+    let sumSquares = 0;
+    for (let i = 0; i < samples.length; i += 1) {
+      const normalized = (samples[i] - 128) / 128;
+      sumSquares += normalized * normalized;
+    }
+    const rms = Math.sqrt(sumSquares / samples.length);
+
+    // RMS-based adaptive gain gives a practical streaming approximation of
+    // loudness normalization without requiring pre-analysis of every MP3.
+    if (rms > 0.018) {
+      const targetRms = 0.115;
+      const desiredNormalization = Math.min(1.65, Math.max(0.48, targetRms / rms));
+      const currentDb = 20 * Math.log10(Math.max(0.0001, radioCurrentNormalizationRef.current));
+      const desiredDb = 20 * Math.log10(desiredNormalization);
+      // Slow changes prevent audible pumping when the music's dynamics move.
+      const maxStepDb = 0.45;
+      const nextDb = currentDb + Math.max(-maxStepDb, Math.min(maxStepDb, desiredDb - currentDb));
+      radioCurrentNormalizationRef.current = Math.pow(10, nextDb / 20);
+    }
+
+    const combinedGain = radioCurrentNormalizationRef.current * radioVolume;
+    gainNode.gain.setTargetAtTime(combinedGain, gainNode.context.currentTime, 0.08);
+    radioLoudnessFrameRef.current = window.requestAnimationFrame(updateRadioLoudness);
+  };
+
+  const startRadioLoudnessMeter = () => {
+    stopRadioLoudnessMeter();
+    if (!radioLoudnessNormalization) return;
+    updateRadioLoudness();
+  };
+
   const radioSchedule = [
     ["00:00 – 04:00", "SOUND OF THE DIASPORA", "DJ NEBULAE", "Diaspora sounds. Global connection."],
     ["04:00 – 07:00", "THE CULTURE DRIVE", "DJ NEBULAE", "Music. Culture. Conversation."],
@@ -164,10 +267,16 @@ export default function App() {
       radioLoadedSrcRef.current = src;
       audio.preload = "auto";
       audio.load();
+      radioCurrentNormalizationRef.current = 1;
     }
+
+    const normalized = ensureRadioAudioGraph();
+    if (!normalized) audio.volume = radioVolume;
+    else audio.volume = 1;
 
     try {
       await audio.play();
+      startRadioLoudnessMeter();
       setRadioPlaying(true);
       setRadioStreamReady(true);
       setRadioPlayerOpen(true);
@@ -241,21 +350,30 @@ export default function App() {
     let cancelled = false;
     const base = import.meta.env.BASE_URL || "./";
     const playlistUrl = `${base.replace(/\/$/, "")}/radio-playlist.json`;
-    fetch(playlistUrl, { cache: "force-cache" })
-      .then((response) => response.ok ? response.json() : null)
-      .then((playlist) => {
-        if (cancelled || !Array.isArray(playlist?.tracks)) return;
-        const tracks = playlist.tracks.filter((track: any) => typeof track?.src === "string" && track.src);
-        if (!tracks.length) return;
 
-        // Start a fresh visit at a random point in the library so the station
-        // does not feel like it always begins with the same record.
+    async function loadPlaylist(attempt = 0): Promise<void> {
+      try {
+        const response = await fetch(playlistUrl, { cache: "no-cache" });
+        if (!response.ok) throw new Error(`Playlist HTTP ${response.status}`);
+        const playlist = await response.json();
+        if (cancelled || !Array.isArray(playlist?.tracks)) throw new Error("Invalid radio playlist");
+        const tracks = playlist.tracks.filter((track: any) => typeof track?.src === "string" && track.src);
+        if (!tracks.length) throw new Error("Radio playlist contains no playable tracks");
+
         const randomIndex = Math.floor(Math.random() * tracks.length);
         setRadioPlaylist(tracks);
         setRadioTrackIndex(randomIndex);
         try { localStorage.setItem("gfs-radio-track-index", String(randomIndex)); } catch {}
-      })
-      .catch(() => {});
+      } catch (error) {
+        if (cancelled || attempt >= 2) {
+          console.info("FOR THE CULTURE RADIO playlist could not be loaded.", error);
+          return;
+        }
+        window.setTimeout(() => loadPlaylist(attempt + 1), 600 * (attempt + 1));
+      }
+    }
+
+    loadPlaylist();
     return () => { cancelled = true; };
   }, []);
 
@@ -272,18 +390,41 @@ export default function App() {
 
   useEffect(() => {
     const audio = radioAudioRef.current;
+    const gainNode = radioNormalizationGainRef.current;
     if (!audio) return;
-    audio.volume = radioVolume;
-  }, [radioVolume]);
+    if (gainNode && radioLoudnessNormalization && radioPlaylist.length) {
+      gainNode.gain.setTargetAtTime(radioCurrentNormalizationRef.current * radioVolume, gainNode.context.currentTime, 0.08);
+      audio.volume = 1;
+      if (radioPlaying) startRadioLoudnessMeter();
+    } else {
+      audio.volume = radioVolume;
+      stopRadioLoudnessMeter();
+    }
+  }, [radioVolume, radioLoudnessNormalization, radioPlaylist.length, radioPlaying]);
 
   useEffect(() => {
     const audio = radioAudioRef.current;
     if (!audio) return;
-    audio.preload = "auto";
+    audio.preload = "metadata";
     audio.setAttribute("playsinline", "true");
-    audio.volume = radioVolume;
-    const onCanPlayThrough = () => setRadioStreamReady(true);
+
+    let bufferRecoveryTimer: number | null = null;
+    const clearBufferRecovery = () => {
+      if (bufferRecoveryTimer !== null) {
+        window.clearTimeout(bufferRecoveryTimer);
+        bufferRecoveryTimer = null;
+      }
+    };
+    const scheduleBufferRecovery = () => {
+      if (!radioPlaylist.length || radioPausedByUser || bufferRecoveryTimer !== null) return;
+      bufferRecoveryTimer = window.setTimeout(() => {
+        bufferRecoveryTimer = null;
+        if (!radioPausedByUser && audio.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) advanceRadioTrack();
+      }, 15000);
+    };
+    const onCanPlay = () => { clearBufferRecovery(); setRadioStreamReady(true); };
     const onError = () => {
+      clearBufferRecovery();
       setRadioStreamReady(false);
       if (!radioPlaylist.length || radioPausedByUser || radioRecoveryTimerRef.current) return;
       radioRecoveryTimerRef.current = window.setTimeout(() => {
@@ -291,11 +432,21 @@ export default function App() {
         advanceRadioTrack();
       }, 700);
     };
-    audio.addEventListener("canplaythrough", onCanPlayThrough);
+
+    audio.addEventListener("canplay", onCanPlay);
+    audio.addEventListener("canplaythrough", onCanPlay);
+    audio.addEventListener("playing", onCanPlay);
+    audio.addEventListener("stalled", scheduleBufferRecovery);
+    audio.addEventListener("waiting", scheduleBufferRecovery);
     audio.addEventListener("error", onError);
     return () => {
-      audio.removeEventListener("canplaythrough", onCanPlayThrough);
+      audio.removeEventListener("canplay", onCanPlay);
+      audio.removeEventListener("canplaythrough", onCanPlay);
+      audio.removeEventListener("playing", onCanPlay);
+      audio.removeEventListener("stalled", scheduleBufferRecovery);
+      audio.removeEventListener("waiting", scheduleBufferRecovery);
       audio.removeEventListener("error", onError);
+      clearBufferRecovery();
       if (radioRecoveryTimerRef.current) window.clearTimeout(radioRecoveryTimerRef.current);
       radioRecoveryTimerRef.current = null;
     };
@@ -364,6 +515,17 @@ export default function App() {
       window.removeEventListener("keydown", onFirstGesture);
     };
   }, [radioStreamUrl, radioPlaylist, radioPausedByUser]);
+
+  useEffect(() => {
+    return () => {
+      stopRadioLoudnessMeter();
+      try { radioSourceNodeRef.current?.disconnect(); } catch {}
+      try { radioNormalizationGainRef.current?.disconnect(); } catch {}
+      try { radioAnalyserRef.current?.disconnect(); } catch {}
+      try { radioLimiterRef.current?.disconnect(); } catch {}
+      if (radioAudioContextRef.current) void radioAudioContextRef.current.close().catch(() => {});
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -930,7 +1092,7 @@ export default function App() {
   }, [visualPaused, visualSlides.length]);
 
   const beatArt = "/beats/galaxy-records-art.png";
-  const beats = [
+  const fallbackBeats = [
     { id: "beat-01", title: "Crimson Motion", bpm: 110, key: "G♯ Minor", mode: "Minor", mood: "Dark / Cinematic", genre: "Galaxy Fire Original", preview: "/beats/beat_1_gsharp_minor_110.mp3" },
     { id: "beat-02", title: "Night Protocol", bpm: 110, key: "C♯ Minor", mode: "Minor", mood: "Moody / Driven", genre: "Galaxy Fire Original", preview: "/beats/beat_2_csharp_minor_110.mp3" },
     { id: "beat-03", title: "Golden Current", bpm: 97, key: "C Major", mode: "Major", mood: "Warm / Uplifting", genre: "Galaxy Fire Original", preview: "/beats/beat_3_c_major_97.mp3" },
@@ -938,7 +1100,9 @@ export default function App() {
     { id: "beat-05", title: "Velvet Heat", bpm: 100, key: "A Minor", mode: "Minor", mood: "Smooth / Emotional", genre: "Galaxy Fire Original", preview: "/beats/beat_5_a_minor_100.mp3" },
     { id: "beat-06", title: "Dark Frequency", bpm: 110, key: "D Minor", mode: "Minor", mood: "Heavy / Focused", genre: "Galaxy Fire Original", preview: "/beats/beat_6_d_minor_110.mp3" },
   ];
-  const [selectedBeat, setSelectedBeat] = useState(beats[0]);
+  type Beat = typeof fallbackBeats[number];
+  const [beats, setBeats] = useState<Beat[]>(fallbackBeats);
+  const [selectedBeat, setSelectedBeat] = useState<Beat>(fallbackBeats[0]);
   const [beatPlaying, setBeatPlaying] = useState(false);
   const [beatProgress, setBeatProgress] = useState(0);
   const [beatSearch, setBeatSearch] = useState("");
@@ -957,6 +1121,23 @@ export default function App() {
   const [beatPurchaseSuccess, setBeatPurchaseSuccess] = useState("");
   const [selectedLicense, setSelectedLicense] = useState<"Basic" | "Premium" | "Unlimited" | "Exclusive">("Unlimited");
   const [beatCustomer, setBeatCustomer] = useState({ name: "", email: "", phone: "" });
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/beats/beat-catalog.json", { cache: "no-store" })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Beat catalogue request failed: ${response.status}`);
+        return response.json();
+      })
+      .then((catalog) => {
+        if (cancelled || !Array.isArray(catalog?.beats) || !catalog.beats.length) return;
+        const nextBeats = catalog.beats as Beat[];
+        setBeats(nextBeats);
+        setSelectedBeat((current) => nextBeats.find((beat) => beat.id === current.id) || nextBeats[0]);
+      })
+      .catch((error) => console.error("Automatic beat catalogue load failed; using built-in catalogue.", error));
+    return () => { cancelled = true; };
+  }, []);
 
   const licenseOptions = [
     { name: "Basic" as const, price: 20000, detail: "MP3 Lease" },
@@ -1803,6 +1984,9 @@ export default function App() {
               <div><span>CURRENT SHOW</span><strong>{radioTrack.show}</strong><small>LIVE · FOR THE CULTURE</small></div>
               <div><span>NEXT</span><strong>AFRICA NOW</strong><small>UP NEXT</small></div>
               <div className="radio-volume"><span>VOLUME</span><input type="range" min="0" max="1" step="0.01" value={radioVolume} onChange={(e) => setRadioVolume(Number(e.target.value))} /></div>
+              <button type="button" className={`radio-loudness-toggle ${radioLoudnessNormalization ? "active" : ""}`} onClick={() => setRadioLoudnessNormalization((enabled) => !enabled)} aria-pressed={radioLoudnessNormalization} title="Automatically smooth loudness differences between songs">
+                {radioLoudnessNormalization ? "AUTO LOUDNESS ON" : "AUTO LOUDNESS OFF"}
+              </button>
             </div>
           </div>
         </div>
