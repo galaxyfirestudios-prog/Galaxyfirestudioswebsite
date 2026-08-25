@@ -80,6 +80,24 @@
           "value": "public, max-age=60, stale-while-revalidate=300"
         }
       ]
+    },
+    {
+      "source": "/radio-playlist.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300, stale-while-revalidate=3600"
+        }
+      ]
+    },
+    {
+      "source": "/radio-config.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300, stale-while-revalidate=3600"
+        }
+      ]
     }
   ]
 }
