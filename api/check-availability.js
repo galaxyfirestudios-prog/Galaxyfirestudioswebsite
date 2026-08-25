@@ -16,8 +16,9 @@ module.exports = async (req, res) => {
     const { startAt, endAt } = req.body || {}
 
     if (!startAt || !endAt) {
-      // Missing availability data should not block the payment gateway.
-      return res.status(200).json(true)
+      return res.status(400).json({
+        error: 'startAt and endAt are required'
+      })
     }
 
     const { data, error } = await supabase.rpc(
@@ -29,18 +30,19 @@ module.exports = async (req, res) => {
     )
 
     if (error) {
-      // Treat availability failures as unknown, not unavailable. The payment
-      // flow must remain usable while the optional scheduling service recovers.
-      console.error('Supabase availability error; allowing payment to continue:', error)
-      return res.status(200).json(true)
+      console.error('Supabase availability error:', error)
+
+      return res.status(500).json({
+        error: error.message
+      })
     }
 
     return res.status(200).json(data === true)
   } catch (error) {
-    // Availability is optional scheduling infrastructure. A temporary
-    // Supabase/RPC failure must never stop a customer from reaching Paystack.
-    console.error('Availability API error; allowing payment to continue:', error)
+    console.error('Availability API error:', error)
 
-    return res.status(200).json(true)
+    return res.status(500).json({
+      error: 'Could not check availability'
+    })
   }
 }

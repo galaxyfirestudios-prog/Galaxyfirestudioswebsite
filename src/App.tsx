@@ -49,27 +49,14 @@ import cultureArt from "@/imports/for-the-culture.webp";
 let paystackLoaderPromise: Promise<any> | null = null;
 
 const getPaystackPublicKey = async () => {
-  // Prefer the current server-side configuration so a stale build-time key
-  // cannot override the Paystack key configured for the live website.
-  try {
-    const response = await fetch('/api/paystack-config', { cache: 'no-store' });
-    const data = await response.json().catch(() => ({}));
-    const serverKey = String(data?.publicKey || '').trim();
-    if (response.ok && serverKey) return serverKey;
-  } catch (error) {
-    console.warn('Paystack runtime configuration unavailable; using build-time fallback.', error);
-  }
-
   const buildKey = String(import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || '').trim();
   if (buildKey) return buildKey;
 
-  // Paystack public keys are safe to expose in browser code. This fallback keeps
-  // checkout working on static deployments where server environment variables
-  // are not available at runtime. The secret key remains server-side only.
-  const existingPublicKey = 'pk_test_f350611c4c768b941d8725e73b122d3d37c9e5d7';
-  if (existingPublicKey) return existingPublicKey;
-
-  throw new Error('Paystack is not configured for this website. Please contact Galaxy Fire Studios.');
+  const response = await fetch('/api/paystack-config', { cache: 'no-store' });
+  const data = await response.json().catch(() => ({}));
+  const key = String(data?.publicKey || '').trim();
+  if (!response.ok || !key) throw new Error('Paystack is not configured for this website. Please contact Galaxy Fire Studios.');
+  return key;
 };
 
 const loadPaystack = async () => {
@@ -121,6 +108,7 @@ export default function App() {
   const [cultureReaderStory, setCultureReaderStory] = useState<any | null>(null);
   const radioAudioRef = useRef<HTMLAudioElement | null>(null);
   const radioLoadedSrcRef = useRef<string>("");
+  const radioRecoveryTimerRef = useRef<number | null>(null);
   const [radioPlaying, setRadioPlaying] = useState(false);
   const [radioVolume, setRadioVolume] = useState(0.85);
   const [radioPlayerOpen, setRadioPlayerOpen] = useState(false);
@@ -171,8 +159,11 @@ export default function App() {
     // resets currentTime to 0, which made PAUSE → PLAY restart the song.
     const sameTrackLoaded = radioLoadedSrcRef.current === src && audio.src === new URL(src, window.location.href).href;
     if (!sameTrackLoaded) {
+      audio.pause();
       audio.src = src;
       radioLoadedSrcRef.current = src;
+      audio.preload = "auto";
+      audio.load();
     }
 
     try {
@@ -215,6 +206,10 @@ export default function App() {
   };
 
   const pauseRadio = () => {
+    if (radioRecoveryTimerRef.current) {
+      window.clearTimeout(radioRecoveryTimerRef.current);
+      radioRecoveryTimerRef.current = null;
+    }
     const audio = radioAudioRef.current;
     audio?.pause();
     setRadioPlaying(false);
@@ -280,6 +275,31 @@ export default function App() {
     if (!audio) return;
     audio.volume = radioVolume;
   }, [radioVolume]);
+
+  useEffect(() => {
+    const audio = radioAudioRef.current;
+    if (!audio) return;
+    audio.preload = "auto";
+    audio.setAttribute("playsinline", "true");
+    audio.volume = radioVolume;
+    const onCanPlayThrough = () => setRadioStreamReady(true);
+    const onError = () => {
+      setRadioStreamReady(false);
+      if (!radioPlaylist.length || radioPausedByUser || radioRecoveryTimerRef.current) return;
+      radioRecoveryTimerRef.current = window.setTimeout(() => {
+        radioRecoveryTimerRef.current = null;
+        advanceRadioTrack();
+      }, 700);
+    };
+    audio.addEventListener("canplaythrough", onCanPlayThrough);
+    audio.addEventListener("error", onError);
+    return () => {
+      audio.removeEventListener("canplaythrough", onCanPlayThrough);
+      audio.removeEventListener("error", onError);
+      if (radioRecoveryTimerRef.current) window.clearTimeout(radioRecoveryTimerRef.current);
+      radioRecoveryTimerRef.current = null;
+    };
+  }, [radioPlaylist, radioPausedByUser]);
 
   const advanceRadioTrack = () => {
     if (!radioPlaylist.length) return;
@@ -1817,7 +1837,7 @@ export default function App() {
           </aside>
         </div>
 
-        <audio ref={radioAudioRef} preload="none" onPlaying={() => setRadioPlaying(true)} onPause={() => setRadioPlaying(false)} onEnded={advanceRadioTrack} onCanPlay={() => setRadioStreamReady(true)} onError={() => setRadioStreamReady(false)} aria-label="For the Culture Radio" />
+        <audio ref={radioAudioRef} preload="auto" playsInline onPlaying={() => setRadioPlaying(true)} onPause={() => setRadioPlaying(false)} onEnded={advanceRadioTrack} onCanPlay={() => setRadioStreamReady(true)} onCanPlayThrough={() => setRadioStreamReady(true)} onError={() => setRadioStreamReady(false)} aria-label="For the Culture Radio" />
       </section>
 
       {radioPlayerOpen && (
