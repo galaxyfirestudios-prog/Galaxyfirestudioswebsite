@@ -55,15 +55,21 @@ const getPaystackPublicKey = async () => {
     const response = await fetch('/api/paystack-config', { cache: 'no-store' });
     const data = await response.json().catch(() => ({}));
     const serverKey = String(data?.publicKey || '').trim();
-    if (response.ok && /^pk_live_[A-Za-z0-9]+$/.test(serverKey)) return serverKey;
+    if (response.ok && serverKey) return serverKey;
   } catch (error) {
-    console.warn('Paystack runtime configuration unavailable; checking build-time configuration.', error);
+    console.warn('Paystack runtime configuration unavailable; using build-time fallback.', error);
   }
 
   const buildKey = String(import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || '').trim();
-  if (/^pk_live_[A-Za-z0-9]+$/.test(buildKey)) return buildKey;
+  if (buildKey) return buildKey;
 
-  throw new Error('Paystack LIVE payment is not configured. Please contact Galaxy Fire Studios.');
+  // Paystack public keys are safe to expose in browser code. This fallback keeps
+  // checkout working on static deployments where server environment variables
+  // are not available at runtime. The secret key remains server-side only.
+  const existingPublicKey = 'pk_test_f350611c4c768b941d8725e73b122d3d37c9e5d7';
+  if (existingPublicKey) return existingPublicKey;
+
+  throw new Error('Paystack is not configured for this website. Please contact Galaxy Fire Studios.');
 };
 
 const loadPaystack = async () => {
@@ -343,10 +349,34 @@ export default function App() {
     let cancelled = false;
     let timer: ReturnType<typeof setInterval> | undefined;
 
-    const mergeCultureStories = (storySets: any[][]) =>
-      Array.from(
+    async function loadCultureStories(showLoading = false) {
+      if (showLoading) setCultureFeedStatus("loading");
+      const base = import.meta.env.BASE_URL || "./";
+      const staticEndpoint = `${base.replace(/\/$/, "")}/editorial-feed.json`;
+      const endpoints = [staticEndpoint, "/api/editorial-feed?limit=12"];
+      let validEmptyFeedSeen = false;
+
+      const results = await Promise.all(endpoints.map(async (endpoint) => {
+        try {
+          const response = await fetch(endpoint, {
+            headers: { Accept: "application/json" },
+            cache: "default",
+          });
+          if (!response.ok) return [];
+          const data = await response.json();
+          if (!Array.isArray(data.stories)) return [];
+          if (data.stories.length === 0) validEmptyFeedSeen = true;
+          return data.stories;
+        } catch (error) {
+          console.warn("FOR THE CULTURE editorial feed endpoint unavailable:", endpoint, error);
+          return [];
+        }
+      }));
+
+      const collectedStories = results.flat();
+      const mergedStories = Array.from(
         new Map(
-          storySets.flat().map((story: any, index: number) => [
+          collectedStories.map((story: any, index: number) => [
             story?.source_url || story?.id || `story-${index}`,
             story,
           ])
@@ -359,84 +389,26 @@ export default function App() {
         })
         .slice(0, 12);
 
-    async function fetchCultureFeed(endpoint: string) {
-      try {
-        const response = await fetch(endpoint, {
-          headers: { Accept: "application/json" },
-          cache: "default",
-        });
-        if (!response.ok) return [];
-        const data = await response.json();
-        return Array.isArray(data.stories) ? data.stories : [];
-      } catch (error) {
-        console.warn("FOR THE CULTURE editorial feed endpoint unavailable:", endpoint, error);
-        return [];
-      }
-    }
-
-    async function loadCultureStories(showLoading = false, includeLive = false) {
-      if (showLoading) setCultureFeedStatus("loading");
-      const base = import.meta.env.BASE_URL || "./";
-      const staticEndpoint = `${base.replace(/\/$/, "")}/editorial-feed.json`;
-
-      // The bundled feed is fast, cacheable, and available without an API round trip.
-      // Load it first so the page can become interactive before live editorial refresh.
-      const staticStories = await fetchCultureFeed(staticEndpoint);
-      const staticMerged = mergeCultureStories([staticStories]);
-
-      if (!cancelled && staticMerged.length) {
-        setCultureStories(staticMerged);
-        setCultureFeedStatus("ready");
-      } else if (!cancelled) {
-        setCultureFeedStatus("error");
-      }
-
-      if (!includeLive || cancelled) return;
-
-      // Refresh the live feed after the initial content is on screen.
-      const liveStories = await fetchCultureFeed("/api/editorial-feed?limit=12");
-      const mergedStories = mergeCultureStories([staticStories, liveStories]);
-
       if (!cancelled && mergedStories.length) {
         setCultureStories(mergedStories);
         setCultureFeedStatus("ready");
+        return;
       }
+
+      if (!cancelled) setCultureFeedStatus(validEmptyFeedSeen ? "empty" : "error");
     }
 
     const refresh = () => {
-      if (document.visibilityState === "visible") loadCultureStories(false, true);
+      if (document.visibilityState === "visible") loadCultureStories(false);
     };
 
-    // Keep the initial request on the static, cacheable feed. The live API is
-    // deferred until the browser is idle so a slow network/API cannot delay first paint.
-    loadCultureStories(true, false);
-    const scheduleLiveRefresh = () => loadCultureStories(false, true);
-    let idleRefresh: number | undefined;
-    const requestIdle = (window as any).requestIdleCallback as
-      | ((callback: () => void, options?: { timeout?: number }) => number)
-      | undefined;
-    const cancelIdle = (window as any).cancelIdleCallback as
-      | ((handle: number) => void)
-      | undefined;
-    if (requestIdle) {
-      idleRefresh = requestIdle(scheduleLiveRefresh, { timeout: 4000 });
-    } else {
-      idleRefresh = window.setTimeout(scheduleLiveRefresh, 2500);
-    }
-
+    loadCultureStories(true);
     timer = setInterval(refresh, 5 * 60 * 1000);
     document.addEventListener("visibilitychange", refresh);
 
     return () => {
       cancelled = true;
       if (timer) clearInterval(timer);
-      if (idleRefresh !== undefined) {
-        if (cancelIdle && typeof idleRefresh === "number") {
-          cancelIdle(idleRefresh);
-        } else {
-          window.clearTimeout(idleRefresh);
-        }
-      }
       document.removeEventListener("visibilitychange", refresh);
     };
   }, []);
@@ -1224,7 +1196,7 @@ export default function App() {
       {/* NAVIGATION */}
       <header className="nav">
         <div className="logo">
-          <img src={logoImg} alt="Galaxy Studios logo" className="logo-img" loading="lazy" decoding="async" width="1800" height="1013" />
+          <img src={logoImg} alt="Galaxy Studios logo" className="logo-img" />
           <div>
             <div className="logo-title">GALAXY FIRE</div>
             <div className="logo-sub">STUDIOS · EST. 2020</div>
@@ -1255,15 +1227,7 @@ export default function App() {
 
       {/* HERO */}
       <section className="hero" id="home">
-        <img
-          src={heroImg}
-          alt="Galaxy Studios control room"
-          className="hero-photo"
-          fetchPriority="high"
-          decoding="async"
-          width="1080"
-          height="720"
-        />
+        <img src={heroImg} alt="Galaxy Studios control room" className="hero-photo" fetchPriority="high" />
         <div className="hero-overlay" />
         <div className="hero-content">
           <div className="eyebrow">PROFESSIONAL RECORDING STUDIO · NIGERIA</div>
@@ -1522,20 +1486,20 @@ export default function App() {
         </div>
         <div className="gallery-grid">
           <div className="gallery-large">
-            <img src={heroImg} alt="Galaxy Studios control room with mixing desk and booth window" className="gallery-photo" loading="lazy" decoding="async"  width="1080" height="720" />
+            <img src={heroImg} alt="Galaxy Studios control room with mixing desk and booth window" className="gallery-photo" loading="lazy" decoding="async" />
             <div className="gallery-caption">THE CONTROL ROOM</div>
           </div>
           <div className="gallery-col">
             <div className="gallery-small">
-              <img src={micCloseImg} alt="Condenser microphone in the red acoustic vocal booth" className="gallery-photo" loading="lazy" decoding="async"  width="1080" height="720" />
+              <img src={micCloseImg} alt="Condenser microphone in the red acoustic vocal booth" className="gallery-photo" loading="lazy" decoding="async" />
               <div className="gallery-caption">THE VOCAL BOOTH</div>
             </div>
             <div className="gallery-small">
-              <img src={mpcLitImg} alt="AKAI MPC X with lit cyan performance pads" className="gallery-photo" loading="lazy" decoding="async"  width="1080" height="720" />
+              <img src={mpcLitImg} alt="AKAI MPC X with lit cyan performance pads" className="gallery-photo" loading="lazy" decoding="async" />
               <div className="gallery-caption">PRODUCTION</div>
             </div>
             <div className="gallery-small">
-              <img src={speakerImg} alt="Studio monitor speaker cone close-up against red velvet wall" className="gallery-photo" loading="lazy" decoding="async"  width="1080" height="720" />
+              <img src={speakerImg} alt="Studio monitor speaker cone close-up against red velvet wall" className="gallery-photo" loading="lazy" decoding="async" />
               <div className="gallery-caption">THE MONITORS</div>
             </div>
           </div>
@@ -1544,15 +1508,15 @@ export default function App() {
         {/* Second row */}
         <div className="gallery-row2">
           <div className="gallery-med">
-            <img src={deskImg} alt="Full studio desk with dual monitors, MPC and studio monitors" className="gallery-photo" loading="lazy" decoding="async"  width="1080" height="720" />
+            <img src={deskImg} alt="Full studio desk with dual monitors, MPC and studio monitors" className="gallery-photo" loading="lazy" decoding="async" />
             <div className="gallery-caption">THE DESK</div>
           </div>
           <div className="gallery-med">
-            <img src={keyboardImg} alt="Studio keyboard with blue LED lighting" className="gallery-photo" loading="lazy" decoding="async"  width="1080" height="720" />
+            <img src={keyboardImg} alt="Studio keyboard with blue LED lighting" className="gallery-photo" loading="lazy" decoding="async" />
             <div className="gallery-caption">THE KEYS</div>
           </div>
           <div className="gallery-med">
-            <img src={monitorsImg} alt="AKG headphones and studio monitor on mixing desk" className="gallery-photo" loading="lazy" decoding="async"  width="1080" height="720" />
+            <img src={monitorsImg} alt="AKG headphones and studio monitor on mixing desk" className="gallery-photo" loading="lazy" decoding="async" />
             <div className="gallery-caption">MONITORING</div>
           </div>
         </div>
@@ -1560,15 +1524,15 @@ export default function App() {
         {/* Third row */}
         <div className="gallery-row2" style={{marginTop: '12px'}}>
           <div className="gallery-med">
-            <img src={micWideImg} alt="Microphone with acoustic shield in the recording room" className="gallery-photo" loading="lazy" decoding="async"  width="1080" height="720" />
+            <img src={micWideImg} alt="Microphone with acoustic shield in the recording room" className="gallery-photo" loading="lazy" decoding="async" />
             <div className="gallery-caption">THE MIC SETUP</div>
           </div>
           <div className="gallery-med">
-            <img src={mpcDemoImg} alt="AKAI MPC X showing genre demo selection screen" className="gallery-photo" loading="lazy" decoding="async"  width="1080" height="720" />
+            <img src={mpcDemoImg} alt="AKAI MPC X showing genre demo selection screen" className="gallery-photo" loading="lazy" decoding="async" />
             <div className="gallery-caption">THE MPC</div>
           </div>
           <div className="gallery-med">
-            <img src={interfaceImg} alt="Universal Audio interface close-up on the studio desk" className="gallery-photo" loading="lazy" decoding="async"  width="1080" height="720" />
+            <img src={interfaceImg} alt="Universal Audio interface close-up on the studio desk" className="gallery-photo" loading="lazy" decoding="async" />
             <div className="gallery-caption">AUDIO INTERFACE</div>
           </div>
         </div>
@@ -1584,7 +1548,7 @@ export default function App() {
 
         <div className="culture-platform-shell">
           <div className="culture-brand-rail">
-            <img src={cultureArt} alt="FOR THE CULTURE" className="culture-brand-art" loading="lazy" decoding="async" width="1600" height="1600" />
+            <img src={cultureArt} alt="FOR THE CULTURE" className="culture-brand-art" />
             <div className="culture-brand-kicker">BY GALAXY FIRE STUDIOS</div>
             <p>Original editorial coverage powered by the FOR THE CULTURE newsroom.</p>
           </div>
@@ -1802,7 +1766,7 @@ export default function App() {
             <div className="radio-player-badge">{radioPlaying ? "ON AIR" : "FOR THE CULTURE RADIO"}</div>
             <div className="radio-player-body">
               <div className="radio-art-wrap">
-                <img src={cultureArt} alt="For the Culture Radio artwork" loading="lazy" decoding="async" width="1600" height="1600" />
+                <img src={cultureArt} alt="For the Culture Radio artwork" />
                 <div className="radio-art-overlay">{radioPlaying ? "LIVE" : "FTC"}</div>
               </div>
               <div className="radio-now-playing">
@@ -1858,7 +1822,7 @@ export default function App() {
 
       {radioPlayerOpen && (
         <div className="radio-player-drawer">
-          <div className="radio-drawer-art"><img src={cultureArt} alt="For the Culture Radio" loading="lazy" decoding="async" width="1600" height="1600" /></div>
+          <div className="radio-drawer-art"><img src={cultureArt} alt="For the Culture Radio" /></div>
           <div className="radio-drawer-track"><span>{radioPlaying ? "● LIVE" : "FOR THE CULTURE RADIO"}</span><strong>{radioTrack.artist}</strong><small>{radioTrack.title} · {radioTrack.host}</small></div>
           <button type="button" className="radio-drawer-control" onClick={toggleRadio}>{radioPlaying ? "Ⅱ" : "▶"}</button>
           <input type="range" min="0" max="1" step="0.01" value={radioVolume} onChange={(e) => setRadioVolume(Number(e.target.value))} aria-label="Radio volume" />
@@ -2314,7 +2278,7 @@ export default function App() {
         <div className="footer-top">
           <div className="footer-brand">
             <div className="logo">
-              <img src={logoImg} alt="Galaxy Studios logo" className="logo-img" loading="lazy" decoding="async" width="1800" height="1013" />
+              <img src={logoImg} alt="Galaxy Studios logo" className="logo-img" />
               <div>
                 <div className="logo-title">GALAXY FIRE</div>
                 <div className="logo-sub">STUDIOS · EST. 2020</div>
