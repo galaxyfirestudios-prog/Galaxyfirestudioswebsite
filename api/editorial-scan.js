@@ -1,5 +1,7 @@
-const { createClient } = require('@supabase/supabase-js')
-const { draftStoriesWithGemini, DEFAULT_MODEL } = require('../lib/gemini-editorial.cjs')
+import { createClient } from '@supabase/supabase-js'
+import geminiEditorial from '../lib/gemini-editorial.cjs'
+
+const { draftStoriesWithGemini, DEFAULT_MODEL } = geminiEditorial
 
 const SOURCES = [
   { name: 'The NATIVE', url: process.env.EDITORIAL_NATIVE_FEED || 'https://thenativemag.com/feed/', weight: 12 },
@@ -277,7 +279,7 @@ async function publishBatch(supabase, items, drafts) {
   return { results, errors }
 }
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   // Vercel Cron authenticates with CRON_SECRET via Authorization: Bearer <secret>.
   // EDITORIAL_CRON_SECRET remains available for manual/editorial calls.
   const cronSecret = process.env.CRON_SECRET || ''
