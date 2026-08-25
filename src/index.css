@@ -24,7 +24,7 @@ img {
 
 /* Main site styles moved out of App.tsx so the browser can cache CSS independently. */
 * { box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
+        html { scroll-behavior: smooth; }\n\n/* Leave room for the fixed site header when FOR THE CULTURE is opened by a deep link. */\n#culture { scroll-margin-top: 88px; }
 
         body {
           margin: 0;
