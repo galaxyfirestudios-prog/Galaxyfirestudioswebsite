@@ -332,6 +332,26 @@ export default function App() {
     else startRadio(true);
   };
 
+  // FOR THE CULTURE is the single public destination for both the platform
+  // and its live radio layer. A navigation click is a real user gesture, so
+  // mobile browsers can honor the radio play request when policy allows it.
+  const enterForTheCulture = (event?: React.MouseEvent<HTMLAnchorElement>) => {
+    event?.preventDefault();
+    setMenuOpen(false);
+    setRadioPlayerOpen(true);
+
+    try {
+      window.history.pushState(null, "", "#culture");
+    } catch {
+      window.location.hash = "culture";
+    }
+
+    requestAnimationFrame(() => {
+      document.querySelector("#culture")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      void startRadio(true);
+    });
+  };
+
   useEffect(() => {
     let cancelled = false;
     const base = import.meta.env.BASE_URL || "./";
@@ -375,6 +395,28 @@ export default function App() {
 
     loadPlaylist();
     return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    const hash = window.location.hash.toLowerCase();
+    if (hash !== "#culture" && hash !== "#radio") return;
+
+    // Keep the old #radio deep link working, but make #culture the single
+    // canonical destination for the FOR THE CULTURE ecosystem.
+    if (hash === "#radio") {
+      try {
+        window.history.replaceState(null, "", "#culture");
+      } catch {
+        window.location.hash = "culture";
+      }
+    }
+
+    const timer = window.setTimeout(() => {
+      document.querySelector("#culture")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setRadioPlayerOpen(true);
+    }, 80);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -1410,8 +1452,7 @@ export default function App() {
           <a href="#services" onClick={() => setMenuOpen(false)}>SERVICES</a>
           <a href="#visuals" onClick={() => setMenuOpen(false)}>VISUALS</a>
           <a href="#booking" onClick={() => setMenuOpen(false)}>BOOK</a>
-          <a href="#culture" onClick={() => setMenuOpen(false)}>FOR THE CULTURE</a>
-          <a href="#radio" onClick={() => setMenuOpen(false)}>RADIO</a>
+          <a href="#culture" onClick={enterForTheCulture}>FOR THE CULTURE</a>
           <a href="#beats" onClick={() => setMenuOpen(false)}>BEATS</a>
           <a href="#shop" onClick={() => setMenuOpen(false)}>SHOP</a>
           <a href="#about" onClick={() => setMenuOpen(false)}>ABOUT</a>
@@ -2497,8 +2538,7 @@ export default function App() {
               <a href="#studio">Studio</a>
               <a href="#services">Services</a>
               <a href="#booking">Book a Session</a>
-              <a href="#culture">For the Culture</a>
-              <a href="#radio">Radio</a>
+              <a href="#culture" onClick={enterForTheCulture}>For the Culture</a>
               <a href="#beats">Beats</a>
               <a href="#shop">Shop</a>
             </div>
