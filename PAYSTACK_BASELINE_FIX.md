@@ -1,7 +1,7 @@
 # PAYSTACK / AVAILABILITY BASELINE FIX
 
-This build uses the uploaded `GalaxyFireStudios-FOR-THE-CULTURE-RADIO-PAYSTACK-FIXED-FULLY-OPTIMIZED.zip`
-as its sole baseline.
+This build uses the uploaded working `GalaxyFireStudios-FOR-THE-CULTURE-CRONJOB-PAYSTACK-RADIO-FIXED.zip` as its baseline.
+The previously supplied broken ZIP is excluded from this update.
 
 ## Booking payment fix
 
