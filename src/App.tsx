@@ -108,9 +108,11 @@ export default function App() {
   const [cultureActiveTab, setCultureActiveTab] = useState("home");
   const [cultureReaderStory, setCultureReaderStory] = useState<any | null>(null);
   const radioAudioRef = useRef<HTMLAudioElement | null>(null);
-  const RADIO_POSITION_KEY = "gfs-radio-track-position";
   const radioLoadedSrcRef = useRef<string>("");
   const radioRecoveryTimerRef = useRef<number | null>(null);
+  const radioResumeTimerRef = useRef<number | null>(null);
+  const radioPausedByUserRef = useRef(false);
+  const radioSwitchingTrackRef = useRef(false);
   const [radioPlaying, setRadioPlaying] = useState(false);
   const [radioVolume, setRadioVolume] = useState(0.85);
   const [radioPlayerOpen, setRadioPlayerOpen] = useState(false);
@@ -164,59 +166,35 @@ export default function App() {
     const audio = radioAudioRef.current;
     const track = radioPlaylist[index];
     if (!audio || !track?.src) { setRadioPlayerOpen(true); return false; }
-    setRadioTrackIndex(index);
-    try { localStorage.setItem("gfs-radio-track-index", String(index)); } catch {}
-    const base = import.meta.env.BASE_URL || "/";
-    const src = `${base.replace(/\/$/, "")}/${String(track.src).replace(/^\//, "")}`;
-   audio.volume = radioVolume;
 
-const saveRadioPosition = () => {
-  try {
-    localStorage.setItem(RADIO_POSITION_KEY, String(audio.currentTime));
-    localStorage.setItem("gfs-radio-track-index", String(index));
-  } catch {}
-};
-
-audio.removeEventListener("timeupdate", saveRadioPosition);
-audio.addEventListener("timeupdate", saveRadioPosition);
-if (track.poster) audio.dataset.poster = track.poster;
     if (fromUser) {
+      radioPausedByUserRef.current = false;
       setRadioPausedByUser(false);
     }
 
-    // A radio pause/resume must behave like a real broadcast: do not reload the
-    // current track when the listener presses PLAY again. Reloading audio.src
-    // resets currentTime to 0, which made PAUSE → PLAY restart the song.
+    setRadioTrackIndex(index);
+    try { localStorage.setItem("gfs-radio-track-index", String(index)); } catch {}
+
+    const base = import.meta.env.BASE_URL || "/";
+    const src = `${base.replace(/\/$/, "")}/${String(track.src).replace(/^\//, "")}`;
+    audio.volume = radioVolume;
+    if (track.poster) audio.dataset.poster = track.poster;
+
+    // Reload the audio element only when changing to a different track.
+    // A normal PLAY after an interruption must keep the currentTime.
     const sameTrackLoaded = radioLoadedSrcRef.current === src && audio.src === new URL(src, window.location.href).href;
- if (!sameTrackLoaded) {
-  audio.pause();
-  audio.src = src;
-  radioLoadedSrcRef.current = src;
-  audio.preload = "auto";
+    if (!sameTrackLoaded) {
+      radioSwitchingTrackRef.current = true;
+      audio.pause();
+      audio.src = src;
+      radioLoadedSrcRef.current = src;
+      audio.preload = "auto";
+      try { audio.currentTime = 0; } catch {}
+      audio.load();
+      radioSwitchingTrackRef.current = false;
+    }
 
-  const savedTrackIndex = Number(localStorage.getItem("gfs-radio-track-index") || "-1");
-  const savedPosition = Number(localStorage.getItem(RADIO_POSITION_KEY) || "0");
-
-  audio.addEventListener(
-    "loadedmetadata",
-    () => {
-      if (
-        savedTrackIndex === index &&
-        Number.isFinite(savedPosition) &&
-        savedPosition > 0 &&
-        Number.isFinite(audio.duration) &&
-        savedPosition < audio.duration - 2
-      ) {
-        try {
-          audio.currentTime = savedPosition;
-        } catch {}
-      }
-    },
-    { once: true }
-  );
-
-  audio.load();
-}    try {
+    try {
       await audio.play();
       setRadioPlaying(true);
       setRadioStreamReady(true);
@@ -232,18 +210,29 @@ if (track.poster) audio.dataset.poster = track.poster;
   };
 
   const startRadio = async (fromUser = false) => {
+    if (!fromUser && radioPausedByUserRef.current) return false;
+
     if (radioPlaylist.length) return playRadioTrack(radioTrackIndex, fromUser);
+
     const audio = radioAudioRef.current;
     if (!audio || !radioStreamUrl) { setRadioPlayerOpen(true); return false; }
-    audio.volume = radioVolume;
+
     if (fromUser) {
+      radioPausedByUserRef.current = false;
       setRadioPausedByUser(false);
     }
-    // Preserve the position of a real stream when toggling pause/play.
+
+    audio.volume = radioVolume;
+
+    // Preserve the current position of a live stream when resuming.
     if (radioLoadedSrcRef.current !== radioStreamUrl || !audio.src) {
+      radioSwitchingTrackRef.current = true;
       audio.src = radioStreamUrl;
       radioLoadedSrcRef.current = radioStreamUrl;
+      audio.preload = "auto";
+      radioSwitchingTrackRef.current = false;
     }
+
     try {
       await audio.play();
       setRadioPlaying(true);
@@ -260,6 +249,11 @@ if (track.poster) audio.dataset.poster = track.poster;
   };
 
   const pauseRadio = () => {
+    radioPausedByUserRef.current = true;
+    if (radioResumeTimerRef.current !== null) {
+      window.clearTimeout(radioResumeTimerRef.current);
+      radioResumeTimerRef.current = null;
+    }
     if (radioRecoveryTimerRef.current) {
       window.clearTimeout(radioRecoveryTimerRef.current);
       radioRecoveryTimerRef.current = null;
@@ -268,8 +262,7 @@ if (track.poster) audio.dataset.poster = track.poster;
     audio?.pause();
     setRadioPlaying(false);
     if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused";
-    // Keep the station paused for the current visit only. Reloading the site
-    // should make a fresh autoplay attempt rather than permanently muting radio.
+    // Keep the station paused until the listener explicitly presses PLAY.
     setRadioPausedByUser(true);
   };
 
@@ -411,52 +404,139 @@ if (track.poster) audio.dataset.poster = track.poster;
   useEffect(() => {
     const audio = radioAudioRef.current;
     if (!audio) return;
+
     audio.preload = "metadata";
     audio.setAttribute("playsinline", "true");
 
     let bufferRecoveryTimer: number | null = null;
+
     const clearBufferRecovery = () => {
       if (bufferRecoveryTimer !== null) {
         window.clearTimeout(bufferRecoveryTimer);
         bufferRecoveryTimer = null;
       }
     };
+
+    const clearResumeTimer = () => {
+      if (radioResumeTimerRef.current !== null) {
+        window.clearTimeout(radioResumeTimerRef.current);
+        radioResumeTimerRef.current = null;
+      }
+    };
+
+    const scheduleResume = (delay = 500) => {
+      if (radioPausedByUserRef.current || !audio.src || radioResumeTimerRef.current !== null) return;
+
+      radioResumeTimerRef.current = window.setTimeout(async () => {
+        radioResumeTimerRef.current = null;
+        if (radioPausedByUserRef.current || !audio.src || !audio.paused) return;
+
+        try {
+          await audio.play();
+          setRadioPlaying(true);
+          setRadioStreamReady(true);
+          updateRadioMediaSession();
+        } catch {
+          // A phone call, car-system interruption, or OS audio handoff can take
+          // a moment to release the audio session. Retry without changing tracks.
+          if (!radioPausedByUserRef.current) scheduleResume(1500);
+        }
+      }, delay);
+    };
+
     const scheduleBufferRecovery = () => {
-      if (!radioPlaylist.length || radioPausedByUser || bufferRecoveryTimer !== null) return;
+      if (!radioPlaylist.length || radioPausedByUserRef.current || bufferRecoveryTimer !== null) return;
       bufferRecoveryTimer = window.setTimeout(() => {
         bufferRecoveryTimer = null;
-        if (!radioPausedByUser && audio.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) advanceRadioTrack();
+        if (!radioPausedByUserRef.current && audio.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
+          scheduleResume(0);
+        }
       }, 15000);
     };
-    const onCanPlay = () => { clearBufferRecovery(); setRadioStreamReady(true); };
+
+    const onCanPlay = () => {
+      clearBufferRecovery();
+      setRadioStreamReady(true);
+    };
+
     const onError = () => {
       clearBufferRecovery();
       setRadioStreamReady(false);
-      if (!radioPlaylist.length || radioPausedByUser || radioRecoveryTimerRef.current) return;
-      radioRecoveryTimerRef.current = window.setTimeout(() => {
-        radioRecoveryTimerRef.current = null;
-        advanceRadioTrack();
-      }, 700);
+      if (radioPausedByUserRef.current || !radioPlaylist.length || radioRecoveryTimerRef.current) return;
+
+      // First try to recover the current track. Only move to another track if
+      // the current media source is genuinely unusable.
+      if (audio.error?.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED) {
+        radioRecoveryTimerRef.current = window.setTimeout(() => {
+          radioRecoveryTimerRef.current = null;
+          advanceRadioTrack();
+        }, 700);
+      } else {
+        scheduleResume(700);
+      }
+    };
+
+    const onPause = () => {
+      if (radioPausedByUserRef.current || radioSwitchingTrackRef.current || audio.ended) return;
+      setRadioPlaying(false);
+      if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused";
+      // The listener did not press PAUSE. Treat this as an external interruption
+      // and resume the same song rather than starting another track.
+      scheduleResume(500);
+    };
+
+    const onPlay = () => {
+      clearResumeTimer();
+      setRadioPlaying(true);
+      setRadioStreamReady(true);
+      if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
+      updateRadioMediaSession();
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible" && !radioPausedByUserRef.current && audio.paused) {
+        scheduleResume(150);
+      }
+    };
+
+    const onPageShow = () => {
+      if (!radioPausedByUserRef.current && audio.paused) scheduleResume(150);
+    };
+
+    const onFocus = () => {
+      if (!radioPausedByUserRef.current && audio.paused) scheduleResume(150);
     };
 
     audio.addEventListener("canplay", onCanPlay);
     audio.addEventListener("canplaythrough", onCanPlay);
     audio.addEventListener("playing", onCanPlay);
+    audio.addEventListener("play", onPlay);
+    audio.addEventListener("pause", onPause);
     audio.addEventListener("stalled", scheduleBufferRecovery);
     audio.addEventListener("waiting", scheduleBufferRecovery);
     audio.addEventListener("error", onError);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("pageshow", onPageShow);
+    window.addEventListener("focus", onFocus);
+
     return () => {
       audio.removeEventListener("canplay", onCanPlay);
       audio.removeEventListener("canplaythrough", onCanPlay);
       audio.removeEventListener("playing", onCanPlay);
+      audio.removeEventListener("play", onPlay);
+      audio.removeEventListener("pause", onPause);
       audio.removeEventListener("stalled", scheduleBufferRecovery);
       audio.removeEventListener("waiting", scheduleBufferRecovery);
       audio.removeEventListener("error", onError);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("pageshow", onPageShow);
+      window.removeEventListener("focus", onFocus);
       clearBufferRecovery();
+      clearResumeTimer();
       if (radioRecoveryTimerRef.current) window.clearTimeout(radioRecoveryTimerRef.current);
       radioRecoveryTimerRef.current = null;
     };
-  }, [radioPlaylist, radioPausedByUser]);
+  }, [radioPlaylist.length, radioTrackIndex]);
 
   const advanceRadioTrack = () => {
     if (!radioPlaylist.length) return;
@@ -521,37 +601,6 @@ if (track.poster) audio.dataset.poster = track.poster;
       window.removeEventListener("keydown", onFirstGesture);
     };
   }, [radioStreamUrl, radioPlaylist, radioPausedByUser]);
-
-  useEffect(() => {
-    const audio = radioAudioRef.current;
-    if (!audio) return;
-
-    const onPlay = () => {
-      setRadioPlaying(true);
-      if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
-      updateRadioMediaSession(radioTrack);
-    };
-    const onPause = () => {
-      setRadioPlaying(false);
-      if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused";
-    };
-    const onVisibilityChange = () => {
-      // Browsers may suspend a background document. Never intentionally pause the
-      // station on visibility changes, and recover playback when the page returns.
-      if (document.visibilityState === "visible" && !radioPausedByUser && audio.paused) {
-        void audio.play().catch(() => {});
-      }
-    };
-
-    audio.addEventListener("play", onPlay);
-    audio.addEventListener("pause", onPause);
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    return () => {
-      audio.removeEventListener("play", onPlay);
-      audio.removeEventListener("pause", onPause);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-    };
-  }, [radioPausedByUser, radioTrack]);
 
   useEffect(() => {
     let cancelled = false;
