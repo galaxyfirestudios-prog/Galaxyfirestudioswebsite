@@ -12,6 +12,58 @@
   },
   "tracks": [
     {
+      "artist": "FOR THE CULTURE RADIO",
+      "title": "3AM BY 9T9TN",
+      "album": null,
+      "genre": null,
+      "year": 2025,
+      "show": "FOR THE CULTURE ROTATION",
+      "host": "DJ NEBULAE",
+      "src": "radio/3AM_BY_9T9TN.mp3",
+      "poster": "radio/art/station-art.webp",
+      "metadataConfidence": "low",
+      "category": "FOR THE CULTURE ROTATION"
+    },
+    {
+      "artist": "9T9YN",
+      "title": "GANGSTER PROD BY WILLS HARMON{MIX AND MASTERED BY TRANSFORM MIX}",
+      "album": null,
+      "genre": "AFRO SWIN",
+      "year": null,
+      "show": "FOR THE CULTURE ROTATION",
+      "host": "DJ NEBULAE",
+      "src": "radio/9T9YN _GANGSTER.mp3",
+      "poster": "radio/art/station-art.webp",
+      "metadataConfidence": "high",
+      "category": "FOR THE CULTURE ROTATION"
+    },
+    {
+      "artist": "FOR THE CULTURE RADIO",
+      "title": "9T9YN MAP HYPE (perfomance version)",
+      "album": null,
+      "genre": null,
+      "year": null,
+      "show": "FOR THE CULTURE ROTATION",
+      "host": "DJ NEBULAE",
+      "src": "radio/9T9YN_MAP_HYPE_(perfomance version).mp3",
+      "poster": "radio/art/station-art.webp",
+      "metadataConfidence": "low",
+      "category": "FOR THE CULTURE ROTATION"
+    },
+    {
+      "artist": "9T9YN",
+      "title": "TRAITOR BY 9T9YN PROD.(WILLS HARMON)",
+      "album": null,
+      "genre": "RnB",
+      "year": null,
+      "show": "FOR THE CULTURE ROTATION",
+      "host": "DJ NEBULAE",
+      "src": "radio/9T9YN_TRAITOR.mp3",
+      "poster": "radio/art/station-art.webp",
+      "metadataConfidence": "high",
+      "category": "FOR THE CULTURE ROTATION"
+    },
+    {
       "artist": "Adey",
       "title": "Cigarette",
       "album": "Dirty Diego",
@@ -132,6 +184,19 @@
       "category": "FOR THE CULTURE ROTATION"
     },
     {
+      "artist": "FOR THE CULTURE RADIO",
+      "title": "EASY by GEEZYSHORE",
+      "album": null,
+      "genre": null,
+      "year": null,
+      "show": "FOR THE CULTURE ROTATION",
+      "host": "DJ NEBULAE",
+      "src": "radio/EASY_by_GEEZYSHORE.mp3",
+      "poster": "radio/art/station-art.webp",
+      "metadataConfidence": "low",
+      "category": "FOR THE CULTURE ROTATION"
+    },
+    {
       "artist": "Famous Music feat. Famous Bobson, Santi, Damayo & Minz",
       "title": "Boti",
       "album": "Eva Bless",
@@ -154,6 +219,19 @@
       "host": "DJ NEBULAE",
       "src": "radio/fasina-5-star.mp3",
       "poster": "radio/art/fasina-5-star.jpg",
+      "metadataConfidence": "high",
+      "category": "FOR THE CULTURE ROTATION"
+    },
+    {
+      "artist": "Detailmadeit",
+      "title": "FAYA",
+      "album": null,
+      "genre": "Afro-Pop",
+      "year": 2024,
+      "show": "FOR THE CULTURE ROTATION",
+      "host": "DJ NEBULAE",
+      "src": "radio/faya_by_Detailmadeit.mp3",
+      "poster": "radio/art/station-art.webp",
       "metadataConfidence": "high",
       "category": "FOR THE CULTURE ROTATION"
     },
@@ -242,6 +320,19 @@
       "src": "radio/issa-vibe.mp3",
       "poster": "radio/art/station-art.webp",
       "metadataConfidence": "high",
+      "category": "FOR THE CULTURE ROTATION"
+    },
+    {
+      "artist": "FOR THE CULTURE RADIO",
+      "title": "Karma By 9t9yn",
+      "album": null,
+      "genre": null,
+      "year": 2025,
+      "show": "FOR THE CULTURE ROTATION",
+      "host": "DJ NEBULAE",
+      "src": "radio/Karma_By_9t9yn.mp3",
+      "poster": "radio/art/station-art.webp",
+      "metadataConfidence": "low",
       "category": "FOR THE CULTURE ROTATION"
     },
     {
@@ -413,6 +504,19 @@
       "category": "FOR THE CULTURE ROTATION"
     },
     {
+      "artist": "FOR THE CULTURE RADIO",
+      "title": "RUFF by GEEZYSHORE",
+      "album": null,
+      "genre": null,
+      "year": null,
+      "show": "FOR THE CULTURE ROTATION",
+      "host": "DJ NEBULAE",
+      "src": "radio/RUFF_by_GEEZYSHORE.mp3",
+      "poster": "radio/art/station-art.webp",
+      "metadataConfidence": "low",
+      "category": "FOR THE CULTURE ROTATION"
+    },
+    {
       "artist": "SoJay",
       "title": "Wish You Well",
       "album": "SoJay's Room, Vol. 1",
@@ -462,6 +566,32 @@
       "src": "radio/sute-live-from-apo.mp3",
       "poster": "radio/art/sute-live-from-apo.jpg",
       "metadataConfidence": "high",
+      "category": "FOR THE CULTURE ROTATION"
+    },
+    {
+      "artist": "FOR THE CULTURE RADIO",
+      "title": "Tunrolaa Fire love",
+      "album": null,
+      "genre": null,
+      "year": null,
+      "show": "FOR THE CULTURE ROTATION",
+      "host": "DJ NEBULAE",
+      "src": "radio/Tunrolaa_Fire love.mp3",
+      "poster": "radio/art/station-art.webp",
+      "metadataConfidence": "low",
+      "category": "FOR THE CULTURE ROTATION"
+    },
+    {
+      "artist": "FOR THE CULTURE RADIO",
+      "title": "Tunrolaa Shots (Drink Responsibly)",
+      "album": null,
+      "genre": null,
+      "year": null,
+      "show": "FOR THE CULTURE ROTATION",
+      "host": "DJ NEBULAE",
+      "src": "radio/Tunrolaa_Shots (Drink Responsibly).mp3",
+      "poster": "radio/art/station-art.webp",
+      "metadataConfidence": "low",
       "category": "FOR THE CULTURE ROTATION"
     },
     {
