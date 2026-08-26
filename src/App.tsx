@@ -108,6 +108,7 @@ export default function App() {
   const [cultureActiveTab, setCultureActiveTab] = useState("home");
   const [cultureReaderStory, setCultureReaderStory] = useState<any | null>(null);
   const radioAudioRef = useRef<HTMLAudioElement | null>(null);
+  const RADIO_POSITION_KEY = "gfs-radio-track-position";
   const radioLoadedSrcRef = useRef<string>("");
   const radioRecoveryTimerRef = useRef<number | null>(null);
   const [radioPlaying, setRadioPlaying] = useState(false);
@@ -150,7 +151,6 @@ export default function App() {
       // Media Session is progressive enhancement; native audio remains the source of truth.
     }
   };
-
   const [radioClock, setRadioClock] = useState(() => new Date());
   const currentProgramme = getCurrentProgramme(radioClock);
   const nextProgramme = getNextProgramme(radioClock);
@@ -168,8 +168,18 @@ export default function App() {
     try { localStorage.setItem("gfs-radio-track-index", String(index)); } catch {}
     const base = import.meta.env.BASE_URL || "/";
     const src = `${base.replace(/\/$/, "")}/${String(track.src).replace(/^\//, "")}`;
-    audio.volume = radioVolume;
-    if (track.poster) audio.dataset.poster = track.poster;
+   audio.volume = radioVolume;
+
+const saveRadioPosition = () => {
+  try {
+    localStorage.setItem(RADIO_POSITION_KEY, String(audio.currentTime));
+    localStorage.setItem("gfs-radio-track-index", String(index));
+  } catch {}
+};
+
+audio.removeEventListener("timeupdate", saveRadioPosition);
+audio.addEventListener("timeupdate", saveRadioPosition);
+if (track.poster) audio.dataset.poster = track.poster;
     if (fromUser) {
       setRadioPausedByUser(false);
     }
@@ -178,15 +188,35 @@ export default function App() {
     // current track when the listener presses PLAY again. Reloading audio.src
     // resets currentTime to 0, which made PAUSE → PLAY restart the song.
     const sameTrackLoaded = radioLoadedSrcRef.current === src && audio.src === new URL(src, window.location.href).href;
-    if (!sameTrackLoaded) {
-      audio.pause();
-      audio.src = src;
-      radioLoadedSrcRef.current = src;
-      audio.preload = "auto";
-      audio.load();
-    }
+ if (!sameTrackLoaded) {
+  audio.pause();
+  audio.src = src;
+  radioLoadedSrcRef.current = src;
+  audio.preload = "auto";
 
-    try {
+  const savedTrackIndex = Number(localStorage.getItem("gfs-radio-track-index") || "-1");
+  const savedPosition = Number(localStorage.getItem(RADIO_POSITION_KEY) || "0");
+
+  audio.addEventListener(
+    "loadedmetadata",
+    () => {
+      if (
+        savedTrackIndex === index &&
+        Number.isFinite(savedPosition) &&
+        savedPosition > 0 &&
+        Number.isFinite(audio.duration) &&
+        savedPosition < audio.duration - 2
+      ) {
+        try {
+          audio.currentTime = savedPosition;
+        } catch {}
+      }
+    },
+    { once: true }
+  );
+
+  audio.load();
+}    try {
       await audio.play();
       setRadioPlaying(true);
       setRadioStreamReady(true);
@@ -296,10 +326,16 @@ export default function App() {
         const tracks = playlist.tracks.filter((track: any) => typeof track?.src === "string" && track.src);
         if (!tracks.length) throw new Error("Radio playlist contains no playable tracks");
 
-        const randomIndex = Math.floor(Math.random() * tracks.length);
+        let restoredIndex = 0;
+        try {
+          const storedIndex = Number(localStorage.getItem("gfs-radio-track-index") || "0");
+          if (Number.isInteger(storedIndex) && storedIndex >= 0 && storedIndex < tracks.length) {
+            restoredIndex = storedIndex;
+          }
+        } catch {}
         setRadioPlaylist(tracks);
-        setRadioTrackIndex(randomIndex);
-        try { localStorage.setItem("gfs-radio-track-index", String(randomIndex)); } catch {}
+        setRadioTrackIndex(restoredIndex);
+        try { localStorage.setItem("gfs-radio-track-index", String(restoredIndex)); } catch {}
       } catch (error) {
         if (cancelled || attempt >= 2) {
           console.info("FOR THE CULTURE RADIO playlist could not be loaded.", error);
