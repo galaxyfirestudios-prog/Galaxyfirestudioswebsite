@@ -166,9 +166,8 @@ export default function App() {
       audio.load();
     }
 
-    // Keep the radio on native HTML audio. Web Audio loudness processing can
-    // interfere with mobile background/lock-screen playback and is unnecessary
-    // for a station whose tracks are already mastered.
+    // Use native HTML audio for the radio. Avoid Web Audio processing so
+    // mobile browsers can keep the station alive while the screen is locked.
     audio.volume = radioVolume;
 
     try {
@@ -291,27 +290,16 @@ export default function App() {
   }, [radioVolume]);
 
   useEffect(() => {
-    const audio = radioAudioRef.current;
-    if (!audio) return;
-    audio.preload = "auto";
-    audio.setAttribute("playsinline", "true");
-    audio.setAttribute("webkit-playsinline", "true");
-    audio.setAttribute("x-webkit-airplay", "allow");
-  }, []);
-
-  // Expose the station to the phone's native lock-screen/media controls.
-  // This is especially important on mobile because the browser can keep a
-  // native audio element alive in the background even when the page is locked.
-  useEffect(() => {
-    const mediaSession = typeof navigator !== "undefined" ? navigator.mediaSession : undefined;
+    const mediaSession = typeof navigator !== "undefined" ? (navigator as any).mediaSession : undefined;
     if (!mediaSession) return;
 
     try {
-      mediaSession.metadata = new MediaMetadata({
+      const artwork = radioTrack.poster ? [{ src: radioTrack.poster }] : undefined;
+      mediaSession.metadata = new (window as any).MediaMetadata({
         title: radioTrack.title || "FOR THE CULTURE LIVE RADIO",
         artist: radioTrack.artist || "FOR THE CULTURE RADIO",
         album: "FOR THE CULTURE LIVE",
-        artwork: radioTrack.poster ? [{ src: radioTrack.poster }] : undefined,
+        artwork,
       });
       mediaSession.playbackState = radioPlaying ? "playing" : "paused";
     } catch {}
@@ -332,7 +320,7 @@ export default function App() {
   }, [radioTrack.title, radioTrack.artist, radioTrack.poster, radioPlaying, radioPlaylist.length]);
 
   useEffect(() => {
-    const mediaSession = typeof navigator !== "undefined" ? navigator.mediaSession : undefined;
+    const mediaSession = typeof navigator !== "undefined" ? (navigator as any).mediaSession : undefined;
     if (!mediaSession) return;
     try { mediaSession.playbackState = radioPlaying ? "playing" : "paused"; } catch {}
   }, [radioPlaying]);
@@ -340,6 +328,10 @@ export default function App() {
   useEffect(() => {
     const audio = radioAudioRef.current;
     if (!audio) return;
+    audio.preload = "auto";
+    audio.setAttribute("playsinline", "true");
+    audio.setAttribute("webkit-playsinline", "true");
+    audio.setAttribute("x-webkit-airplay", "allow");
 
     let bufferRecoveryTimer: number | null = null;
     const clearBufferRecovery = () => {

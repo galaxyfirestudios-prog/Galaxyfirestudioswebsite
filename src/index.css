@@ -1165,9 +1165,6 @@ img {
         .radio-player-footer small { margin-top:2px; color:#666; font-size:9px; }
         .radio-volume { display:flex; align-items:center; gap:10px; justify-content:flex-end; }
         .radio-volume input { width:100px; accent-color:#e50914; }
-        .radio-loudness-toggle { border:1px solid #3a3a3a; background:transparent; color:#777; padding:8px 10px; font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:900; letter-spacing:1px; cursor:pointer; white-space:nowrap; transition:all .2s ease; }
-        .radio-loudness-toggle.active { border-color:#e50914; color:#fff; box-shadow:0 0 0 1px rgba(229,9,20,.12) inset; }
-        .radio-loudness-toggle:hover { color:#fff; border-color:#666; }
         .radio-content-grid { max-width:1440px; margin:0 auto; display:grid; grid-template-columns:1fr 1.45fr 1fr; gap:12px; position:relative; z-index:1; }
         .radio-panel { min-width:0; border:1px solid #232323; background:#0b0b0b; padding:18px; }
         .radio-panel-head { display:flex; justify-content:space-between; align-items:center; gap:12px; padding-bottom:14px; border-bottom:1px solid #222; }
