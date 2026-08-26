@@ -45,7 +45,6 @@ import visual27 from "@/imports/visuals/visual_27.webp";
 import visual28 from "@/imports/visuals/visual_28.webp";
 import visual29 from "@/imports/visuals/visual_29.webp";
 import cultureArt from "@/imports/for-the-culture.webp";
-import { getCurrentProgramme, getNextProgramme, getTodaySchedule, getHost, formatRadioTime, RADIO_TIME_ZONE } from "./radio/programming";
 
 let paystackLoaderPromise: Promise<any> | null = null;
 
@@ -140,7 +139,7 @@ export default function App() {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: String(track?.title || "FOR THE CULTURE RADIO"),
         artist: String(track?.artist || "FOR THE CULTURE RADIO"),
-        album: String(currentProgramme.title || "FOR THE CULTURE RADIO"),
+        album: String(track?.show || "FOR THE CULTURE LIVE"),
         artwork: [
           { src: new URL(cultureArt, window.location.href).href, sizes: "512x512", type: "image/webp" },
         ],
@@ -151,14 +150,13 @@ export default function App() {
     }
   };
 
-  const [radioClock, setRadioClock] = useState(() => new Date());
-  const currentProgramme = getCurrentProgramme(radioClock);
-  const nextProgramme = getNextProgramme(radioClock);
-  const todayRadioSchedule = getTodaySchedule(radioClock);
-  const currentHost = getHost(currentProgramme.hostId);
-  const stationClockLabel = new Intl.DateTimeFormat("en-US", { timeZone: RADIO_TIME_ZONE, hour: "numeric", minute: "2-digit", hour12: true }).format(radioClock);
-
-  useEffect(() => { const timer = window.setInterval(() => setRadioClock(new Date()), 30000); return () => window.clearInterval(timer); }, []);
+  const radioSchedule = [
+    ["00:00 – 04:00", "SOUND OF THE DIASPORA", "DJ NEBULAE", "Diaspora sounds. Global connection."],
+    ["04:00 – 07:00", "THE CULTURE DRIVE", "DJ NEBULAE", "Music. Culture. Conversation."],
+    ["07:00 – 10:00", "AFRICA NOW", "DJ NEBULAE", "The best African sounds and stories."],
+    ["10:00 – 13:00", "THE NIGHT SHIFT", "DJ NEBULAE", "Deep vibes. Late-night records."],
+    ["13:00 – 16:00", "BEATS & RHYMES", "DJ NEBULAE", "Hip hop. Bars. Classics. New school."],
+  ];
 
   const playRadioTrack = async (index: number, fromUser = false) => {
     const audio = radioAudioRef.current;
@@ -354,7 +352,7 @@ export default function App() {
 
   useEffect(() => {
     updateRadioMediaSession(radioTrack);
-  }, [radioTrackIndex, radioTrack.artist, radioTrack.title, currentProgramme.id]);
+  }, [radioTrackIndex, radioTrack.artist, radioTrack.title, radioTrack.show, radioTrack.host]);
 
   useEffect(() => {
     if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
@@ -1963,16 +1961,15 @@ export default function App() {
                 <span>NOW PLAYING</span>
                 <h3>{radioTrack.artist}</h3>
                 <strong>{radioTrack.title}</strong>
-                <small className="radio-programme-live-label">{currentProgramme.title} · {currentProgramme.host || "FOR THE CULTURE RADIO"} · {stationClockLabel}</small>
                 <div className="radio-waveform" aria-hidden="true">{Array.from({ length: 48 }, (_, i) => <i key={i} style={{ height: `${18 + ((i * 17) % 44)}%` }} />)}</div>
                 <div className="radio-meta"><span>{radioPlaying ? "LIVE" : "STANDBY"} <b>●</b></span><span>128 KBPS</span></div>
               </div>
               <button type="button" className={`radio-big-play ${radioPlaying ? "playing" : ""}`} onClick={toggleRadio} aria-label={radioPlaying ? "Pause radio" : "Play radio"}>{radioPlaying ? "Ⅱ" : "▶"}</button>
             </div>
             <div className="radio-player-footer">
-              <div><span>HOST</span><strong>{currentProgramme.host || "FOR THE CULTURE RADIO"}</strong><small>{currentHost?.role || "STATION PROGRAMMING"}</small></div>
-              <div><span>ON AIR NOW</span><strong>{currentProgramme.title}</strong><small>{currentProgramme.tagline}</small></div>
-              <div><span>NEXT</span><strong>{nextProgramme.title}</strong><small>{formatRadioTime(nextProgramme.start)} · UP NEXT</small></div>
+              <div><span>HOST</span><strong>{radioTrack.host}</strong></div>
+              <div><span>CURRENT SHOW</span><strong>{radioTrack.show}</strong><small>LIVE · FOR THE CULTURE</small></div>
+              <div><span>NEXT</span><strong>AFRICA NOW</strong><small>UP NEXT</small></div>
               <div className="radio-volume"><span>VOLUME</span><input type="range" min="0" max="1" step="0.01" value={radioVolume} onChange={(e) => setRadioVolume(Number(e.target.value))} /></div>
             </div>
           </div>
@@ -1993,15 +1990,15 @@ export default function App() {
 
           <section className="radio-panel radio-schedule">
             <div className="radio-panel-head"><h3>PROGRAM SCHEDULE</h3><span>VIEW FULL SCHEDULE</span></div>
-            {todayRadioSchedule.map((item) => (
-              <div className={`radio-schedule-row ${item.id === currentProgramme.id ? "current" : ""}`} key={item.id}>
-                <span className="schedule-time">{formatRadioTime(item.start)} – {item.end === "00:00" ? "12:00 AM" : formatRadioTime(item.end)}</span><div><strong>{item.title}</strong><small>{item.host || "FOR THE CULTURE RADIO"}</small></div><p>{item.tagline}</p><span className="schedule-state">{item.id === currentProgramme.id ? "ON AIR" : "○"}</span>
+            {radioSchedule.map(([time, show, host, desc], index) => (
+              <div className={`radio-schedule-row ${index === 1 ? "current" : ""}`} key={show}>
+                <span className="schedule-time">{time}</span><div><strong>{show}</strong><small>{host}</small></div><p>{desc}</p><span className="schedule-state">{index === 1 && radioPlaying ? "ON AIR" : "○"}</span>
               </div>
             ))}
           </section>
 
           <aside className="radio-panel radio-connect">
-            <div className="radio-panel-head"><h3>THE STATION</h3><span>{currentHost?.name || "FOR THE CULTURE"}</span></div>
+            <div className="radio-panel-head"><h3>THE STATION</h3><span>DJ NEBULAE</span></div>
             <h4>MUSIC.<br />CULTURE.<br /><em>CONNECTION.</em></h4>
             <p>FOR THE CULTURE RADIO is the live audio layer of the Galaxy Fire ecosystem — built for records, stories, artists, conversations and the sounds moving the culture.</p>
             <div className="radio-source-note"><span>RADIO ENGINE</span><strong>{radioPlaylist.length ? `${radioPlaylist.length} TRACK ROTATION READY` : (radioStreamUrl ? "STREAM CONFIGURED" : "PLAYLIST READYING")}</strong></div>
@@ -2014,7 +2011,7 @@ export default function App() {
       {radioPlayerOpen && (
         <div className="radio-player-drawer">
           <div className="radio-drawer-art"><img src={cultureArt} alt="For the Culture Radio" /></div>
-          <div className="radio-drawer-track"><span>{radioPlaying ? "● LIVE" : "FOR THE CULTURE RADIO"}</span><strong>{radioTrack.artist}</strong><small>{radioTrack.title} · {currentProgramme.title} · {currentProgramme.host || "FOR THE CULTURE RADIO"}</small></div>
+          <div className="radio-drawer-track"><span>{radioPlaying ? "● LIVE" : "FOR THE CULTURE RADIO"}</span><strong>{radioTrack.artist}</strong><small>{radioTrack.title} · {radioTrack.host}</small></div>
           <button type="button" className="radio-drawer-control" onClick={toggleRadio}>{radioPlaying ? "Ⅱ" : "▶"}</button>
           <input type="range" min="0" max="1" step="0.01" value={radioVolume} onChange={(e) => setRadioVolume(Number(e.target.value))} aria-label="Radio volume" />
           <span className="radio-drawer-quality">128 KBPS</span>
