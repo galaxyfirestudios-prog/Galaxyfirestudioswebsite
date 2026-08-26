@@ -107,10 +107,19 @@ export default function App() {
   const [cultureActiveTab, setCultureActiveTab] = useState("home");
   const [cultureReaderStory, setCultureReaderStory] = useState<any | null>(null);
   const radioAudioRef = useRef<HTMLAudioElement | null>(null);
+  const radioAudioContextRef = useRef<AudioContext | null>(null);
+  const radioSourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const radioNormalizationGainRef = useRef<GainNode | null>(null);
+  const radioLimiterRef = useRef<DynamicsCompressorNode | null>(null);
+  const radioAnalyserRef = useRef<AnalyserNode | null>(null);
+  const radioLoudnessFrameRef = useRef<number | null>(null);
+  const radioCurrentNormalizationRef = useRef(1);
   const radioLoadedSrcRef = useRef<string>("");
   const radioRecoveryTimerRef = useRef<number | null>(null);
   const [radioPlaying, setRadioPlaying] = useState(false);
   const [radioVolume, setRadioVolume] = useState(0.85);
+  // Spotify-style adaptive loudness normalization is enabled by default.
+  const [radioLoudnessNormalization, setRadioLoudnessNormalization] = useState(true);
   const [radioPlayerOpen, setRadioPlayerOpen] = useState(false);
   const [radioStreamReady, setRadioStreamReady] = useState(false);
   // A user pause only affects the current page session. A fresh visit should
@@ -132,6 +141,100 @@ export default function App() {
   const radioRecentlyPlayed = radioHistory.length ? radioHistory : [
     { artist: "FOR THE CULTURE RADIO", title: "Waiting for the first track…" },
   ];
+  const ensureRadioAudioGraph = () => {
+    const audio = radioAudioRef.current;
+    if (!audio || !radioPlaylist.length) return false;
+
+    try {
+      const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AudioContextClass) return false;
+      if (!radioAudioContextRef.current) radioAudioContextRef.current = new AudioContextClass();
+      const context = radioAudioContextRef.current;
+
+      if (!radioSourceNodeRef.current) {
+        const source = context.createMediaElementSource(audio);
+        const gain = context.createGain();
+        const analyser = context.createAnalyser();
+        const limiter = context.createDynamicsCompressor();
+
+        analyser.fftSize = 1024;
+        analyser.smoothingTimeConstant = 0.82;
+        limiter.threshold.value = -1;
+        limiter.knee.value = 8;
+        limiter.ratio.value = 8;
+        limiter.attack.value = 0.003;
+        limiter.release.value = 0.15;
+
+        source.connect(gain);
+        gain.connect(analyser);
+        analyser.connect(limiter);
+        limiter.connect(context.destination);
+
+        radioSourceNodeRef.current = source;
+        radioNormalizationGainRef.current = gain;
+        radioAnalyserRef.current = analyser;
+        radioLimiterRef.current = limiter;
+      }
+
+      if (context.state === "suspended") void context.resume();
+      return true;
+    } catch (error) {
+      // If a future external stream cannot be routed through Web Audio because
+      // of CORS, fall back to native HTML audio rather than breaking playback.
+      console.info("FOR THE CULTURE RADIO loudness normalization unavailable; using native playback.", error);
+      return false;
+    }
+  };
+
+  const stopRadioLoudnessMeter = () => {
+    if (radioLoudnessFrameRef.current !== null) {
+      window.cancelAnimationFrame(radioLoudnessFrameRef.current);
+      radioLoudnessFrameRef.current = null;
+    }
+  };
+
+  const updateRadioLoudness = () => {
+    const analyser = radioAnalyserRef.current;
+    const gainNode = radioNormalizationGainRef.current;
+    if (!analyser || !gainNode || !radioLoudnessNormalization) {
+      if (gainNode) gainNode.gain.value = radioVolume;
+      stopRadioLoudnessMeter();
+      return;
+    }
+
+    const samples = new Uint8Array(analyser.fftSize);
+    analyser.getByteTimeDomainData(samples);
+    let sumSquares = 0;
+    for (let i = 0; i < samples.length; i += 1) {
+      const normalized = (samples[i] - 128) / 128;
+      sumSquares += normalized * normalized;
+    }
+    const rms = Math.sqrt(sumSquares / samples.length);
+
+    // RMS-based adaptive gain gives a practical streaming approximation of
+    // loudness normalization without requiring pre-analysis of every MP3.
+    if (rms > 0.018) {
+      const targetRms = 0.115;
+      const desiredNormalization = Math.min(1.65, Math.max(0.48, targetRms / rms));
+      const currentDb = 20 * Math.log10(Math.max(0.0001, radioCurrentNormalizationRef.current));
+      const desiredDb = 20 * Math.log10(desiredNormalization);
+      // Slow changes prevent audible pumping when the music's dynamics move.
+      const maxStepDb = 0.45;
+      const nextDb = currentDb + Math.max(-maxStepDb, Math.min(maxStepDb, desiredDb - currentDb));
+      radioCurrentNormalizationRef.current = Math.pow(10, nextDb / 20);
+    }
+
+    const combinedGain = radioCurrentNormalizationRef.current * radioVolume;
+    gainNode.gain.setTargetAtTime(combinedGain, gainNode.context.currentTime, 0.08);
+    radioLoudnessFrameRef.current = window.requestAnimationFrame(updateRadioLoudness);
+  };
+
+  const startRadioLoudnessMeter = () => {
+    stopRadioLoudnessMeter();
+    if (!radioLoudnessNormalization) return;
+    updateRadioLoudness();
+  };
+
   const radioSchedule = [
     ["00:00 – 04:00", "SOUND OF THE DIASPORA", "DJ NEBULAE", "Diaspora sounds. Global connection."],
     ["04:00 – 07:00", "THE CULTURE DRIVE", "DJ NEBULAE", "Music. Culture. Conversation."],
@@ -164,14 +267,16 @@ export default function App() {
       radioLoadedSrcRef.current = src;
       audio.preload = "auto";
       audio.load();
+      radioCurrentNormalizationRef.current = 1;
     }
 
-    // Use native HTML audio for the radio. Avoid Web Audio processing so
-    // mobile browsers can keep the station alive while the screen is locked.
-    audio.volume = radioVolume;
+    const normalized = ensureRadioAudioGraph();
+    if (!normalized) audio.volume = radioVolume;
+    else audio.volume = 1;
 
     try {
       await audio.play();
+      startRadioLoudnessMeter();
       setRadioPlaying(true);
       setRadioStreamReady(true);
       setRadioPlayerOpen(true);
@@ -227,6 +332,26 @@ export default function App() {
     else startRadio(true);
   };
 
+  // FOR THE CULTURE is the single public destination for both the platform
+  // and its live radio layer. A navigation click is a real user gesture, so
+  // mobile browsers can honor the radio play request when policy allows it.
+  const enterForTheCulture = (event?: React.MouseEvent<HTMLAnchorElement>) => {
+    event?.preventDefault();
+    setMenuOpen(false);
+    setRadioPlayerOpen(true);
+
+    try {
+      window.history.pushState(null, "", "#culture");
+    } catch {
+      window.location.hash = "culture";
+    }
+
+    requestAnimationFrame(() => {
+      document.querySelector("#culture")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      void startRadio(true);
+    });
+  };
+
   useEffect(() => {
     let cancelled = false;
     const base = import.meta.env.BASE_URL || "./";
@@ -273,6 +398,28 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const hash = window.location.hash.toLowerCase();
+    if (hash !== "#culture" && hash !== "#radio") return;
+
+    // Keep the old #radio deep link working, but make #culture the single
+    // canonical destination for the FOR THE CULTURE ecosystem.
+    if (hash === "#radio") {
+      try {
+        window.history.replaceState(null, "", "#culture");
+      } catch {
+        window.location.hash = "culture";
+      }
+    }
+
+    const timer = window.setTimeout(() => {
+      document.querySelector("#culture")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setRadioPlayerOpen(true);
+    }, 80);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     try {
       const stored = JSON.parse(localStorage.getItem("gfs-radio-history") || "[]");
       if (Array.isArray(stored)) setRadioHistory(stored.slice(0, 8));
@@ -285,53 +432,23 @@ export default function App() {
 
   useEffect(() => {
     const audio = radioAudioRef.current;
+    const gainNode = radioNormalizationGainRef.current;
     if (!audio) return;
-    audio.volume = radioVolume;
-  }, [radioVolume]);
-
-  useEffect(() => {
-    const mediaSession = typeof navigator !== "undefined" ? (navigator as any).mediaSession : undefined;
-    if (!mediaSession) return;
-
-    try {
-      const artwork = radioTrack.poster ? [{ src: radioTrack.poster }] : undefined;
-      mediaSession.metadata = new (window as any).MediaMetadata({
-        title: radioTrack.title || "FOR THE CULTURE LIVE RADIO",
-        artist: radioTrack.artist || "FOR THE CULTURE RADIO",
-        album: "FOR THE CULTURE LIVE",
-        artwork,
-      });
-      mediaSession.playbackState = radioPlaying ? "playing" : "paused";
-    } catch {}
-
-    const play = () => { void startRadio(true); };
-    const pause = () => { pauseRadio(); };
-    const next = () => { if (radioPlaylist.length) advanceRadioTrack(); };
-
-    try { mediaSession.setActionHandler("play", play); } catch {}
-    try { mediaSession.setActionHandler("pause", pause); } catch {}
-    try { mediaSession.setActionHandler("nexttrack", next); } catch {}
-
-    return () => {
-      try { mediaSession.setActionHandler("play", null); } catch {}
-      try { mediaSession.setActionHandler("pause", null); } catch {}
-      try { mediaSession.setActionHandler("nexttrack", null); } catch {}
-    };
-  }, [radioTrack.title, radioTrack.artist, radioTrack.poster, radioPlaying, radioPlaylist.length]);
-
-  useEffect(() => {
-    const mediaSession = typeof navigator !== "undefined" ? (navigator as any).mediaSession : undefined;
-    if (!mediaSession) return;
-    try { mediaSession.playbackState = radioPlaying ? "playing" : "paused"; } catch {}
-  }, [radioPlaying]);
+    if (gainNode && radioLoudnessNormalization && radioPlaylist.length) {
+      gainNode.gain.setTargetAtTime(radioCurrentNormalizationRef.current * radioVolume, gainNode.context.currentTime, 0.08);
+      audio.volume = 1;
+      if (radioPlaying) startRadioLoudnessMeter();
+    } else {
+      audio.volume = radioVolume;
+      stopRadioLoudnessMeter();
+    }
+  }, [radioVolume, radioLoudnessNormalization, radioPlaylist.length, radioPlaying]);
 
   useEffect(() => {
     const audio = radioAudioRef.current;
     if (!audio) return;
-    audio.preload = "auto";
+    audio.preload = "metadata";
     audio.setAttribute("playsinline", "true");
-    audio.setAttribute("webkit-playsinline", "true");
-    audio.setAttribute("x-webkit-airplay", "allow");
 
     let bufferRecoveryTimer: number | null = null;
     const clearBufferRecovery = () => {
@@ -440,6 +557,17 @@ export default function App() {
       window.removeEventListener("keydown", onFirstGesture);
     };
   }, [radioStreamUrl, radioPlaylist, radioPausedByUser]);
+
+  useEffect(() => {
+    return () => {
+      stopRadioLoudnessMeter();
+      try { radioSourceNodeRef.current?.disconnect(); } catch {}
+      try { radioNormalizationGainRef.current?.disconnect(); } catch {}
+      try { radioAnalyserRef.current?.disconnect(); } catch {}
+      try { radioLimiterRef.current?.disconnect(); } catch {}
+      if (radioAudioContextRef.current) void radioAudioContextRef.current.close().catch(() => {});
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -693,7 +821,7 @@ export default function App() {
     ["home", "HOME", "#culture-home"], ["stories", "STORIES", "#culture-stories"],
     ["discover", "DISCOVER", "#culture-discover"]
   ] as const;
-\n  // Deep-link support for the unified FOR THE CULTURE + LIVE RADIO destination.\n  // Example: /?section=for-the-culture (radio keeps its existing autoplay behavior).\n  // We also accept #culture / #for-the-culture so shared links remain compatible.\n  useEffect(() => {\n    const params = new URLSearchParams(window.location.search);\n    const section = params.get("section")?.toLowerCase();\n    const hash = window.location.hash.toLowerCase();\n    const wantsCulture = section === "for-the-culture" || section === "culture" || hash === "#culture" || hash === "#for-the-culture";\n    if (!wantsCulture) return;\n\n    setCultureActiveTab("home");\n\n    const scrollToCulture = () => {\n      const target = document.getElementById("culture");\n      if (!target) return false;\n      const headerOffset = 88;\n      const top = target.getBoundingClientRect().top + window.scrollY - headerOffset;\n      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });\n      return true;\n    };\n\n    let attempts = 0;\n    let timer: number | null = null;\n    const attempt = () => {\n      attempts += 1;\n      if (scrollToCulture() || attempts >= 12) return;\n      timer = window.setTimeout(attempt, 120);\n    };\n\n    // Wait for React's rendered section and content-visibility to settle.\n    const frame = window.requestAnimationFrame(() => window.requestAnimationFrame(attempt));\n    return () => {\n      window.cancelAnimationFrame(frame);\n      if (timer !== null) window.clearTimeout(timer);\n    };\n  }, [cultureStories]);\n
+
   const storeProducts = [
     { id: "at2020", name: "Audio-Technica AT2020", category: "Microphones", market: 150000, price: 187500, stock: 5, badge: "BEST SELLER", desc: "Cardioid condenser microphone for vocals, instruments and home studios.", query: "Audio-Technica AT2020 microphone" },
     { id: "at2035", name: "Audio-Technica AT2035", category: "Microphones", market: 285000, price: 356250, stock: 3, badge: "PRO", desc: "Large-diaphragm condenser with detailed, low-noise vocal capture.", query: "Audio-Technica AT2035 microphone" },
@@ -1324,8 +1452,7 @@ export default function App() {
           <a href="#services" onClick={() => setMenuOpen(false)}>SERVICES</a>
           <a href="#visuals" onClick={() => setMenuOpen(false)}>VISUALS</a>
           <a href="#booking" onClick={() => setMenuOpen(false)}>BOOK</a>
-          <a href="#culture" onClick={() => setMenuOpen(false)}>FOR THE CULTURE</a>
-          <a href="#radio" onClick={() => setMenuOpen(false)}>RADIO</a>
+          <a href="#culture" onClick={enterForTheCulture}>FOR THE CULTURE</a>
           <a href="#beats" onClick={() => setMenuOpen(false)}>BEATS</a>
           <a href="#shop" onClick={() => setMenuOpen(false)}>SHOP</a>
           <a href="#about" onClick={() => setMenuOpen(false)}>ABOUT</a>
@@ -1898,6 +2025,9 @@ export default function App() {
               <div><span>CURRENT SHOW</span><strong>{radioTrack.show}</strong><small>LIVE · FOR THE CULTURE</small></div>
               <div><span>NEXT</span><strong>AFRICA NOW</strong><small>UP NEXT</small></div>
               <div className="radio-volume"><span>VOLUME</span><input type="range" min="0" max="1" step="0.01" value={radioVolume} onChange={(e) => setRadioVolume(Number(e.target.value))} /></div>
+              <button type="button" className={`radio-loudness-toggle ${radioLoudnessNormalization ? "active" : ""}`} onClick={() => setRadioLoudnessNormalization((enabled) => !enabled)} aria-pressed={radioLoudnessNormalization} title="Automatically smooth loudness differences between songs">
+                {radioLoudnessNormalization ? "AUTO LOUDNESS ON" : "AUTO LOUDNESS OFF"}
+              </button>
             </div>
           </div>
         </div>
@@ -2408,8 +2538,7 @@ export default function App() {
               <a href="#studio">Studio</a>
               <a href="#services">Services</a>
               <a href="#booking">Book a Session</a>
-              <a href="#culture">For the Culture</a>
-              <a href="#radio">Radio</a>
+              <a href="#culture" onClick={enterForTheCulture}>For the Culture</a>
               <a href="#beats">Beats</a>
               <a href="#shop">Shop</a>
             </div>
