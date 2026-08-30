@@ -1,6 +1,38 @@
 {
   "stories": [
     {
+      "id": "ftc-1788113062250-0",
+      "source_name": "NotJustOk",
+      "source_url": "https://notjustok.com/sports/barcelona-agrees-deal-with-gabriel-jesus/",
+      "source_title": "Barcelona agrees deal with Arsenal's forward player",
+      "source_excerpt": "Barcelona have reportedly agreed a deal to sign Gabriel Jesus from Arsenal in a stunning late transfer move that could see the Brazilian forward make a fresh start in La Liga. The Catalan giants have turned to Jesus after their pursuit of Atlético Madrid striker Julián Álvarez became increasingly complicated. Barcelona are now understood to […] The post Barcelona agrees deal with Arsenal's forward player appeared first on NotjustOk .",
+      "image_url": "https://notjustok.com/wp-content/uploads/2022/06/images-2.jpeg",
+      "source_published_at": "2026-08-30T13:56:26.000Z",
+      "relevance_score": 31,
+      "headline": "Barcelona Moves for Arsenal Forward Gabriel Jesus",
+      "dek": "La Liga giants Barcelona have reportedly struck an agreement to bring Gabriel Jesus to Catalonia following complications in their pursuit of Julián Álvarez.",
+      "body": "In a surprising late development in the transfer market, Spanish powerhouse Barcelona have reportedly reached an agreement to secure the services of Arsenal forward Gabriel Jesus. According to reports from NotJustOk published on August 30, 2026, this move marks a fresh chapter for the Brazilian attacker as he prepares for a potential switch to La Liga. The Catalan club shifted their focus to Jesus after encountering significant hurdles in their attempts to acquire Atlético Madrid striker Julián Álvarez. With negotiations stalling on their previous target, Barcelona pivoted quickly to land the Arsenal player in what could prove to be one of the most talked-about late moves of the window. As the deal nears finalization, fans and pundits alike will be watching closely to see how Jesus adapts to the demands of Spanish football and what role he will ultimately play under the Barcelona tactical setup. Further updates are expected as the final paperwork is sorted out for the Brazilian forward's transition from North London to Catalonia.",
+      "category": "CULTURE",
+      "status": "published",
+      "published_at": "2026-08-30T18:04:22.250Z"
+    },
+    {
+      "id": "ftc-1788113062250-1",
+      "source_name": "NotJustOk",
+      "source_url": "https://notjustok.com/uncategorized/what-will-emiliano-martinez-will-bring-to-chelsea/",
+      "source_title": "What will Emiliano Martínez bring to Chelsea?",
+      "source_excerpt": "Chelsea Football Club have now completed the signing of Emiliano Martínez from Aston Villa, with the Argentine joining on a three-year deal. The move comes after a difficult start to the 2026/27 campaign for Robert Sánchez, whose errors in Chelsea’s opening game against Fulham once again raised questions about the reliability of the position. Sánchez […] The post What will Emiliano Martínez bring to Chelsea? appeared first on NotjustOk .",
+      "image_url": "https://notjustok.com/wp-content/uploads/2026/08/HQ9NiHmW4AAJA7V-1440x720.jpg",
+      "source_published_at": "2026-08-30T16:12:04.000Z",
+      "relevance_score": 30,
+      "headline": "Chelsea Secures Goalkeeper Emiliano Martínez on Three-Year Contract",
+      "dek": "The Blues have officially brought in the Argentine shot-stopper from Aston Villa following early-season defensive concerns.",
+      "body": "Chelsea Football Club have officially bolstered their squad with the acquisition of Emiliano Martínez, who joins the Stamford Bridge outfit from Aston Villa on a three-year agreement. As reported by NotJustOk on August 30, 2026, the arrival of the Argentine goalkeeper comes in the wake of a rocky beginning to the 2026/27 campaign for the Blues. Questions regarding stability between the posts surfaced early following a tough opening fixture against Fulham, where Robert Sánchez committed costly errors that reignited debates over the reliability of the position. In response to these defensive vulnerabilities, Chelsea moved decisively to secure Martínez and his proven pedigree. The experienced goalkeeper brings a high level of performance and confidence to the squad, qualities that the Blues will desperately need as they navigate a competitive Premier League season. Supporters will be eager to see how quickly the newly signed star integrates into the starting lineup and addresses the club's recent defensive woes.",
+      "category": "CULTURE",
+      "status": "published",
+      "published_at": "2026-08-30T18:04:22.250Z"
+    },
+    {
       "id": "ftc-1788091458198-0",
       "source_name": "NotJustOk",
       "source_url": "https://notjustok.com/sports/who-is-chelseas-new-shirt-sponsor-for-the-2026-27-season/",
@@ -417,7 +449,7 @@
       "published_at": "2026-08-26T11:00:03.955Z"
     }
   ],
-  "count": 26,
+  "count": 28,
   "source": "FOR THE CULTURE Editorial Engine",
-  "generated_at": "2026-08-30T12:04:18.198Z"
+  "generated_at": "2026-08-30T18:04:22.250Z"
 }
