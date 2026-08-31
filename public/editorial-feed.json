@@ -1,6 +1,38 @@
 {
   "stories": [
     {
+      "id": "ftc-1788177869119-0",
+      "source_name": "NotJustOk",
+      "source_url": "https://notjustok.com/sports/novak-djokovic-suffers-shock-first-round-exit-at-2026-us-open/",
+      "source_title": "Novak Djokovic suffers shock first-round exit at 2026 US Open",
+      "source_excerpt": "Novak Djokovic has suffered a stunning first-round defeat at the 2026 US Open, bringing his campaign at Flushing Meadows to an early and unexpected end. The Serbian superstar was beaten by Argentina’s Mariano Navone in a dramatic five-set encounter. Djokovic won the second and third sets to take control of the match, but Navone fought […] The post Novak Djokovic suffers shock first-round exit at 2026 US Open appeared first on NotjustOk .",
+      "image_url": "https://notjustok.com/wp-content/uploads/2026/08/HRBa6sCbsAAMEwl-1440x720.jpg",
+      "source_published_at": "2026-08-31T08:26:09.000Z",
+      "relevance_score": 30,
+      "headline": "Djokovic Stunned in US Open First Round",
+      "dek": "The Serbian champion experienced an unexpected early exit at Flushing Meadows following a grueling five-set defeat against Argentina's Mariano Navone.",
+      "body": "Tennis great Novak Djokovic encountered a major upset at the 2026 US Open, exiting the tournament in the opening round. Reporting from NotJustOk indicates that the Serbian icon's campaign in New York concluded abruptly after a tense, five-set battle against Argentine competitor Mariano Navone. Although Djokovic managed to secure the second and third sets to gain the upper hand during the clash, Navone mounted a resilient comeback. This surprising early elimination marks a dramatic shift in what is typically a reliable major tournament run for the veteran player. Fans and analysts alike were left reeling as the contest slipped away from the seasoned champion, turning what seemed like a routine opening round into one of the most talked-about moments of the tournament so far. The defeat leaves a significant void in the tournament bracket as the competition progresses without one of its most dominant historical figures.",
+      "category": "CULTURE",
+      "status": "published",
+      "published_at": "2026-08-31T12:04:29.119Z"
+    },
+    {
+      "id": "ftc-1788177869119-1",
+      "source_name": "NotJustOk",
+      "source_url": "https://notjustok.com/sports/what-will-emiliano-martinez-will-bring-to-chelsea/",
+      "source_title": "What will Emiliano Martínez add to Chelsea?",
+      "source_excerpt": "Chelsea Football Club have now completed the signing of Emiliano Martínez from Aston Villa, with the Argentine joining on a three-year deal. The move comes after a difficult start to the 2026/27 campaign for Robert Sánchez, whose errors in Chelsea’s opening game against Fulham once again raised questions about the reliability of the position. Sánchez […] The post What will Emiliano Martínez add to Chelsea? appeared first on NotjustOk .",
+      "image_url": "https://notjustok.com/wp-content/uploads/2026/08/HQ-zcKGXEAAPsQ--1440x720.jpg",
+      "source_published_at": "2026-08-30T16:12:04.000Z",
+      "relevance_score": 26,
+      "headline": "Chelsea Secures Goalkeeper Emiliano Martínez on Three-Year Contract",
+      "dek": "The Blues have finalized an agreement with Aston Villa to bring the Argentine shot-stopper to Stamford Bridge amidst early-season roster adjustments.",
+      "body": "Chelsea Football Club has officially reinforced its squad by completing the acquisition of Emiliano Martínez from Aston Villa on a three-year contract. According to details shared by NotJustOk, this high-profile transfer arrives immediately following a rocky start to the 2026/27 campaign for the club. Goalkeeper Robert Sánchez faced scrutiny after making costly mistakes during Chelsea's opening fixture against Fulham, reigniting long-standing debates regarding reliability between the posts. The arrival of Martínez is expected to address these defensive stability concerns and inject proven experience into the squad. As the club navigates a demanding domestic schedule, the addition of the seasoned Argentine offers a tactical pivot for the coaching staff. Supporters will be watching closely to see how quickly the newly signed goalkeeper can establish his presence and steady the team's defensive line moving forward.",
+      "category": "CULTURE",
+      "status": "published",
+      "published_at": "2026-08-31T12:04:29.119Z"
+    },
+    {
       "id": "ftc-1788156309434-0",
       "source_name": "NotJustOk",
       "source_url": "https://notjustok.com/lyrics/ride-on-lyrics-by-soundz-fave/",
@@ -529,7 +561,7 @@
       "published_at": "2026-08-26T11:00:03.955Z"
     }
   ],
-  "count": 33,
+  "count": 35,
   "source": "FOR THE CULTURE Editorial Engine",
-  "generated_at": "2026-08-31T06:05:09.434Z"
+  "generated_at": "2026-08-31T12:04:29.120Z"
 }
