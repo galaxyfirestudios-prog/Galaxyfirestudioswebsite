@@ -1,0 +1,11 @@
+{
+  "title": "Galaxy Fire Studios",
+  "description": "Galaxy Fire Studios — professional recording, music production, vocal production, mixing and mastering.",
+  "robots": {
+    "index": true
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

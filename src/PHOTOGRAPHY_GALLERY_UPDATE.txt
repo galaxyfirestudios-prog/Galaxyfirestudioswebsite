@@ -1,0 +1,10 @@
+Galaxy Fire Studios Photography & Visuals gallery update
+
+- Added visual_28.webp and visual_29.webp to src/imports/visuals/.
+- Converted the two new photographs from JPEG to optimized WebP.
+- Resized the two new photographs to 1600x1067 while preserving their original 3:2 composition.
+- Removed embedded metadata from the optimized copies.
+- Added both images to the Photography & Visuals slider.
+- Photography gallery images retain their natural aspect ratio instead of being cropped into fixed-height boxes.
+- Added explicit image dimensions to reduce layout shifting.
+- Existing visual_01.webp through visual_27.webp were already optimized WebP files and were left unchanged.
