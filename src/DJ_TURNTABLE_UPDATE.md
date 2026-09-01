@@ -1,0 +1,1 @@
+Updated from the supplied latest working site only. The Beat Store vinyl now rotates as a complete platter; the artwork no longer rotates independently. The tonearm uses a DJ-style pivot, arm, cartridge and stylus, moving from a raised parked position toward the record during playback and lifting during the stopping state. Existing site functionality is preserved.
