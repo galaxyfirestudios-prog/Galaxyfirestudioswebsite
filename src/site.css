@@ -237,6 +237,59 @@
         /* BOOKING */
         .booking { min-height: 750px; position: relative; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
         .booking-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+
+        .booking-overlay { position: absolute; inset: 0; background: linear-gradient(rgba(0,0,0,.72), rgba(0,0,0,.92)); }
+        .booking-content { position: relative; z-index: 1; max-width: 900px; padding: 0 5%; }
+        .booking-content h2 { font-size: clamp(55px, 8vw, 110px); }
+        .booking-content p { max-width: 520px; margin: auto; color: #999; line-height: 1.7; }
+        .booking-buttons { justify-content: center; }
+
+        .contact-details { display: flex; justify-content: center; gap: 70px; margin-top: 80px; }
+        .contact-details div { display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+        .contact-details span { color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-size: 8px; font-weight: 900; letter-spacing: 2px; }
+
+        /* BOOKING MODAL */
+        .booking-buttons button { cursor: pointer; border: 0; color: white; }
+        .price-button { cursor: pointer; border: 0; background: transparent; color: white; font-family: inherit; font-weight: 900; letter-spacing: 1.5px; font-size: 11px; padding: 0; }
+        .booking-modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 25px; }
+        .booking-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.86); backdrop-filter: blur(8px); }
+        .booking-modal-card { position: relative; z-index: 1; width: min(760px, 100%); max-height: 92vh; overflow-y: auto; background: #0b0b0b; border: 1px solid #272727; padding: 48px; box-shadow: 0 30px 100px rgba(0,0,0,.6); }
+        .booking-close { position: absolute; top: 15px; right: 18px; border: 0; background: transparent; color: #aaa; font-size: 32px; cursor: pointer; line-height: 1; }
+        .booking-modal-card h2 { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(48px, 7vw, 82px); line-height: .88; margin: 16px 0 22px; }
+        .booking-modal-intro { color: #888; line-height: 1.6; max-width: 600px; margin-bottom: 30px; }
+        .booking-form { display: flex; flex-direction: column; gap: 18px; }
+        .booking-form label { display: flex; flex-direction: column; gap: 8px; color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 900; letter-spacing: 1.8px; }
+        .booking-form input, .booking-form select, .booking-form textarea { width: 100%; box-sizing: border-box; border: 1px solid #2b2b2b; background: #121212; color: white; padding: 14px; font: 14px Arial, sans-serif; outline: none; }
+        .booking-form input:focus, .booking-form select:focus, .booking-form textarea:focus { border-color: #e50914; }
+        .booking-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .payment-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .payment-option { text-align: left; cursor: pointer; border: 1px solid #292929; background: #101010; color: white; padding: 18px; display: flex; flex-direction: column; gap: 7px; }
+        .payment-option.active { border-color: #e50914; background: #18090a; }
+        .payment-option span { color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 900; letter-spacing: 1.5px; }
+        .payment-option strong { font-size: 24px; }
+        .payment-option small { color: #777; }
+        .booking-total { border-top: 1px solid #242424; border-bottom: 1px solid #242424; padding: 17px 0; display: flex; justify-content: space-between; align-items: center; }
+        .booking-total span { color: #777; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; letter-spacing: 2px; }
+        .booking-total strong { font-size: 28px; }
+        .booking-submit { cursor: pointer; border: 0; color: white; width: 100%; margin-top: 4px; }
+        .booking-payment-error { color: #ff5a61; margin: 12px 0 0; font-size: 13px; line-height: 1.5; }
+        .booking-payment-note { color: #666; font-size: 11px; line-height: 1.6; text-align: center; }
+        .booking-success { text-align: center; padding: 30px 10px 10px; }
+        .booking-success h2 { margin-bottom: 25px; }
+        .booking-success p { max-width: 520px; margin: 0 auto 30px; color: #888; line-height: 1.7; }
+        .success-mark { width: 58px; height: 58px; display: grid; place-items: center; margin: 0 auto 25px; border: 1px solid #e50914; color: #e50914; font-size: 28px; }
+
+        /* FOOTER */
+        footer { padding: 80px 7% 30px; background: #050505; }
+        .footer-top { display: flex; justify-content: space-between; padding-bottom: 70px; }
+        .footer-brand p { color: #666; margin-top: 20px; font-size: 14px; }
+        .footer-links { display: flex; gap: 100px; }
+        .footer-links div { display: flex; flex-direction: column; gap: 14px; }
+        .footer-links span { color: #e50914; font-family: 'Barlow Condensed', sans-serif; font-size: 9px; letter-spacing: 2px; margin-bottom: 6px; }
+        .footer-links a { color: #777; font-size: 13px; transition: color .2s; }
+        .footer-links a:hover { color: white; }
+        .footer-bottom { border-top: 1px solid #1a1a1a; padding-top: 25px; display: flex; justify-content: space-between; color: #444; font-family: 'Barlow Condensed', sans-serif; font-size: 9px; letter-spacing: 1px; }
+
         /* ABOUT PREVIEW */
         .about-preview {
           padding: 120px 7%;
